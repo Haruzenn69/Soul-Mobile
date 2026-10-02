@@ -18,16 +18,14 @@ Map<String, dynamic>? dataOf(Object? body) {
 List<Map<String, dynamic>> listOf(Map<String, dynamic>? data, String key) {
   final v = data?[key];
   if (v is List) {
-    return v
-        .whereType<Map>()
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
+    return v.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
   }
   return const [];
 }
 
-final siswaDashboardProvider =
-    FutureProvider<Map<String, dynamic>>((ref) async {
+final siswaDashboardProvider = FutureProvider<Map<String, dynamic>>((
+  ref,
+) async {
   final res = await ref.read(apiClientProvider).get('/siswa/dashboard');
   return dataOf(res) ?? {};
 });
@@ -42,64 +40,65 @@ final notifikasiProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   return dataOf(res) ?? {};
 });
 
-final ketuaDashboardProvider =
-    FutureProvider<Map<String, dynamic>>((ref) async {
+final ketuaDashboardProvider = FutureProvider<Map<String, dynamic>>((
+  ref,
+) async {
   final res = await ref.read(apiClientProvider).get('/ketua/dashboard');
   return dataOf(res) ?? {};
 });
 
-final ketuaKegiatanProvider =
-    FutureProvider<Map<String, dynamic>>((ref) async {
+final ketuaKegiatanProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final res = await ref.read(apiClientProvider).get('/ketua/kegiatan');
   return dataOf(res) ?? {};
 });
 
-final ketuaAnggotaProvider =
-    FutureProvider<Map<String, dynamic>>((ref) async {
+final ketuaAnggotaProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final res = await ref.read(apiClientProvider).get('/ketua/anggota');
   return dataOf(res) ?? {};
 });
 
-final ketuaPendaftaranProvider =
-    FutureProvider<Map<String, dynamic>>((ref) async {
+final ketuaPendaftaranProvider = FutureProvider<Map<String, dynamic>>((
+  ref,
+) async {
   final res = await ref.read(apiClientProvider).get('/ketua/pendaftaran');
   return dataOf(res) ?? {};
 });
 
-final ketuaPengajuanProvider =
-    FutureProvider<Map<String, dynamic>>((ref) async {
+final ketuaPengajuanProvider = FutureProvider<Map<String, dynamic>>((
+  ref,
+) async {
   final res = await ref.read(apiClientProvider).get('/ketua/pengajuan-keluar');
   return dataOf(res) ?? {};
 });
 
-final ketuaLaporanProvider =
-    FutureProvider<Map<String, dynamic>>((ref) async {
+final ketuaLaporanProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final res = await ref.read(apiClientProvider).get('/ketua/laporan-bulanan');
   return dataOf(res) ?? {};
 });
 
-final kegiatanDetailProvider =
-    FutureProvider.family<Map<String, dynamic>, int>((ref, id) async {
-  final res =
-      await ref.read(apiClientProvider).get('/ketua/kegiatan/$id');
-  final data = dataOf(res);
-  return {
-    'kegiatan': data?['kegiatan'],
-    'presensi': data?['presensi'],
-    'rekap': data?['rekap'],
-  };
-});
+final kegiatanDetailProvider = FutureProvider.family<Map<String, dynamic>, int>(
+  (ref, id) async {
+    final res = await ref.read(apiClientProvider).get('/ketua/kegiatan/$id');
+    final data = dataOf(res);
+    return {
+      'kegiatan': data?['kegiatan'],
+      'presensi': data?['presensi'],
+      'rekap': data?['rekap'],
+    };
+  },
+);
 
-final presensiFormProvider =
-    FutureProvider.family<Map<String, dynamic>, int>((ref, id) async {
+final presensiFormProvider = FutureProvider.family<Map<String, dynamic>, int>((
+  ref,
+  id,
+) async {
   final res = await ref
       .read(apiClientProvider)
       .get('/ketua/kegiatan/$id/presensi');
   return dataOf(res) ?? {};
 });
 
-final ketuaRekapProvider =
-    FutureProvider<Map<String, dynamic>>((ref) async {
+final ketuaRekapProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final res = await ref.read(apiClientProvider).get('/ketua/rekap');
   return dataOf(res) ?? {};
 });
@@ -119,8 +118,9 @@ final siswaNilaiProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   return dataOf(res) ?? {};
 });
 
-final siswaPengajuanProvider =
-    FutureProvider<Map<String, dynamic>>((ref) async {
+final siswaPengajuanProvider = FutureProvider<Map<String, dynamic>>((
+  ref,
+) async {
   final res = await ref.read(apiClientProvider).get('/siswa/pengajuan-keluar');
   return dataOf(res) ?? {};
 });
@@ -130,11 +130,65 @@ final siswaProfilProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   return dataOf(res) ?? {};
 });
 
-final ekskulDetailProvider =
-    FutureProvider.family<Map<String, dynamic>, int>((ref, id) async {
+final ekskulDetailProvider = FutureProvider.family<Map<String, dynamic>, int>((
+  ref,
+  id,
+) async {
   final res = await ref.read(apiClientProvider).get('/catalog/$id');
-  final data = dataOf(res);
-  final ekskul = data?['ekskul'];
-  if (ekskul is Map) return Map<String, dynamic>.from(ekskul);
-  return {};
+  return dataOf(res) ?? {};
 });
+
+final ketuaProfilEkskulProvider = FutureProvider<Map<String, dynamic>>((
+  ref,
+) async {
+  final res = await ref.read(apiClientProvider).get('/ketua/profil-ekskul');
+  return dataOf(res) ?? {};
+});
+
+final ketuaPrestasiProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final res = await ref.read(apiClientProvider).get('/ketua/prestasi');
+  return dataOf(res) ?? {};
+});
+
+final laporanDetailProvider = FutureProvider.family<Map<String, dynamic>, int>((
+  ref,
+  id,
+) async {
+  final res = await ref
+      .read(apiClientProvider)
+      .get('/ketua/laporan-bulanan/$id');
+  return dataOf(res) ?? {};
+});
+
+final siswaRekapMonthProvider =
+    FutureProvider.family<Map<String, dynamic>, String?>((ref, bulan) async {
+      final query = (bulan != null && bulan.isNotEmpty)
+          ? {'bulan': bulan}
+          : null;
+      final res = await ref
+          .read(apiClientProvider)
+          .get('/siswa/rekap', query: query);
+      return dataOf(res) ?? {};
+    });
+
+final ketuaRekapMonthProvider =
+    FutureProvider.family<Map<String, dynamic>, String?>((ref, bulan) async {
+      final query = (bulan != null && bulan.isNotEmpty)
+          ? {'bulan': bulan}
+          : null;
+      final res = await ref
+          .read(apiClientProvider)
+          .get('/ketua/rekap', query: query);
+      return dataOf(res) ?? {};
+    });
+
+final ketuaTestimoniProvider =
+    FutureProvider.family<Map<String, dynamic>, String?>((ref, status) async {
+      final query = (status != null && status.isNotEmpty && status != 'semua')
+          ? {'status': status}
+          : null;
+      final res = await ref
+          .read(apiClientProvider)
+          .get('/ketua/testimoni', query: query);
+      return dataOf(res) ?? {};
+    });

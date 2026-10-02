@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 
+import 'dart:typed_data';
+
 import 'app_config.dart';
 import 'token_storage.dart';
 
@@ -30,10 +32,7 @@ class ApiClient {
       ),
     );
     _dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: _onRequest,
-        onError: _onError,
-      ),
+      InterceptorsWrapper(onRequest: _onRequest, onError: _onError),
     );
   }
 
@@ -104,16 +103,49 @@ class ApiClient {
     );
   }
 
-  Future<Map<String, dynamic>> get(String path,
-      {Map<String, dynamic>? query}) async {
-    return _unwrap(await _guard(
-        () => _dio.get(path, queryParameters: query, options: _noContentAsNullOptions)));
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, dynamic>? query,
+  }) async {
+    return _unwrap(
+      await _guard(
+        () => _dio.get(
+          path,
+          queryParameters: query,
+          options: _noContentAsNullOptions,
+        ),
+      ),
+    );
   }
 
-  Future<Map<String, dynamic>> post(String path,
-      {Object? data, Map<String, dynamic>? query}) async {
-    return _unwrap(await _guard(() => _dio.post(path,
-        data: data, queryParameters: query, options: _noContentAsNullOptions)));
+  Future<Map<String, dynamic>> post(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? query,
+  }) async {
+    return _unwrap(
+      await _guard(
+        () => _dio.post(
+          path,
+          data: data,
+          queryParameters: query,
+          options: _noContentAsNullOptions,
+        ),
+      ),
+    );
+  }
+
+  Future<Uint8List> getBytes(String path, {Map<String, dynamic>? query}) async {
+    final response = await _guard(
+      () => _dio.get<List<int>>(
+        path,
+        queryParameters: query,
+        options: Options(responseType: ResponseType.bytes),
+      ),
+    );
+    final data = response.data;
+    if (data is List<int>) return Uint8List.fromList(data);
+    throw const ApiException(message: 'File dari server tidak valid.');
   }
 
   Future<Map<String, dynamic>> postMultipart(
@@ -138,7 +170,8 @@ class ApiClient {
   }
 
   Future<Response<dynamic>> _guard(
-      Future<Response<dynamic>> Function() run) async {
+    Future<Response<dynamic>> Function() run,
+  ) async {
     try {
       return await run();
     } on DioException catch (e) {
@@ -146,7 +179,8 @@ class ApiClient {
       if (api is ApiException) throw api;
       throw ApiException(
         statusCode: e.response?.statusCode,
-        message: e.type == DioExceptionType.connectionError ||
+        message:
+            e.type == DioExceptionType.connectionError ||
                 e.type == DioExceptionType.connectionTimeout
             ? 'Tidak dapat terhubung ke server. Coba lagi.'
             : 'Terjadi kesalahan jaringan. Periksa koneksimu.',

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../core/app_config.dart';
 import '../../core/providers.dart';
 import '../../data/providers.dart';
 import '../../models/models.dart';
@@ -14,29 +13,26 @@ class AnggotaScreen extends ConsumerWidget {
     super.key,
     required this.user,
     this.isKetua = true,
+    this.initialTab = 0,
   });
 
   final AuthUser user;
   final bool isKetua;
+  final int initialTab;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DefaultTabController(
       length: 3,
+      initialIndex: initialTab.clamp(0, 2),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Text(
-                'Anggota',
-                style: TextStyle(
-                  color: AppTheme.ink,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
+            const PageHeader(
+              title: 'Anggota',
+              subtitle: 'Kelola keanggotaan dan permohonan siswa.',
+              eyebrow: 'PENGELOLAAN EKSKUL',
             ),
             const TabBar(
               labelColor: AppTheme.blue,
@@ -49,10 +45,10 @@ class AnggotaScreen extends ConsumerWidget {
                 Tab(text: 'Pengajuan'),
               ],
             ),
-            const Expanded(
+            Expanded(
               child: TabBarView(
                 children: [
-                  _AnggotaList(),
+                  _AnggotaList(user: user),
                   _PendaftaranList(),
                   _PengajuanList(),
                 ],
@@ -66,7 +62,9 @@ class AnggotaScreen extends ConsumerWidget {
 }
 
 class _AnggotaList extends ConsumerWidget {
-  const _AnggotaList();
+  const _AnggotaList({required this.user});
+
+  final AuthUser user;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -92,7 +90,8 @@ class _AnggotaList extends ConsumerWidget {
               final p = Pendaftaran.fromJson(items[i]);
               return _AnggotaTile(
                 pendaftaran: p,
-                onStatus: () => _changeStatus(context, ref, p),
+                isSelf: p.siswaRaw?['id'] == user.siswa?.id,
+                onStatus: (status) => _changeStatus(context, ref, p, status),
               );
             },
           );
@@ -102,103 +101,146 @@ class _AnggotaList extends ConsumerWidget {
   }
 
   Future<void> _changeStatus(
-      BuildContext context, WidgetRef ref, Pendaftaran p) async {
-    final selected = await showDialog<String>(
+    BuildContext context,
+    WidgetRef ref,
+    Pendaftaran p,
+    String status,
+  ) async {
+    final actionLabel = switch (status) {
+      'diterima' => 'Aktifkan',
+      'peringatan' => 'Beri peringatan',
+      'nonaktif' => 'Nonaktifkan',
+      _ => 'Ubah status',
+    };
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(p.ekskul?.namaEkskul ?? 'Ubah Status',
-            style: GoogleFonts.inter(fontWeight: FontWeight.w800)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final status in [
-              ('diterima', 'Aktifkan kembali'),
-              ('peringatan', 'Beri peringatan'),
-              ('nonaktif', 'Nonaktifkan'),
-            ])
-              ListTile(
-                title: Text(status.$2,
-                    style: GoogleFonts.inter(fontSize: 14)),
-                onTap: () => Navigator.of(context).pop(status.$1),
-              ),
-          ],
-        ),
+        title: Text('$actionLabel ${p.siswaNama ?? 'anggota'}?'),
+        content: Text(switch (status) {
+          'peringatan' => 'Siswa akan menerima notifikasi peringatan. Status keanggotaannya tetap aktif.',
+          'nonaktif' => 'Siswa tidak lagi dihitung sebagai anggota aktif dan akan menerima notifikasi.',
+          _ => 'Siswa akan menerima notifikasi bahwa status keanggotaannya aktif kembali.',
+        }),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(actionLabel),
+          ),
+        ],
       ),
     );
-    if (selected == null || !context.mounted) return;
+    if (confirmed != true || !context.mounted) return;
     try {
       await ref
           .read(apiClientProvider)
-          .post('/ketua/anggota/${p.id}/status', data: {'status': selected});
+          .post('/ketua/anggota/${p.id}/status', data: {'status': status});
       ref.invalidate(ketuaAnggotaProvider);
       ref.invalidate(ketuaDashboardProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Status anggota diperbarui.')),
+          SnackBar(content: Text('Status berhasil diubah: $actionLabel.')),
         );
       }
     } catch (e) {
-      await showErrorDialog(context, ref, e);
+      if (context.mounted) {
+        await showErrorDialog(context, ref, e);
+      }
     }
   }
 }
 
 class _AnggotaTile extends StatelessWidget {
-  const _AnggotaTile({required this.pendaftaran, required this.onStatus});
+  const _AnggotaTile({
+    required this.pendaftaran,
+    required this.isSelf,
+    required this.onStatus,
+  });
 
   final Pendaftaran pendaftaran;
-  final VoidCallback onStatus;
+  final bool isSelf;
+  final ValueChanged<String> onStatus;
+
+  List<(String, String)> get _statusActions => switch (pendaftaran.status) {
+    'diterima' => [
+      ('peringatan', 'Beri peringatan'),
+      ('nonaktif', 'Nonaktifkan'),
+    ],
+    'peringatan' => [
+      ('diterima', 'Aktifkan kembali'),
+      ('nonaktif', 'Nonaktifkan'),
+    ],
+    'nonaktif' || 'keluar' => [('diterima', 'Aktifkan kembali')],
+    _ => const [],
+  };
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: const Color(AppConfig.brandBg),
-            child: Text(
-              (pendaftaran.siswaNama?.isNotEmpty ?? false)
-                  ? pendaftaran.siswaNama![0]
-                  : 'S',
-              style: GoogleFonts.inter(
-                color: AppTheme.blue,
-                fontWeight: FontWeight.w800,
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 21,
+              backgroundColor: AppTheme.blueBg,
+              child: Text(
+                (pendaftaran.siswaNama?.isNotEmpty ?? false)
+                    ? pendaftaran.siswaNama![0].toUpperCase()
+                    : 'S',
+                style: GoogleFonts.plusJakartaSans(
+                  color: AppTheme.blue,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  pendaftaran.siswaNama ?? 'Anggota',
-                  style: GoogleFonts.inter(
-                    color: AppTheme.ink,
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    pendaftaran.siswaNama ?? 'Anggota',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.ink,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${pendaftaran.statusLabel} · ${pendaftaran.tanggalDaftar ?? ''}',
-                  style: GoogleFonts.inter(
-                    color: AppTheme.sub,
-                    fontSize: 11.5,
+                  const SizedBox(height: 3),
+                  Text(
+                    pendaftaran.tanggalDaftar ?? 'Tanggal tidak tersedia',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.sub,
+                      fontSize: 10.5,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 6),
+                  StatusChip(pendaftaran.statusLabel),
+                ],
+              ),
             ),
-          ),
-          StatusChip(pendaftaran.statusLabel),
-        ],
+            if (!isSelf && _statusActions.isNotEmpty)
+              PopupMenuButton<String>(
+                tooltip: 'Ubah status anggota',
+                onSelected: onStatus,
+                itemBuilder: (context) => [
+                  for (final action in _statusActions)
+                    PopupMenuItem<String>(
+                      value: action.$1,
+                      child: Text(action.$2),
+                    ),
+                ],
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -215,9 +257,7 @@ class _PendaftaranList extends ConsumerWidget {
       value: data,
       builder: (context, d) {
         final items = listOf(d, 'pendaftarans');
-        final pendings = items
-            .where((e) => e['status'] == 'pending')
-            .toList();
+        final pendings = items.where((e) => e['status'] == 'pending').toList();
         if (pendings.isEmpty) {
           return const EmptyState(
             title: 'Tidak ada pendaftar menunggu',
@@ -235,14 +275,14 @@ class _PendaftaranList extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+                border: Border.all(color: AppTheme.line),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     p.siswaNama ?? 'Pendaftar Baru',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.plusJakartaSans(
                       color: AppTheme.ink,
                       fontSize: 13.5,
                       fontWeight: FontWeight.w700,
@@ -252,7 +292,7 @@ class _PendaftaranList extends ConsumerWidget {
                     const SizedBox(height: 4),
                     Text(
                       '“${p.alasan}”',
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         color: AppTheme.sub,
                         fontSize: 12,
                         fontStyle: FontStyle.italic,
@@ -291,7 +331,11 @@ class _PendaftaranList extends ConsumerWidget {
   }
 
   Future<void> _proses(
-      BuildContext context, WidgetRef ref, Pendaftaran p, String status) async {
+    BuildContext context,
+    WidgetRef ref,
+    Pendaftaran p,
+    String status,
+  ) async {
     try {
       await ref
           .read(apiClientProvider)
@@ -301,11 +345,15 @@ class _PendaftaranList extends ConsumerWidget {
       ref.invalidate(ketuaDashboardProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(status == 'diterima' ? 'Diterima.' : 'Ditolak.')),
+          SnackBar(
+            content: Text(status == 'diterima' ? 'Diterima.' : 'Ditolak.'),
+          ),
         );
       }
     } catch (e) {
-      await showErrorDialog(context, ref, e);
+      if (context.mounted) {
+        await showErrorDialog(context, ref, e);
+      }
     }
   }
 }
@@ -321,9 +369,7 @@ class _PengajuanList extends ConsumerWidget {
       value: data,
       builder: (context, d) {
         final items = listOf(d, 'pengajuans');
-        final pendings = items
-            .where((e) => e['status'] == 'pending')
-            .toList();
+        final pendings = items.where((e) => e['status'] == 'pending').toList();
         if (pendings.isEmpty) {
           return const EmptyState(
             title: 'Tidak ada pengajuan keluar',
@@ -341,7 +387,7 @@ class _PengajuanList extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+                border: Border.all(color: AppTheme.line),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,7 +397,7 @@ class _PengajuanList extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           '${p['nama'] ?? '-'}',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.plusJakartaSans(
                             color: AppTheme.ink,
                             fontSize: 13.5,
                             fontWeight: FontWeight.w700,
@@ -364,7 +410,7 @@ class _PengajuanList extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text(
                     '${p['alasan'] ?? '-'}',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.plusJakartaSans(
                       color: AppTheme.sub,
                       fontSize: 12,
                       fontStyle: FontStyle.italic,
@@ -375,8 +421,7 @@ class _PengajuanList extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () =>
-                              _proses(context, ref, p, 'ditolak'),
+                          onPressed: () => _proses(context, ref, p, 'ditolak'),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: const Color(0xFFE11D48),
                             side: const BorderSide(color: Color(0xFFFECDD3)),
@@ -387,8 +432,7 @@ class _PengajuanList extends ConsumerWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () =>
-                              _proses(context, ref, p, 'diterima'),
+                          onPressed: () => _proses(context, ref, p, 'diterima'),
                           child: const Text('Terima'),
                         ),
                       ),
@@ -403,23 +447,30 @@ class _PengajuanList extends ConsumerWidget {
     );
   }
 
-  Future<void> _proses(BuildContext context, WidgetRef ref,
-      Map<String, dynamic> p, String status) async {
+  Future<void> _proses(
+    BuildContext context,
+    WidgetRef ref,
+    Map<String, dynamic> p,
+    String status,
+  ) async {
     try {
       await ref
           .read(apiClientProvider)
-          .post('/ketua/pengajuan-keluar/${p['id']}',
-              data: {'status': status});
+          .post('/ketua/pengajuan-keluar/${p['id']}', data: {'status': status});
       ref.invalidate(ketuaPengajuanProvider);
       ref.invalidate(ketuaAnggotaProvider);
       ref.invalidate(ketuaDashboardProvider);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(status == 'diterima' ? 'Diterima.' : 'Ditolak.')),
+          SnackBar(
+            content: Text(status == 'diterima' ? 'Diterima.' : 'Ditolak.'),
+          ),
         );
       }
     } catch (e) {
-      await showErrorDialog(context, ref, e);
+      if (context.mounted) {
+        await showErrorDialog(context, ref, e);
+      }
     }
   }
 }

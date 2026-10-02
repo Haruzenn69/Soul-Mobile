@@ -28,16 +28,10 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Text(
-              'Katalog Ekskul',
-              style: TextStyle(
-                color: AppTheme.ink,
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
+          const PageHeader(
+            title: 'Jelajahi Ekskul',
+            subtitle: 'Temukan kegiatan yang sesuai dengan minatmu.',
+            eyebrow: 'KATALOG',
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
@@ -74,8 +68,7 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
     final filtered = _cari.isEmpty
         ? joinable
         : joinable.where((e) {
-            final nama =
-                (e['nama_ekskul'] as String? ?? '').toLowerCase();
+            final nama = (e['nama_ekskul'] as String? ?? '').toLowerCase();
             final pembinaRaw = e['pembina'];
             final pembina = pembinaRaw is Map
                 ? (pembinaRaw['nama'] as String? ?? '').toLowerCase()
@@ -97,17 +90,16 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.hourglass_top, color: Color(0xFFB45309), size: 20),
+                const Icon(
+                  Icons.hourglass_top,
+                  color: Color(0xFFB45309),
+                  size: 20,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Pendaftaran kamu ke ${
-                        ((pending['ekskul'] is Map)
-                            ? (pending['ekskul'] as Map)['nama_ekskul']
-                            : 'ekskul')
-                            .toString()
-                      } masih menunggu persetujuan ketua.',
-                    style: GoogleFonts.inter(
+                    'Pendaftaran kamu ke ${((pending['ekskul'] is Map) ? (pending['ekskul'] as Map)['nama_ekskul'] : 'ekskul').toString()} masih menunggu persetujuan ketua.',
+                    style: GoogleFonts.plusJakartaSans(
                       color: const Color(0xFF92400E),
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
@@ -130,12 +122,16 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.check_circle, color: Color(0xFF16803C), size: 20),
+                const Icon(
+                  Icons.check_circle,
+                  color: Color(0xFF16803C),
+                  size: 20,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     'Kamu sudah aktif di ',
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.plusJakartaSans(
                       color: const Color(0xFF14532D),
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
@@ -154,9 +150,8 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
               ekskul: Ekskul.fromJson(raw),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => EkskulDetailScreen(
-                    ekskulId: Ekskul.fromJson(raw).id,
-                  ),
+                  builder: (_) =>
+                      EkskulDetailScreen(ekskulId: Ekskul.fromJson(raw).id),
                 ),
               ),
             ),
@@ -182,15 +177,22 @@ class _EkskulCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.line),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0D0F172A),
+                blurRadius: 2,
+                offset: Offset(0, 1),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -214,7 +216,7 @@ class _EkskulCard extends StatelessWidget {
                   children: [
                     Text(
                       ekskul.namaEkskul,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         color: AppTheme.ink,
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
@@ -227,7 +229,7 @@ class _EkskulCard extends StatelessWidget {
                           : ekskul.namaEkskul,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         color: AppTheme.sub,
                         fontSize: 12,
                       ),
@@ -235,15 +237,11 @@ class _EkskulCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        StatusChip(
-                          ekskul.isOpenRecruitment
-                              ? 'Buka'
-                              : 'Tutup',
-                        ),
+                        StatusChip(ekskul.isOpenRecruitment ? 'Buka' : 'Tutup'),
                         const SizedBox(width: 8),
                         Text(
                           '${ekskul.anggotaCount} anggota',
-                          style: GoogleFonts.inter(
+                          style: GoogleFonts.plusJakartaSans(
                             color: AppTheme.sub,
                             fontSize: 11,
                           ),

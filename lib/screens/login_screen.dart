@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/app_config.dart';
 import '../core/providers.dart';
 import '../theme/app_theme.dart';
+import '../widgets/common.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -33,9 +34,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       setState(() => _localError = 'Masukkan NIS dan password kamu.');
       return;
     }
-    await ref
-        .read(authControllerProvider.notifier)
-        .login(id, _password.text);
+    await ref.read(authControllerProvider.notifier).login(id, _password.text);
   }
 
   @override
@@ -44,86 +43,155 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Column(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [AppTheme.blue, AppTheme.blueDark],
-                      ),
-                    ),
-                    child: SafeArea(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Container(
-                                  width: 46,
-                                  height: 46,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.14),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Icon(
-                                    Icons.shield_moon_rounded,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  AppConfig.appName,
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 2,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Spacer(),
-                            Text(
-                              'Satu Akun,\nSemua Ekskul',
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontSize: 30,
-                                fontWeight: FontWeight.w900,
-                                height: 1.15,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              'Daftar ekskul, isi presensi, dan pantau laporan dalam satu aplikasi.',
-                              style: GoogleFonts.inter(
-                                color: Colors.white.withValues(alpha: 0.9),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                height: 1.4,
-                              ),
-                            ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact =
+              constraints.maxHeight < 620 ||
+              MediaQuery.viewInsetsOf(context).bottom > 0;
+          final heroHeight = compact
+              ? 112.0
+              : (constraints.maxHeight * 0.38).clamp(240.0, 310.0);
+          return SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: heroHeight,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            AppTheme.sky,
+                            const Color(0xFF60A5FA),
+                            AppTheme.blue,
                           ],
+                        ),
+                      ),
+                      child: SafeArea(
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            24,
+                            compact ? 8 : 24,
+                            24,
+                            compact ? 8 : 24,
+                          ),
+                          child: compact
+                              ? Row(
+                                  children: [
+                                    Container(
+                                      width: 42,
+                                      height: 42,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.14,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(
+                                        Icons.shield_moon_rounded,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      AppConfig.appName,
+                                      style: GoogleFonts.inter(
+                                        color: Colors.white,
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 2,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Flexible(
+                                      child: Text(
+                                        'Satu Akun, Semua Ekskul',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.end,
+                                        style: GoogleFonts.inter(
+                                          color: Colors.white,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 46,
+                                          height: 46,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.14,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.shield_moon_rounded,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          AppConfig.appName,
+                                          style: GoogleFonts.inter(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w900,
+                                            letterSpacing: 2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      'Satu Akun,\nSemua Ekskul',
+                                      style: GoogleFonts.inter(
+                                        color: Colors.white,
+                                        fontSize: 30,
+                                        fontWeight: FontWeight.w900,
+                                        height: 1.15,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      'Daftar ekskul, isi presensi, dan pantau laporan dalam satu aplikasi.',
+                                      style: GoogleFonts.inter(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.9,
+                                        ),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                Expanded(
-                  flex: 3,
-                  child: Container(
+                  Container(
                     color: Colors.white,
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        24,
+                        compact ? 20 : 28,
+                        24,
+                        32,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -150,7 +218,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFFF1F2),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: const Color(0xFFFECDD3)),
+                                border: Border.all(
+                                  color: const Color(0xFFFECDD3),
+                                ),
                               ),
                               child: Row(
                                 children: [
@@ -181,7 +251,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFFF1F2),
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: const Color(0xFFFECDD3)),
+                                border: Border.all(
+                                  color: const Color(0xFFFECDD3),
+                                ),
                               ),
                               child: Row(
                                 children: [
@@ -223,8 +295,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             decoration: InputDecoration(
                               labelText: 'Password',
                               suffixIcon: IconButton(
-                                onPressed: () =>
-                                    setState(() => _showPassword = !_showPassword),
+                                onPressed: () => setState(
+                                  () => _showPassword = !_showPassword,
+                                ),
                                 icon: Icon(
                                   _showPassword
                                       ? Icons.visibility_off_outlined
@@ -237,7 +310,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(height: 10),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 8),
+                              horizontal: 10,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFF7E6),
                               borderRadius: BorderRadius.circular(8),
@@ -297,16 +372,72 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   : const Text('LOGIN'),
                             ),
                           ),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: _forgotPassword,
+                              child: const Text('Lupa kata sandi?'),
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _forgotPassword() async {
+    final email = TextEditingController();
+    final value = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Atur Ulang Kata Sandi'),
+        content: TextField(
+          controller: email,
+          keyboardType: TextInputType.emailAddress,
+          decoration: const InputDecoration(labelText: 'Email akun'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Batal'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final address = email.text.trim();
+              if (address.contains('@')) {
+                Navigator.pop(dialogContext, address);
+              }
+            },
+            child: const Text('Kirim tautan'),
           ),
         ],
       ),
     );
+    email.dispose();
+    if (value == null || !mounted) return;
+
+    try {
+      await ref
+          .read(apiClientProvider)
+          .post('/auth/forgot-password', data: {'email': value});
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Jika email terdaftar, tautan pengaturan ulang akan dikirim.',
+            ),
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted) await showErrorDialog(context, ref, error);
+    }
   }
 }

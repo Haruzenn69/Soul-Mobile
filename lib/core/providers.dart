@@ -4,7 +4,9 @@ import '../models/models.dart';
 import 'api_client.dart';
 import 'token_storage.dart';
 
-final tokenStorageProvider = Provider<TokenStorage>((ref) => const TokenStorage());
+final tokenStorageProvider = Provider<TokenStorage>(
+  (ref) => const TokenStorage(),
+);
 
 final apiClientProvider = Provider<ApiClient>(
   (ref) => ApiClient(tokenStorage: ref.watch(tokenStorageProvider)),
@@ -34,14 +36,13 @@ class AuthState {
     bool? loading,
     String? loginError,
     bool clearError = false,
-  }) =>
-      AuthState(
-        status: status ?? this.status,
-        user: user ?? this.user,
-        token: token ?? this.token,
-        loading: loading ?? this.loading,
-        loginError: clearError ? null : (loginError ?? this.loginError),
-      );
+  }) => AuthState(
+    status: status ?? this.status,
+    user: user ?? this.user,
+    token: token ?? this.token,
+    loading: loading ?? this.loading,
+    loginError: clearError ? null : (loginError ?? this.loginError),
+  );
 }
 
 class AuthController extends Notifier<AuthState> {
@@ -61,9 +62,17 @@ class AuthController extends Notifier<AuthState> {
         return;
       }
       final res = await api.get('/auth/me');
-      final user = AuthUser.fromJson(res['data'] is Map
-          ? (res['data'] as Map)['user'] as Map<String, dynamic>?
-          : null);
+      final user = AuthUser.fromJson(
+        res['data'] is Map
+            ? (res['data'] as Map)['user'] as Map<String, dynamic>?
+            : null,
+      );
+      if (user.role != 'siswa') {
+        await api.post('/auth/logout');
+        await api.clearToken();
+        state = const AuthState(status: AuthStatus.unauthenticated);
+        return;
+      }
       state = AuthState(
         status: AuthStatus.authenticated,
         user: user,
@@ -83,13 +92,21 @@ class AuthController extends Notifier<AuthState> {
     state = state.copyWith(loading: true, clearError: true);
     try {
       final api = ref.read(apiClientProvider);
-      final res = await api.post('/auth/login', data: {
-        'identifier': identifier,
-        'password': password,
-      });
+      final res = await api.post(
+        '/auth/login',
+        data: {'identifier': identifier, 'password': password},
+      );
       final data = res['data'] as Map<String, dynamic>;
       final token = data['token'] as String;
       final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>?);
+      if (user.role != 'siswa') {
+        api.setToken(token);
+        await api.post('/auth/logout');
+        await api.clearToken();
+        throw const ApiException(
+          message: 'Aplikasi ini hanya mendukung akun Siswa dan Ketua Ekskul.',
+        );
+      }
 
       await ref.read(tokenStorageProvider).write(token);
       api.setToken(token);
@@ -99,9 +116,7 @@ class AuthController extends Notifier<AuthState> {
         token: token,
       );
     } catch (e) {
-      final msg = e is ApiException
-          ? e.message
-          : 'Login gagal. Coba lagi.';
+      final msg = e is ApiException ? e.message : 'Login gagal. Coba lagi.';
       state = state.copyWith(loading: false, loginError: msg);
     }
   }
@@ -118,8 +133,9 @@ class AuthController extends Notifier<AuthState> {
   void clearLoginError() => state = state.copyWith(clearError: true);
 }
 
-final authControllerProvider =
-    NotifierProvider<AuthController, AuthState>(AuthController.new);
+final authControllerProvider = NotifierProvider<AuthController, AuthState>(
+  AuthController.new,
+);
 
 class _ShellTab extends Notifier<int> {
   @override

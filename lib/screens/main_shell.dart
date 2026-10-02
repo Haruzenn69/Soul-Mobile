@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../core/app_config.dart';
 import '../core/providers.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
@@ -12,6 +11,7 @@ import 'beranda/siswa_beranda.dart';
 import 'katalog/katalog_screen.dart';
 import 'kegiatan/kegiatan_screen.dart';
 import 'laporan/laporan_screen.dart';
+import 'menu/ketua_menu_screen.dart';
 import 'notifikasi/notifikasi_screen.dart';
 import 'profil/profil_screen.dart';
 
@@ -44,6 +44,8 @@ class _ShellScaffold extends ConsumerStatefulWidget {
 }
 
 class _ShellScaffoldState extends ConsumerState<_ShellScaffold> {
+  final Map<int, Widget> _tabCache = {};
+
   @override
   Widget build(BuildContext context) {
     final index = ref.watch(shellTabProvider);
@@ -51,25 +53,48 @@ class _ShellScaffoldState extends ConsumerState<_ShellScaffold> {
     // leave a higher tab index in the ketua shell and then return to the
     // shorter siswa shell. NavigationBar requires the index to be valid.
     final safeIndex = index >= 0 && index < widget.tabs.length ? index : 0;
+    final tabChildren = List<Widget>.generate(widget.tabs.length, (i) {
+      final cachedTab = _tabCache[i];
+      if (cachedTab != null) return cachedTab;
+      if (i != safeIndex) return const SizedBox.shrink();
+
+      final tab = widget.tabs[i].builder(context);
+      _tabCache[i] = tab;
+      return tab;
+    });
     return Scaffold(
-      body: IndexedStack(index: safeIndex, children: [
-        for (final tab in widget.tabs) tab.builder(context),
-      ]),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: safeIndex,
-        onDestinationSelected: (i) =>
-            ref.read(shellTabProvider.notifier).set(i),
-        backgroundColor: Colors.white,
-        indicatorColor: const Color(AppConfig.brandBg),
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: [
-          for (final tab in widget.tabs)
-            NavigationDestination(
-              icon: Icon(tab.icon, color: AppTheme.sub),
-              selectedIcon: Icon(tab.icon, color: AppTheme.blue),
-              label: tab.label,
-            ),
-        ],
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFF0F9FF), Colors.white, Color(0xFFFFFBEB)],
+            stops: [0, 0.52, 1],
+          ),
+        ),
+        child: IndexedStack(index: safeIndex, children: tabChildren),
+      ),
+      bottomNavigationBar: DecoratedBox(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: AppTheme.line)),
+        ),
+        child: NavigationBar(
+          selectedIndex: safeIndex,
+          onDestinationSelected: (i) =>
+              ref.read(shellTabProvider.notifier).set(i),
+          backgroundColor: Colors.white,
+          indicatorColor: AppTheme.blueBg,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          destinations: [
+            for (final tab in widget.tabs)
+              NavigationDestination(
+                icon: Icon(tab.icon, color: AppTheme.sub),
+                selectedIcon: Icon(tab.icon, color: AppTheme.blue),
+                label: tab.label,
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -129,14 +154,14 @@ class KetuaShell extends StatelessWidget {
           (_) => BerandaKetua(user: user),
         ),
         _TabItem(
-          'Kegiatan',
-          Icons.calendar_month_outlined,
-          (_) => KegiatanScreen(user: user),
-        ),
-        _TabItem(
           'Anggota',
           Icons.groups_outlined,
           (_) => AnggotaScreen(user: user, isKetua: true),
+        ),
+        _TabItem(
+          'Kegiatan',
+          Icons.calendar_month_outlined,
+          (_) => KegiatanScreen(user: user),
         ),
         _TabItem(
           'Laporan',
@@ -144,14 +169,9 @@ class KetuaShell extends StatelessWidget {
           (_) => LaporanScreen(user: user),
         ),
         _TabItem(
-          'Notifikasi',
-          Icons.notifications_outlined,
-          (_) => NotifikasiScreen(isKetua: true),
-        ),
-        _TabItem(
-          'Profil',
-          Icons.person_outline,
-          (_) => ProfilScreen(user: user),
+          'Menu',
+          Icons.menu_rounded,
+          (_) => KetuaMenuScreen(user: user),
         ),
       ],
     );

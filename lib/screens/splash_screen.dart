@@ -38,7 +38,7 @@ class SplashScreen extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               AppConfig.appName,
-              style: GoogleFonts.inter(
+              style: GoogleFonts.plusJakartaSans(
                 color: AppTheme.ink,
                 fontSize: 30,
                 fontWeight: FontWeight.w900,
@@ -48,7 +48,7 @@ class SplashScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'Satu Akun, Semua Ekskul',
-              style: GoogleFonts.inter(
+              style: GoogleFonts.plusJakartaSans(
                 color: AppTheme.sub,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,

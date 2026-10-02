@@ -22,33 +22,30 @@ class NotifikasiScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Notifikasi',
-                  style: TextStyle(
-                    color: AppTheme.ink,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () async {
-                    try {
-                      await ref
-                          .read(apiClientProvider)
-                          .post('/siswa/notifikasi/read-all');
-                      ref.invalidate(notifikasiProvider);
-                      ref.invalidate(siswaDashboardProvider);
-                      if (isKetua) ref.invalidate(ketuaDashboardProvider);
-                    } catch (_) {}
-                  },
-                  child: const Text('Tandai semua'),
-                ),
-              ],
+          PageHeader(
+            title: 'Notifikasi',
+            subtitle: 'Pembaruan penting seputar aktivitas ekskulmu.',
+            action: IconButton(
+              tooltip: 'Tandai semua dibaca',
+              style: IconButton.styleFrom(
+                backgroundColor: AppTheme.blueBg,
+                foregroundColor: AppTheme.blue,
+              ),
+              onPressed: () async {
+                try {
+                  await ref
+                      .read(apiClientProvider)
+                      .post('/siswa/notifikasi/read-all');
+                  ref.invalidate(notifikasiProvider);
+                  ref.invalidate(siswaDashboardProvider);
+                  if (isKetua) ref.invalidate(ketuaDashboardProvider);
+                } catch (error) {
+                  if (context.mounted) {
+                    await showErrorDialog(context, ref, error);
+                  }
+                }
+              },
+              icon: const Icon(Icons.done_all_rounded),
             ),
           ),
           Expanded(
@@ -73,11 +70,17 @@ class NotifikasiScreen extends ConsumerWidget {
                       onTap: () async {
                         if (n.isRead) return;
                         try {
-                          await ref.read(apiClientProvider).post(
-                              '/siswa/notifikasi/${n.id}/read');
+                          await ref
+                              .read(apiClientProvider)
+                              .post('/siswa/notifikasi/${n.id}/read');
                           ref.invalidate(notifikasiProvider);
                           ref.invalidate(siswaDashboardProvider);
-                        } catch (_) {}
+                          if (isKetua) ref.invalidate(ketuaDashboardProvider);
+                        } catch (error) {
+                          if (context.mounted) {
+                            await showErrorDialog(context, ref, error);
+                          }
+                        }
                       },
                     );
                   },
@@ -112,7 +115,11 @@ class _NotifCard extends StatelessWidget {
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
+            border: Border.all(
+              color: notifikasi.isRead
+                  ? AppTheme.line
+                  : const Color(0xFFBFDBFE),
+            ),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,11 +131,7 @@ class _NotifCard extends StatelessWidget {
                   color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(
-                  Icons.notifications_none,
-                  color: color,
-                  size: 20,
-                ),
+                child: Icon(Icons.notifications_none, color: color, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -140,7 +143,7 @@ class _NotifCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             notifikasi.judul,
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.plusJakartaSans(
                               color: AppTheme.ink,
                               fontSize: 13.5,
                               fontWeight: FontWeight.w700,
@@ -161,7 +164,7 @@ class _NotifCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       notifikasi.pesan,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         color: AppTheme.sub,
                         fontSize: 12.5,
                         height: 1.4,
@@ -170,7 +173,7 @@ class _NotifCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       notifikasi.createdLabel,
-                      style: GoogleFonts.inter(
+                      style: GoogleFonts.plusJakartaSans(
                         color: AppTheme.sub.withValues(alpha: 0.7),
                         fontSize: 11,
                       ),
