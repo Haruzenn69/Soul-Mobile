@@ -5,8 +5,7 @@ import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
 import '../faq/ketua_faq_screen.dart';
-import '../kegiatan/rekap_presensi_screen.dart';
-import '../notifikasi/notifikasi_screen.dart';
+import '../nilai/nilai_screen.dart';
 import '../profil/profil_screen.dart';
 import '../profil_ekskul/profil_ekskul_screen.dart';
 import '../testimoni/testimoni_manage_screen.dart';
@@ -31,13 +30,13 @@ class KetuaMenuScreen extends StatelessWidget {
           _IdentityCard(user: user),
           const SizedBox(height: 26),
           _MenuSection(
-            title: 'Kegiatan',
+            title: 'Penilaian',
             children: [
               _MenuTile(
-                icon: Icons.fact_check_outlined,
-                title: 'Rekap Absensi',
-                subtitle: 'Tinjau dan unduh rekap kehadiran.',
-                onTap: () => _open(context, const RekapPresensiScreen()),
+                icon: Icons.workspace_premium_outlined,
+                title: 'Nilai Akhir',
+                subtitle: 'Lihat nilai akhirmu pada periode berjalan.',
+                onTap: () => _open(context, const NilaiScreen()),
               ),
             ],
           ),
@@ -70,15 +69,6 @@ class KetuaMenuScreen extends StatelessWidget {
             title: 'Akun',
             children: [
               _MenuTile(
-                icon: Icons.notifications_none_outlined,
-                title: 'Notifikasi',
-                subtitle: 'Lihat pembaruan tentang ekskul.',
-                onTap: () => _open(
-                  context,
-                  const Scaffold(body: NotifikasiScreen(isKetua: true)),
-                ),
-              ),
-              _MenuTile(
                 icon: Icons.person_outline,
                 title: 'Profil & Pengaturan',
                 subtitle: 'Data diri, keamanan akun, dan keluar.',
@@ -86,7 +76,7 @@ class KetuaMenuScreen extends StatelessWidget {
                   context,
                   Scaffold(
                     appBar: AppBar(title: const Text('Profil & Pengaturan')),
-                    body: ProfilScreen(user: user),
+                    body: ProfilScreen(user: user, showHeader: false),
                   ),
                 ),
               ),
@@ -314,7 +304,11 @@ class _MenuTile extends StatelessWidget {
                 const SizedBox(width: 6),
                 Padding(
                   padding: const EdgeInsets.only(top: 9),
-                  child: Icon(Icons.chevron_right, color: AppTheme.sub, size: 22),
+                  child: Icon(
+                    Icons.chevron_right,
+                    color: AppTheme.sub,
+                    size: 22,
+                  ),
                 ),
               ],
             ),

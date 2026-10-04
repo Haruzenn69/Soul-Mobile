@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/app_config.dart';
 import '../../core/providers.dart';
+import '../../core/upload_check.dart';
 import '../../data/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
@@ -144,14 +145,27 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
                         imageQuality: 85,
                       );
                       if (picked == null) return;
-                      final bytes = await picked.readAsBytes();
-                      setDialogState(() {
-                        photo = picked;
-                        photoBytes = bytes;
-                      });
+                      try {
+                        final bytes = await readImageBytesChecked(
+                          picked,
+                          label: 'Dokumentasi kegiatan',
+                        );
+                        setDialogState(() {
+                          photo = picked;
+                          photoBytes = bytes;
+                        });
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(e.toString())),
+                          );
+                        }
+                      }
                     },
                     icon: const Icon(Icons.add_photo_alternate_outlined),
-                    label: Text(photo?.name ?? 'Ganti dokumentasi (opsional)'),
+                    label: Text(
+                      photo?.name ?? 'Ganti dokumentasi (maks. 2 MB)',
+                    ),
                   ),
                 ],
               ),
@@ -218,6 +232,44 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
       materiCtrl.dispose();
       deskripsiCtrl.dispose();
       endDateCtrl.dispose();
+    }
+  }
+
+  Future<void> _gantiDokumentasi(Kegiatan keg) async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (picked == null || !mounted) return;
+
+    try {
+      final bytes = await readImageBytesChecked(
+        picked,
+        label: 'Dokumentasi kegiatan',
+      );
+      final fields = <String, dynamic>{
+        'materi': keg.materi.trim(),
+        'deskripsi': keg.deskripsi?.trim() ?? '',
+        'tanggal_kegiatan': keg.tanggalKegiatan ?? '',
+        'jenis_kegiatan': keg.isEvent ? 'event' : null,
+        'tanggal_berakhir': keg.isEvent ? keg.tanggalBerakhir : null,
+      };
+      await ref.read(apiClientProvider).postMultipart(
+            '/ketua/kegiatan/${widget.kegiatanId}/update',
+            fields: fields,
+            files: [MultipartFile.fromBytes(bytes, filename: picked.name)],
+            fileKeys: const ['dokumentasi'],
+          );
+      ref.invalidate(kegiatanDetailProvider(widget.kegiatanId));
+      ref.invalidate(ketuaKegiatanProvider);
+      ref.invalidate(ketuaDashboardProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Dokumentasi berhasil diperbarui.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) await showErrorDialog(context, ref, e);
     }
   }
 
@@ -363,7 +415,10 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
                     title: 'Dokumentasi Kegiatan',
                     subtitle: 'Ketuk foto untuk memperbesar.',
                     icon: Icons.photo_library_outlined,
-                    child: _activityPhoto(AppConfig.imageUrl(keg.dokumentasi)),
+                    child: _activityPhoto(
+                        AppConfig.imageUrl(keg.dokumentasi),
+                        onReplace: () => _gantiDokumentasi(keg),
+                      ),
                   ),
                 ],
                 if (keg.deskripsi?.trim().isNotEmpty == true) ...[
@@ -405,28 +460,50 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  mainAxisExtent: 100,
+const SizedBox(height: 12),
+                Row(
                   children: [
-                    for (final entry in [
-                      ('hadir', 'Hadir', Icons.check_circle_outline_rounded),
-                      ('sakit', 'Sakit', Icons.sick_outlined),
-                      ('izin', 'Izin', Icons.event_note_outlined),
-                      ('alpha', 'Alpha', Icons.cancel_outlined),
-                    ])
-                      StatCard(
-                        label: entry.$2,
-                        value: '${(ringkasan[entry.$1] as num?)?.toInt() ?? 0}',
-                        color: _colorFor(entry.$1),
-                        icon: entry.$3,
-                        compact: true,
+                    Expanded(
+                      child: StatCard(
+                        label: 'Hadir',
+                        value:
+                            '${(ringkasan['hadir'] as num?)?.toInt() ?? 0}',
+                        icon: Icons.check_circle_outline,
+                        color: _colorFor('hadir'),
                       ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: StatCard(
+                        label: 'Izin',
+                        value: '${(ringkasan['izin'] as num?)?.toInt() ?? 0}',
+                        icon: Icons.event_note_outlined,
+                        color: _colorFor('izin'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: StatCard(
+                        label: 'Sakit',
+                        value: '${(ringkasan['sakit'] as num?)?.toInt() ?? 0}',
+                        icon: Icons.medical_information_outlined,
+                        color: _colorFor('sakit'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: StatCard(
+                        label: 'Alpha',
+                        value:
+                            '${(ringkasan['alpha'] as num?)?.toInt() ?? 0}',
+                        icon: Icons.person_off_outlined,
+                        color: _colorFor('alpha'),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -695,12 +772,12 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
     );
   }
 
-  Widget _activityPhoto(String imageUrl) {
+  Widget _activityPhoto(String imageUrl, {VoidCallback? onReplace}) {
     return Semantics(
       button: true,
       label: 'Perbesar foto dokumentasi',
       child: GestureDetector(
-        onTap: () => _showPhoto(context, imageUrl),
+        onTap: () => _showPhoto(context, imageUrl, onReplace: onReplace),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(14),
           child: Image.network(
@@ -752,18 +829,19 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
     );
   }
 
-  void _showPhoto(BuildContext context, String imageUrl) {
+  void _showPhoto(BuildContext context, String imageUrl, {VoidCallback? onReplace}) {
     PhotoViewDialog.show(
       context,
       imageUrl: imageUrl,
       title: 'Dokumentasi Kegiatan',
+      onReplace: onReplace,
     );
   }
 
   Color _colorFor(String key) {
     switch (key) {
       case 'hadir':
-        return const Color(0xFF16803C);
+        return const Color(0xFF15803D);
       case 'izin':
         return const Color(0xFF1E5AA8);
       case 'sakit':

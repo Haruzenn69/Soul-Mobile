@@ -118,19 +118,19 @@ class _AnggotaListState extends ConsumerState<_AnggotaList> {
         });
         return Column(
           children: [
-            _NameSearchField(
+            NameSearchField(
               hint: 'Cari nama anggota...',
               onChanged: (value) => setState(() => _query = value),
             ),
-            _ListCountLabel(count: filtered.length, label: 'anggota'),
+            ListCountLabel(count: filtered.length, label: 'anggota'),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
-                ref.invalidate(ketuaAnggotaProvider);
-                try {
-                  await ref.read(ketuaAnggotaProvider.future);
-                } catch (_) {}
-              },
+                  ref.invalidate(ketuaAnggotaProvider);
+                  try {
+                    await ref.read(ketuaAnggotaProvider.future);
+                  } catch (_) {}
+                },
                 child: filtered.isEmpty
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
@@ -352,52 +352,68 @@ class _PendaftaranList extends ConsumerStatefulWidget {
 
 class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
   String _query = '';
+  String _status = 'semua';
 
   @override
   Widget build(BuildContext context) {
-    final data = ref.watch(ketuaPendaftaranProvider);
+    final data = ref.watch(ketuaPendaftaranProvider(_status));
 
     return ApiAsyncView(
       value: data,
-      onRetry: () => ref.invalidate(ketuaPendaftaranProvider),
+      onRetry: () => ref.invalidate(ketuaPendaftaranProvider(_status)),
       builder: (context, d) {
         final items = listOf(d, 'pendaftarans');
-        final pendings = items.where((e) => e['status'] == 'pending').toList();
-        final filtered = _filterByStudentName(pendings, _query, (item) {
+        final filtered = _filterByStudentName(items, _query, (item) {
           return Pendaftaran.fromJson(item).siswaNama;
         });
         return Column(
           children: [
-            _NameSearchField(
+            NameSearchField(
               hint: 'Cari nama pendaftar...',
               onChanged: (value) => setState(() => _query = value),
             ),
-            _ListCountLabel(
+            StatusFilterChips(
+              items: [
+                StatusFilter('semua', 'Semua', _int(d['total'])),
+                StatusFilter('pending', 'Menunggu', _int(d['pending_count'])),
+                StatusFilter(
+                  'diterima',
+                  'Disetujui',
+                  _int(d['diterima_count']),
+                ),
+                StatusFilter('ditolak', 'Ditolak', _int(d['ditolak_count'])),
+              ],
+              selected: _status,
+              onSelected: (value) => setState(() => _status = value),
+            ),
+            ListCountLabel(
               count: filtered.length,
-              label: 'pendaftar menunggu',
+              label: _pendaftaranLabel(_status),
             ),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
-                ref.invalidate(ketuaPendaftaranProvider);
-                try {
-                  await ref.read(ketuaPendaftaranProvider.future);
-                } catch (_) {}
-              },
+                  ref.invalidate(ketuaPendaftaranProvider(_status));
+                  try {
+                    await ref.read(ketuaPendaftaranProvider(_status).future);
+                  } catch (_) {}
+                },
                 child: filtered.isEmpty
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.only(top: 24),
                         children: [
                           EmptyState(
-                            title: pendings.isEmpty
-                                ? 'Tidak ada pendaftar menunggu'
+                            title: items.isEmpty
+                                ? _pendaftaranEmptyTitle(_status)
                                 : 'Nama pendaftar tidak ditemukan',
-                            subtitle: pendings.isEmpty
-                                ? null
+                            subtitle: items.isEmpty
+                                ? _pendaftaranEmptySubtitle(_status)
                                 : 'Coba kata kunci nama yang lain.',
-                            icon: pendings.isEmpty
-                                ? Icons.how_to_reg_outlined
+                            icon: items.isEmpty
+                                ? (_status == 'semua'
+                                      ? Icons.history_outlined
+                                      : Icons.how_to_reg_outlined)
                                 : Icons.search_off_rounded,
                           ),
                         ],
@@ -408,7 +424,9 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                         itemCount: filtered.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, i) {
-                          final p = Pendaftaran.fromJson(filtered[i]);
+                          final raw = filtered[i];
+                          final p = Pendaftaran.fromJson(raw);
+                          final status = raw['status']?.toString() ?? 'pending';
                           return Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
@@ -460,11 +478,7 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                                         ],
                                       ),
                                     ),
-                                    const Icon(
-                                      Icons.person_add_alt_1_outlined,
-                                      color: AppTheme.blue,
-                                      size: 20,
-                                    ),
+                                    StatusChip(_statusLabel(status)),
                                   ],
                                 ),
                                 if (p.alasan?.isNotEmpty == true) ...[
@@ -477,38 +491,44 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                                     text: 'Tidak ada catatan pendaftaran.',
                                   ),
                                 ],
-                                const SizedBox(height: 12),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: OutlinedButton(
-                                        onPressed: () =>
-                                            _proses(context, ref, p, 'ditolak'),
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: const Color(
-                                            0xFFE11D48,
+                                if (status == 'pending') ...[
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed: () => _proses(
+                                            context,
+                                            ref,
+                                            p,
+                                            'ditolak',
                                           ),
-                                          side: const BorderSide(
-                                            color: Color(0xFFFECDD3),
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: const Color(
+                                              0xFFE11D48,
+                                            ),
+                                            side: const BorderSide(
+                                              color: Color(0xFFFECDD3),
+                                            ),
                                           ),
+                                          child: const Text('Tolak'),
                                         ),
-                                        child: const Text('Tolak'),
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: ElevatedButton(
-                                        onPressed: () => _proses(
-                                          context,
-                                          ref,
-                                          p,
-                                          'diterima',
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          onPressed: () => _proses(
+                                            context,
+                                            ref,
+                                            p,
+                                            'diterima',
+                                          ),
+                                          child: const Text('Terima'),
                                         ),
-                                        child: const Text('Terima'),
                                       ),
-                                    ),
-                                  ],
-                                ),
+                                    ],
+                                  ),
+                                ],
                               ],
                             ),
                           );
@@ -532,7 +552,9 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
       await ref
           .read(apiClientProvider)
           .post('/ketua/pendaftaran/${p.id}', data: {'status': status});
-      ref.invalidate(ketuaPendaftaranProvider);
+      for (final s in const ['semua', 'pending', 'diterima', 'ditolak']) {
+        ref.invalidate(ketuaPendaftaranProvider(s));
+      }
       ref.invalidate(ketuaAnggotaProvider);
       ref.invalidate(ketuaDashboardProvider);
       if (context.mounted) {
@@ -559,52 +581,68 @@ class _PengajuanList extends ConsumerStatefulWidget {
 
 class _PengajuanListState extends ConsumerState<_PengajuanList> {
   String _query = '';
+  String _status = 'semua';
 
   @override
   Widget build(BuildContext context) {
-    final data = ref.watch(ketuaPengajuanProvider);
+    final data = ref.watch(ketuaPengajuanProvider(_status));
 
     return ApiAsyncView(
       value: data,
-      onRetry: () => ref.invalidate(ketuaPengajuanProvider),
+      onRetry: () => ref.invalidate(ketuaPengajuanProvider(_status)),
       builder: (context, d) {
         final items = listOf(d, 'pengajuans');
-        final pendings = items.where((e) => e['status'] == 'pending').toList();
-        final filtered = _filterByStudentName(pendings, _query, (item) {
+        final filtered = _filterByStudentName(items, _query, (item) {
           return _studentName(item);
         });
         return Column(
           children: [
-            _NameSearchField(
+            NameSearchField(
               hint: 'Cari nama siswa...',
               onChanged: (value) => setState(() => _query = value),
             ),
-            _ListCountLabel(
+            StatusFilterChips(
+              items: [
+                StatusFilter('semua', 'Semua', _int(d['total'])),
+                StatusFilter('pending', 'Menunggu', _int(d['pending_count'])),
+                StatusFilter(
+                  'diterima',
+                  'Disetujui',
+                  _int(d['diterima_count']),
+                ),
+                StatusFilter('ditolak', 'Ditolak', _int(d['ditolak_count'])),
+              ],
+              selected: _status,
+              onSelected: (value) => setState(() => _status = value),
+            ),
+            ListCountLabel(
               count: filtered.length,
-              label: 'pengajuan menunggu',
+              label: _pengajuanLabel(_status),
             ),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
-                ref.invalidate(ketuaPengajuanProvider);
-                try {
-                  await ref.read(ketuaPengajuanProvider.future);
-                } catch (_) {}
-              },
+                  ref.invalidate(ketuaPengajuanProvider(_status));
+                  try {
+                    await ref.read(ketuaPengajuanProvider(_status).future);
+                  } catch (_) {}
+                },
                 child: filtered.isEmpty
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.only(top: 24),
                         children: [
                           EmptyState(
-                            title: pendings.isEmpty
-                                ? 'Tidak ada pengajuan keluar'
+                            title: items.isEmpty
+                                ? _pengajuanEmptyTitle(_status)
                                 : 'Nama siswa tidak ditemukan',
-                            subtitle: pendings.isEmpty
-                                ? null
+                            subtitle: items.isEmpty
+                                ? _pengajuanEmptySubtitle(_status)
                                 : 'Coba kata kunci nama yang lain.',
-                            icon: pendings.isEmpty
-                                ? Icons.logout_outlined
+                            icon: items.isEmpty
+                                ? (_status == 'semua'
+                                      ? Icons.history_outlined
+                                      : Icons.logout_outlined)
                                 : Icons.search_off_rounded,
                           ),
                         ],
@@ -683,37 +721,43 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
                                       : 'Tidak ada alasan yang dicantumkan.',
                                 ),
                                 const SizedBox(height: 12),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: OutlinedButton(
-                                        onPressed: () =>
-                                            _proses(context, ref, p, 'ditolak'),
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: const Color(
-                                            0xFFE11D48,
+                                if (p['status'] == 'pending') ...[
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed: () => _proses(
+                                            context,
+                                            ref,
+                                            p,
+                                            'ditolak',
                                           ),
-                                          side: const BorderSide(
-                                            color: Color(0xFFFECDD3),
+                                          style: OutlinedButton.styleFrom(
+                                            foregroundColor: const Color(
+                                              0xFFE11D48,
+                                            ),
+                                            side: const BorderSide(
+                                              color: Color(0xFFFECDD3),
+                                            ),
                                           ),
+                                          child: const Text('Tolak'),
                                         ),
-                                        child: const Text('Tolak'),
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: ElevatedButton(
-                                        onPressed: () => _proses(
-                                          context,
-                                          ref,
-                                          p,
-                                          'diterima',
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          onPressed: () => _proses(
+                                            context,
+                                            ref,
+                                            p,
+                                            'diterima',
+                                          ),
+                                          child: const Text('Terima'),
                                         ),
-                                        child: const Text('Terima'),
                                       ),
-                                    ),
-                                  ],
-                                ),
+                                    ],
+                                  ),
+                                ],
                               ],
                             ),
                           );
@@ -737,7 +781,9 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
       await ref
           .read(apiClientProvider)
           .post('/ketua/pengajuan-keluar/${p['id']}', data: {'status': status});
-      ref.invalidate(ketuaPengajuanProvider);
+      for (final s in const ['semua', 'pending', 'diterima', 'ditolak']) {
+        ref.invalidate(ketuaPengajuanProvider(s));
+      }
       ref.invalidate(ketuaAnggotaProvider);
       ref.invalidate(ketuaDashboardProvider);
       if (context.mounted) {
@@ -753,87 +799,6 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
       }
     }
   }
-}
-
-class _NameSearchField extends StatefulWidget {
-  const _NameSearchField({required this.hint, required this.onChanged});
-
-  final String hint;
-  final ValueChanged<String> onChanged;
-
-  @override
-  State<_NameSearchField> createState() => _NameSearchFieldState();
-}
-
-class _NameSearchFieldState extends State<_NameSearchField> {
-  final _controller = TextEditingController();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-    child: TextField(
-      key: ValueKey(widget.hint),
-      controller: _controller,
-      onChanged: (value) {
-        widget.onChanged(value);
-        setState(() {});
-      },
-      decoration: InputDecoration(
-        hintText: widget.hint,
-        prefixIcon: const Icon(Icons.search_rounded),
-        suffixIcon: _controller.text.isEmpty
-            ? null
-            : IconButton(
-                tooltip: 'Hapus pencarian',
-                onPressed: () {
-                  _controller.clear();
-                  widget.onChanged('');
-                  setState(() {});
-                },
-                icon: const Icon(Icons.close_rounded),
-              ),
-      ),
-    ),
-  );
-}
-
-class _ListCountLabel extends StatelessWidget {
-  const _ListCountLabel({required this.count, required this.label});
-
-  final int count;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 2, 20, 3),
-    child: Row(
-      children: [
-        Text(
-          '$count $label',
-          style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.sub,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const Spacer(),
-        const Tooltip(
-          message: 'Tarik daftar ke bawah untuk memperbarui',
-          child: Icon(
-            Icons.swipe_down_alt_rounded,
-            size: 16,
-            color: AppTheme.sub,
-          ),
-        ),
-      ],
-    ),
-  );
 }
 
 class _RequestNote extends StatelessWidget {
@@ -896,3 +861,51 @@ List<Map<String, dynamic>> _filterByStudentName(
       })
       .toList(growable: false);
 }
+
+int? _int(Object? value) {
+  if (value == null) return null;
+  return int.tryParse(value.toString());
+}
+
+String _pendaftaranLabel(String status) => switch (status) {
+  'pending' => 'pendaftar menunggu',
+  'diterima' => 'pendaftar disetujui',
+  'ditolak' => 'pendaftar ditolak',
+  _ => 'pendaftaran',
+};
+
+String _pendaftaranEmptyTitle(String status) => switch (status) {
+  'pending' => 'Tidak ada pendaftar menunggu',
+  'diterima' => 'Belum ada pendaftar disetujui',
+  'ditolak' => 'Belum ada pendaftar ditolak',
+  _ => 'Belum ada riwayat pendaftaran',
+};
+
+String _pendaftaranEmptySubtitle(String status) => switch (status) {
+  'pending' =>
+    'Permintaan bergabung yang belum kamu proses akan muncul di sini.',
+  'diterima' => 'Pendaftar yang telah kamu terima tercatat di sini.',
+  'ditolak' => 'Pendaftar yang kamu tolak tercatat di sini.',
+  _ => 'Semua permintaan dan riwayat pendaftaran tercatat di sini.',
+};
+
+String _pengajuanLabel(String status) => switch (status) {
+  'pending' => 'pengajuan menunggu',
+  'diterima' => 'pengajuan disetujui',
+  'ditolak' => 'pengajuan ditolak',
+  _ => 'pengajuan keluar',
+};
+
+String _pengajuanEmptyTitle(String status) => switch (status) {
+  'pending' => 'Tidak ada pengajuan keluar',
+  'diterima' => 'Belum ada pengajuan disetujui',
+  'ditolak' => 'Belum ada pengajuan ditolak',
+  _ => 'Belum ada riwayat pengajuan',
+};
+
+String _pengajuanEmptySubtitle(String status) => switch (status) {
+  'pending' => 'Permintaan keluar yang belum kamu proses akan muncul di sini.',
+  'diterima' => 'Pengajuan keluar yang disetujui tercatat di sini.',
+  'ditolak' => 'Pengajuan keluar yang ditolak tercatat di sini.',
+  _ => 'Semua riwayat pengajuan keluar tercatat di sini.',
+};

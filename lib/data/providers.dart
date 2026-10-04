@@ -57,19 +57,27 @@ final ketuaAnggotaProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   return dataOf(res) ?? {};
 });
 
-final ketuaPendaftaranProvider = FutureProvider<Map<String, dynamic>>((
-  ref,
-) async {
-  final res = await ref.read(apiClientProvider).get('/ketua/pendaftaran');
-  return dataOf(res) ?? {};
-});
+final ketuaPendaftaranProvider =
+    FutureProvider.family<Map<String, dynamic>, String>((ref, status) async {
+      final query = (status.isNotEmpty && status != 'semua')
+          ? {'status': status}
+          : null;
+      final res = await ref
+          .read(apiClientProvider)
+          .get('/ketua/pendaftaran', query: query);
+      return dataOf(res) ?? {};
+    });
 
-final ketuaPengajuanProvider = FutureProvider<Map<String, dynamic>>((
-  ref,
-) async {
-  final res = await ref.read(apiClientProvider).get('/ketua/pengajuan-keluar');
-  return dataOf(res) ?? {};
-});
+final ketuaPengajuanProvider =
+    FutureProvider.family<Map<String, dynamic>, String>((ref, status) async {
+      final query = (status.isNotEmpty && status != 'semua')
+          ? {'status': status}
+          : null;
+      final res = await ref
+          .read(apiClientProvider)
+          .get('/ketua/pengajuan-keluar', query: query);
+      return dataOf(res) ?? {};
+    });
 
 final ketuaLaporanProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final res = await ref.read(apiClientProvider).get('/ketua/laporan-bulanan');

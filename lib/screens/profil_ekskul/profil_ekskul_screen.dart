@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/app_config.dart';
 import '../../core/providers.dart';
+import '../../core/upload_check.dart';
 import '../../data/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
@@ -41,27 +42,58 @@ class _ProfilEkskulScreenState extends ConsumerState<ProfilEkskulScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kelola Profil Ekskul'),
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppTheme.blue,
-          unselectedLabelColor: AppTheme.sub,
-          indicatorColor: AppTheme.blue,
-          labelStyle: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.w800,
-            fontSize: 13,
+      appBar: AppBar(title: const Text('Kelola Profil Ekskul')),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Container(
+              key: const ValueKey('profil-ekskul-pill-tabs'),
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: AppTheme.line),
+              ),
+              child: TabBar(
+                key: const ValueKey('profil-ekskul-tab-bar'),
+                controller: _tabController,
+                dividerHeight: 0,
+                overlayColor: WidgetStatePropertyAll(Colors.transparent),
+                labelColor: AppTheme.blue,
+                unselectedLabelColor: AppTheme.sub,
+                indicatorColor: Colors.transparent,
+                dividerColor: Colors.transparent,
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicator: BoxDecoration(
+                  color: AppTheme.blueBg,
+                  borderRadius: BorderRadius.all(Radius.circular(24)),
+                ),
+                labelPadding: EdgeInsets.zero,
+                labelStyle: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                ),
+                unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 11,
+                ),
+                tabs: const [
+                  Tab(height: 30, text: 'Profil'),
+                  Tab(height: 30, text: 'Galeri'),
+                  Tab(height: 30, text: 'Prestasi'),
+                ],
+              ),
+            ),
           ),
-          tabs: const [
-            Tab(text: 'Profil'),
-            Tab(text: 'Galeri'),
-            Tab(text: 'Prestasi'),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: const [_ProfilTab(), _GaleriTab(), _PrestasiTab()],
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: const [_ProfilTab(), _GaleriTab(), _PrestasiTab()],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -198,7 +230,10 @@ class _ProfilTabState extends ConsumerState<_ProfilTab> {
         imageQuality: 85,
       );
       if (image == null) return;
-      final bytes = await image.readAsBytes();
+      final bytes = await readImageBytesChecked(
+        image,
+        label: logo ? 'Logo ekskul' : 'Cover ekskul',
+      );
       if (!mounted) return;
       setState(() {
         if (logo) {
@@ -247,7 +282,7 @@ class _ProfilTabState extends ConsumerState<_ProfilTab> {
                           'Pendaftaran Anggota Baru',
                           style: GoogleFonts.plusJakartaSans(
                             color: AppTheme.ink,
-                            fontSize: 14.5,
+                            fontSize: 14,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -289,7 +324,7 @@ class _ProfilTabState extends ConsumerState<_ProfilTab> {
                     'Informasi Utama Ekskul',
                     style: GoogleFonts.plusJakartaSans(
                       color: AppTheme.ink,
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -404,6 +439,9 @@ class _GaleriTab extends ConsumerWidget {
         return Scaffold(
           floatingActionButton: FloatingActionButton(
             onPressed: () => _uploadGallery(context, ref),
+            backgroundColor: AppTheme.blue,
+            foregroundColor: Colors.white,
+            shape: const CircleBorder(),
             tooltip: 'Tambah foto galeri',
             child: const Icon(Icons.add_photo_alternate_outlined),
           ),
@@ -541,7 +579,7 @@ class _GaleriTab extends ConsumerWidget {
       for (final photo in photos) {
         files.add(
           MultipartFile.fromBytes(
-            await photo.readAsBytes(),
+            await readImageBytesChecked(photo, label: 'Foto galeri'),
             filename: photo.name,
           ),
         );
@@ -637,7 +675,7 @@ class _PrestasiTabState extends ConsumerState<_PrestasiTab> {
             );
           }
           return ListView.separated(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
             itemCount: items.length,
             separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (context, i) {
@@ -707,8 +745,11 @@ class _PrestasiTabState extends ConsumerState<_PrestasiTab> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _tambahPrestasi,
+        backgroundColor: AppTheme.blue,
+        foregroundColor: Colors.white,
+        shape: const CircleBorder(),
         tooltip: 'Tambah Prestasi',
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }

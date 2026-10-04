@@ -17,6 +17,7 @@ class TestimoniManageScreen extends ConsumerStatefulWidget {
 
 class _TestimoniManageScreenState extends ConsumerState<TestimoniManageScreen> {
   String _selectedStatus = 'semua';
+  String _query = '';
 
   Future<void> _approve(int id) async {
     try {
@@ -175,115 +176,186 @@ class _TestimoniManageScreenState extends ConsumerState<TestimoniManageScreen> {
     final state = ref.watch(ketuaTestimoniProvider(_selectedStatus));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kelola Testimoni'),
-        actions: [
-          IconButton(
-            onPressed: _tambahTestimoni,
-            icon: const Icon(Icons.add),
-            tooltip: 'Tambah Testimoni',
-          ),
-        ],
+      appBar: AppBar(title: const Text('Kelola Testimoni')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _tambahTestimoni,
+        backgroundColor: AppTheme.blue,
+        foregroundColor: Colors.white,
+        shape: const CircleBorder(),
+        tooltip: 'Tambah testimoni',
+        child: const Icon(Icons.add_rounded),
       ),
       body: ApiAsyncView(
         value: state,
         onRetry: () => ref.invalidate(ketuaTestimoniProvider(_selectedStatus)),
         builder: (context, data) {
-          final pendingCount = (data['pending_count'] as num?)?.toInt() ?? 0;
           final items = listOf(data, 'testimonis');
+          final filtered = _filterTestimoni(items, _query);
 
           return Column(
             children: [
-              Container(
-                color: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildChip('semua', 'Semua'),
-                      const SizedBox(width: 8),
-                      _buildChip(
-                        'pending',
-                        'Pending${pendingCount > 0 ? ' ($pendingCount)' : ''}',
-                      ),
-                      const SizedBox(width: 8),
-                      _buildChip('approved', 'Disetujui'),
-                      const SizedBox(width: 8),
-                      _buildChip('rejected', 'Ditolak'),
-                    ],
-                  ),
-                ),
+              NameSearchField(
+                hint: 'Cari testimoni...',
+                onChanged: (value) => setState(() => _query = value),
               ),
-              const Divider(height: 1),
+              StatusFilterChips(
+                items: [
+                  StatusFilter('semua', 'Semua', _intCount(data['total'])),
+                  StatusFilter(
+                    'pending',
+                    'Menunggu',
+                    _intCount(data['pending_count']),
+                  ),
+                  StatusFilter(
+                    'approved',
+                    'Disetujui',
+                    _intCount(data['approved_count']),
+                  ),
+                  StatusFilter(
+                    'rejected',
+                    'Ditolak',
+                    _intCount(data['rejected_count']),
+                  ),
+                ],
+                selected: _selectedStatus,
+                onSelected: (value) => setState(() => _selectedStatus = value),
+              ),
+              ListCountLabel(count: filtered.length, label: 'testimoni'),
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: () async {
                     ref.invalidate(ketuaTestimoniProvider(_selectedStatus));
                     try {
-                      await ref
-                          .read(ketuaTestimoniProvider(_selectedStatus).future);
+                      await ref.read(
+                        ketuaTestimoniProvider(_selectedStatus).future,
+                      );
                     } catch (_) {}
                   },
-                  child: items.isEmpty
+                  child: filtered.isEmpty
                       ? ListView(
-                          children: const [
-                            SizedBox(height: 60),
+                          padding: const EdgeInsets.only(top: 40),
+                          children: [
                             EmptyState(
-                              title: 'Belum ada testimoni',
-                              subtitle: 'Testimoni yang dikirim siswa akan muncul di sini.',
-                              icon: Icons.reviews_outlined,
+                              title: items.isEmpty
+                                  ? 'Belum ada testimoni'
+                                  : 'Testimoni tidak ditemukan',
+                              subtitle: items.isEmpty
+                                  ? _testimoniEmptySubtitle(_selectedStatus)
+                                  : 'Coba kata kunci yang lain.',
+                              icon: items.isEmpty
+                                  ? Icons.reviews_outlined
+                                  : Icons.search_off_rounded,
                             ),
                           ],
                         )
                       : ListView.separated(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: items.length,
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+                          itemCount: filtered.length,
                           separatorBuilder: (_, _) =>
                               const SizedBox(height: 12),
                           itemBuilder: (context, i) {
-                            final item = items[i];
+                            final item = filtered[i];
                             final id = (item['id'] as num?)?.toInt() ?? 0;
                             final status =
                                 item['status'] as String? ?? 'pending';
+                            final nama = item['nama']?.toString() ?? '-';
+                            final namaAwal = nama.trim().isEmpty
+                                ? '?'
+                                : nama.trim()[0].toUpperCase();
 
                             return Container(
-                              padding: const EdgeInsets.all(14),
+                              padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: Colors.black.withValues(alpha: 0.05),
+                                  color: const Color(0xFFE8EDF5),
                                 ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF0F172A)
+                                        .withValues(alpha: 0.035),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Expanded(
+                                      Container(
+                                        width: 38,
+                                        height: 38,
+                                        alignment: Alignment.center,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFEFF6FF),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
                                         child: Text(
-                                          '${item['nama'] ?? '-'}${item['kelas'] != null ? ' · ${item['kelas']}' : ''}',
+                                          namaAwal,
                                           style: GoogleFonts.plusJakartaSans(
-                                            color: AppTheme.ink,
+                                            color: AppTheme.blue,
+                                            fontSize: 16,
                                             fontWeight: FontWeight.w800,
-                                            fontSize: 14,
                                           ),
                                         ),
                                       ),
-                                      StatusChip(status),
+                                      const SizedBox(width: 11),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              nama,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style:
+                                                  GoogleFonts.plusJakartaSans(
+                                                    color: AppTheme.ink,
+                                                    fontWeight: FontWeight.w800,
+                                                    fontSize: 14,
+                                                  ),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              item['kelas'] is String &&
+                                                      (item['kelas'] as String)
+                                                          .isNotEmpty
+                                                  ? item['kelas'] as String
+                                                  : 'Tanpa kelas',
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style:
+                                                  GoogleFonts.plusJakartaSans(
+                                                    color: AppTheme.sub,
+                                                    fontSize: 11,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      StatusChip(
+                                        status == 'approved'
+                                            ? 'Disetujui'
+                                            : status == 'rejected'
+                                            ? 'Ditolak'
+                                            : 'Pending',
+                                      ),
                                     ],
                                   ),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 12),
                                   Text(
                                     '“${item['quote'] ?? ''}”',
                                     style: GoogleFonts.plusJakartaSans(
-                                      color: AppTheme.sub,
+                                      color: AppTheme.ink,
                                       fontSize: 13,
                                       fontStyle: FontStyle.italic,
                                       height: 1.45,
@@ -303,9 +375,14 @@ class _TestimoniManageScreenState extends ConsumerState<TestimoniManageScreen> {
                                               color: Color(0xFFE11D48),
                                             ),
                                             padding: const EdgeInsets.symmetric(
-                                              horizontal: 10,
-                                              vertical: 4,
+                                              horizontal: 12,
+                                              vertical: 6,
                                             ),
+                                            textStyle:
+                                                GoogleFonts.plusJakartaSans(
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 12,
+                                                ),
                                           ),
                                           onPressed: () => _reject(id),
                                           child: const Text('Tolak'),
@@ -317,14 +394,19 @@ class _TestimoniManageScreenState extends ConsumerState<TestimoniManageScreen> {
                                               0xFF16803C,
                                             ),
                                             padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 4,
+                                              horizontal: 14,
+                                              vertical: 6,
                                             ),
+                                            textStyle:
+                                                GoogleFonts.plusJakartaSans(
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 12,
+                                                ),
                                           ),
                                           onPressed: () => _approve(id),
                                           child: const Text('Setujui'),
                                         ),
-                                        const SizedBox(width: 8),
+                                        const SizedBox(width: 4),
                                       ],
                                       IconButton(
                                         icon: const Icon(
@@ -351,14 +433,33 @@ class _TestimoniManageScreenState extends ConsumerState<TestimoniManageScreen> {
     );
   }
 
-  Widget _buildChip(String value, String label) {
-    final isSelected = _selectedStatus == value;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (val) {
-        if (val) setState(() => _selectedStatus = value);
-      },
-    );
+  int? _intCount(Object? value) {
+    if (value == null) return null;
+    return int.tryParse(value.toString());
+  }
+
+  String _testimoniEmptySubtitle(String status) => switch (status) {
+    'pending' => 'Belum ada testimoni yang menunggu persetujuan.',
+    'approved' => 'Belum ada testimoni yang disetujui.',
+    'rejected' => 'Belum ada testimoni yang ditolak.',
+    _ => 'Testimoni yang dikirim siswa akan muncul di sini.',
+  };
+
+  List<Map<String, dynamic>> _filterTestimoni(
+    List<Map<String, dynamic>> items,
+    String query,
+  ) {
+    if (query.isEmpty) return items;
+    final q = query.toLowerCase();
+    return items
+        .where((item) {
+          final haystack = [
+            item['nama']?.toString() ?? '',
+            item['kelas']?.toString() ?? '',
+            item['quote']?.toString() ?? '',
+          ].join(' ').toLowerCase();
+          return haystack.contains(q);
+        })
+        .toList(growable: false);
   }
 }

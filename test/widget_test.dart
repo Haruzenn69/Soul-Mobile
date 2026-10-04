@@ -123,21 +123,10 @@ void main() {
     expect(find.text('Ringkasan Kehadiran'), findsOneWidget);
     expect(find.text('Hadir'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
-    final summaryGrid = tester.widget<GridView>(find.byType(GridView).first);
-    expect(
-      (summaryGrid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount)
-          .crossAxisCount,
-      2,
-    );
-    expect(
-      (summaryGrid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount)
-          .mainAxisExtent,
-      100,
-    );
     final statCards = tester.widgetList<StatCard>(find.byType(StatCard));
     expect(statCards, hasLength(4));
     expect(
-      statCards.every((card) => card.icon != null && card.compact),
+      statCards.every((card) => card.icon != null && !card.compact),
       isTrue,
     );
     await tester.scrollUntilVisible(
@@ -191,7 +180,7 @@ void main() {
             },
           ),
           ketuaPendaftaranProvider.overrideWith(
-            (ref) async => {
+            (ref, status) async => {
               'pendaftarans': [
                 {
                   'id': 3,
@@ -203,7 +192,7 @@ void main() {
             },
           ),
           ketuaPengajuanProvider.overrideWith(
-            (ref) async => {
+            (ref, status) async => {
               'pengajuans': [
                 {
                   'id': 4,
@@ -362,7 +351,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('1 laporan tersimpan'), findsOneWidget);
+    expect(find.text('1 laporan tersimpan'), findsNothing);
     expect(find.text('September 2026'), findsOneWidget);
     expect(find.text('Perlu Revisi'), findsOneWidget);
     expect(find.text('Perlu diperbaiki dan dikirim ulang'), findsOneWidget);

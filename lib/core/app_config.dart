@@ -6,7 +6,7 @@ class AppConfig {
   static const _defined = String.fromEnvironment('API_BASE_URL');
 
   // Base host Laravel yang dapat diakses dari perangkat.
-  static const _localNetworkHost = 'http://192.168.95.61:8000';
+  static const _localNetworkHost = 'http://<ip addr>:8000';
 
   static const appName = 'SOUL';
   static const brandBlue = 0xFF2563EB;

@@ -8,9 +8,8 @@ import '../../data/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
-import '../kegiatan/rekap_presensi_screen.dart';
-import 'laporan_detail_screen.dart';
 import 'laporan_create_screen.dart';
+import 'laporan_detail_screen.dart';
 
 class LaporanScreen extends ConsumerWidget {
   const LaporanScreen({super.key, required this.user});
@@ -19,114 +18,80 @@ class LaporanScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => Navigator.of(context).push(
+          MaterialPageRoute<void>(builder: (_) => const LaporanCreateScreen()),
+        ),
+        backgroundColor: AppTheme.blue,
+        foregroundColor: Colors.white,
+        shape: const CircleBorder(),
+        tooltip: 'Buat laporan baru',
+        child: const Icon(Icons.add_rounded),
+      ),
+      body: const SafeArea(child: LaporanContent()),
+    );
+  }
+}
+
+class LaporanContent extends ConsumerWidget {
+  const LaporanContent({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final laporan = ref.watch(ketuaLaporanProvider);
 
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          PageHeader(
-            title: 'Laporan Bulanan',
-            subtitle: 'Pantau dan unduh ringkasan kegiatan ekskul.',
-            eyebrow: 'DOKUMENTASI',
-            topPadding: 25,
-            action: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const RekapPresensiScreen(),
-                    ),
-                  ),
-                  icon: const Icon(Icons.fact_check_outlined),
-                  tooltip: 'Rekap kehadiran',
-                ),
-                IconButton.filled(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => const LaporanCreateScreen(),
-                    ),
-                  ),
-                  icon: const Icon(Icons.add),
-                  tooltip: 'Buat laporan baru',
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ApiAsyncView(
-              value: laporan,
-              onRetry: () => ref.invalidate(ketuaLaporanProvider),
-              builder: (context, data) {
-                final items = listOf(data, 'laporans');
-                if (items.isEmpty) {
-                  return const EmptyState(
-                    title: 'Belum ada laporan',
-                    subtitle: 'Buat laporan untuk memulai dokumentasi bulanan.',
-                    icon: Icons.description_outlined,
-                  );
-                }
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    ref.invalidate(ketuaLaporanProvider);
-                    try {
-                      await ref.read(ketuaLaporanProvider.future);
-                    } catch (_) {}
-                  },
-                  child: ListView.separated(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                    itemCount: items.length + 1,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (context, i) {
-                      if (i == 0) {
-                        return Padding(
-                          padding: const EdgeInsets.fromLTRB(4, 2, 4, 2),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 11,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: AppTheme.line),
-                            ),
-                            child: Text(
-                              '${items.length} laporan tersimpan',
-                              style: GoogleFonts.plusJakartaSans(
-                                color: AppTheme.ink,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: ApiAsyncView(
+            value: laporan,
+            onRetry: () => ref.invalidate(ketuaLaporanProvider),
+            builder: (context, data) {
+              final items = listOf(data, 'laporans');
+              if (items.isEmpty) {
+                return const EmptyState(
+                  title: 'Belum ada laporan',
+                  subtitle: 'Buat laporan untuk memulai dokumentasi bulanan.',
+                  icon: Icons.description_outlined,
+                );
+              }
+              return RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(ketuaLaporanProvider);
+                  try {
+                    await ref.read(ketuaLaporanProvider.future);
+                  } catch (_) {}
+                },
+                child: ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                  itemCount: items.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemBuilder: (context, i) {
+                    final report = items[i];
+                    return _LaporanCard(
+                      data: report,
+                      onTap: () {
+                        final id = (report['id'] as num?)?.toInt();
+                        if (id == null) return;
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => LaporanDetailScreen(laporanId: id),
                           ),
                         );
-                      }
-                      final report = items[i - 1];
-                      return _LaporanCard(
-                        data: report,
-                        onTap: () {
-                          final id = (report['id'] as num?)?.toInt();
-                          if (id == null) return;
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) =>
-                                  LaporanDetailScreen(laporanId: id),
-                            ),
-                          );
-                        },
-                        onDownload: () => _downloadPdf(context, ref, report),
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
+                      },
+                      onDownload: () => _downloadPdf(context, ref, report),
+                    );
+                  },
+                ),
+              );
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

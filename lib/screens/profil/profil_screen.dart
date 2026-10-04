@@ -6,15 +6,13 @@ import '../../core/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
-import '../profil_ekskul/profil_ekskul_screen.dart';
-import '../faq/ketua_faq_screen.dart';
-import '../testimoni/testimoni_manage_screen.dart';
 import 'profil_edit_screen.dart';
 
 class ProfilScreen extends ConsumerWidget {
-  const ProfilScreen({super.key, required this.user});
+  const ProfilScreen({super.key, required this.user, this.showHeader = true});
 
   final AuthUser user;
+  final bool showHeader;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -22,167 +20,344 @@ class ProfilScreen extends ConsumerWidget {
 
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        padding: EdgeInsets.fromLTRB(16, showHeader ? 0 : 16, 16, 24),
         children: [
-          const PageHeader(
-            title: 'Profil & Pengaturan',
-            subtitle: 'Informasi akun dan preferensi keamanan.',
-            eyebrow: 'AKUN',
-            topPadding: 25,
-          ),
+          if (showHeader)
+            const PageHeader(
+              title: 'Profil & Pengaturan',
+              subtitle: 'Informasi akun dan preferensi keamanan.',
+              eyebrow: 'AKUN',
+              topPadding: 25,
+            ),
           Container(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [AppTheme.sky, Color(0xFF60A5FA), AppTheme.blue],
               ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Colors.white.withValues(alpha: 0.2),
-                  child: Text(
-                    user.namaTampilan.isEmpty
-                        ? '?'
-                        : user.namaTampilan[0].toUpperCase(),
-                    style: GoogleFonts.plusJakartaSans(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.blue.withValues(alpha: 0.18),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user.namaTampilan,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: Colors.white.withValues(alpha: 0.2),
+                      child: Text(
+                        user.namaTampilan.isEmpty
+                            ? '?'
+                            : user.namaTampilan[0].toUpperCase(),
                         style: GoogleFonts.plusJakartaSans(
                           color: Colors.white,
-                          fontSize: 18,
+                          fontSize: 22,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        siswa?.kelas?.nama.isNotEmpty == true
-                            ? '${siswa!.kelas!.nama} · ${user.isKetua ? 'Ketua Ekskul' : (siswa.jabatan)}'
-                            : user.isKetua
-                            ? 'Ketua ekstrakurikuler'
-                            : 'Siswa',
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 11,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Text(
+                        user.isKetua ? 'KETUA' : 'SISWA',
                         style: GoogleFonts.plusJakartaSans(
-                          color: Colors.white.withValues(alpha: 0.88),
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1D4ED8),
+                          fontSize: 10,
+                          letterSpacing: 0.6,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                Text(
+                  user.namaTampilan,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white,
+                    fontSize: 25,
+                    height: 1.2,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  siswa?.kelas?.nama.isNotEmpty == true
+                      ? '${siswa!.kelas!.nama} · ${user.isKetua ? 'Ketua Ekskul' : (siswa.jabatan)}'
+                      : user.isKetua
+                      ? 'Ketua ekstrakurikuler'
+                      : 'Siswa',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white.withValues(alpha: 0.88),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 18),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppTheme.line),
-            ),
+          _contentCard(
+            icon: Icons.badge_outlined,
+            title: 'Data Diri',
+            subtitle: 'Informasi akun dan identitas sekolahmu.',
             child: Column(
               children: [
-                _row(Icons.badge_outlined, 'Username', user.username),
-                _row(Icons.alternate_email, 'Email', user.email),
+                _row(Icons.alternate_email, 'Username', user.username),
+                _divider(),
+                _row(Icons.mail_outline, 'Email', user.email),
+                _divider(),
                 _row(Icons.badge_outlined, 'NIS', siswa?.nis ?? '-'),
+                _divider(),
                 _row(
                   Icons.person_outline,
                   'Jenis Kelamin',
                   siswa?.jenisKelamin ?? '-',
                 ),
+                _divider(),
                 _row(Icons.school_outlined, 'Kelas', siswa?.kelas?.nama ?? '-'),
+                _divider(),
                 _row(
                   Icons.verified_outlined,
                   'Jabatan',
                   user.isKetua ? 'Ketua Ekskul' : (siswa?.jabatan ?? '-'),
                 ),
-                if (user.aktivEkskul != null)
+                if (user.aktivEkskul != null) ...[
+                  _divider(),
                   _row(
                     Icons.explore_outlined,
                     'Ekskul Aktif',
                     user.aktivEkskul!.namaEkskul,
                   ),
+                ],
               ],
             ),
           ),
-          const SizedBox(height: 24),
-          if (user.isKetua) ...[
-            OutlinedButton.icon(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => ProfilEkskulScreen(user: user),
+          const SizedBox(height: 14),
+          _contentCard(
+            icon: Icons.lock_outline_rounded,
+            title: 'Akun & Keamanan',
+            subtitle: 'Kelola akses ke akunmu.',
+            child: Column(
+              children: [
+                _actionRow(
+                  icon: Icons.edit_outlined,
+                  label: 'Edit Profil',
+                  subtitle: 'Perbarui data pribadimu.',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProfilEditScreen(user: user),
+                    ),
+                  ),
                 ),
-              ),
-              icon: const Icon(Icons.tune_outlined),
-              label: const Text('Kelola Profil Ekskul & Prestasi'),
-            ),
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const TestimoniManageScreen(),
+                _divider(),
+                _actionRow(
+                  icon: Icons.key_outlined,
+                  label: 'Ubah Kata Sandi',
+                  subtitle: 'Buat kata sandi baru untuk keamanan akun.',
+                  onTap: () => _changePassword(context, ref),
                 ),
-              ),
-              icon: const Icon(Icons.reviews_outlined),
-              label: const Text('Kelola Testimoni Ekskul'),
+                _divider(),
+                _actionRow(
+                  icon: Icons.logout,
+                  label: 'Logout',
+                  subtitle: 'Keluar dari aplikasi.',
+                  color: const Color(0xFFE11D48),
+                  iconBackground: const Color(0xFFFFF1F2),
+                  onTap: () =>
+                      ref.read(authControllerProvider.notifier).logout(),
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const KetuaFaqScreen()),
-              ),
-              icon: const Icon(Icons.help_outline),
-              label: const Text('Kelola FAQ Ekskul'),
-            ),
-            const SizedBox(height: 10),
-          ],
-          OutlinedButton.icon(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => ProfilEditScreen(user: user)),
-            ),
-            icon: const Icon(Icons.edit_outlined),
-            label: const Text('Edit Profil'),
-          ),
-          const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: () => _changePassword(context, ref),
-            icon: const Icon(Icons.lock_outline),
-            label: const Text('Ubah Kata Sandi'),
-          ),
-          const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: () => ref.read(authControllerProvider.notifier).logout(),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFE11D48),
-              side: const BorderSide(color: Color(0xFFFECDD3)),
-            ),
-            icon: const Icon(Icons.logout),
-            label: const Text('Logout'),
           ),
         ],
       ),
     );
+  }
+
+  Widget _contentCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Widget child,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE8EDF5)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.035),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: AppTheme.blue, size: 20),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppTheme.ink,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppTheme.sub,
+                        fontSize: 11,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _row(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 11),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: AppTheme.blue),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              label,
+              style: GoogleFonts.plusJakartaSans(
+                color: AppTheme.sub,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: GoogleFonts.plusJakartaSans(
+                color: AppTheme.ink,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _actionRow({
+    required IconData icon,
+    required String label,
+    required String subtitle,
+    required VoidCallback onTap,
+    Color color = AppTheme.blue,
+    Color iconBackground = const Color(0xFFEFF6FF),
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: iconBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.ink,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.sub,
+                      fontSize: 11,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(Icons.chevron_right_rounded, color: AppTheme.sub, size: 22),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _divider() {
+    return const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9));
   }
 
   Future<void> _changePassword(BuildContext context, WidgetRef ref) async {
@@ -321,35 +496,5 @@ class ProfilScreen extends ConsumerWidget {
     } catch (error) {
       if (context.mounted) await showErrorDialog(context, ref, error);
     }
-  }
-
-  Widget _row(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: AppTheme.blue),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              label,
-              style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.sub,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          Text(
-            value,
-            style: GoogleFonts.plusJakartaSans(
-              color: AppTheme.ink,
-              fontSize: 13.5,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

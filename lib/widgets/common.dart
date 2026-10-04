@@ -217,7 +217,7 @@ class SectionTitle extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.plusJakartaSans(
               color: AppTheme.ink,
-              fontSize: 16,
+              fontSize: 17,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -438,4 +438,179 @@ Future<void> showErrorDialog(
       ? error.message
       : 'Terjadi kesalahan. Coba lagi.';
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+}
+
+class StatusFilter {
+  const StatusFilter(this.value, this.label, this.count);
+
+  final String value;
+  final String label;
+  final int? count;
+}
+
+class StatusFilterChips extends StatelessWidget {
+  const StatusFilterChips({
+    super.key,
+    required this.items,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final List<StatusFilter> items;
+  final String selected;
+  final ValueChanged<String> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 2),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (var i = 0; i < items.length; i++) ...[
+              if (i > 0) const SizedBox(width: 8),
+              _chip(items[i]),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _chip(StatusFilter item) {
+    final isSelected = selected == item.value;
+    return GestureDetector(
+      key: ValueKey('status-chip-${item.value}'),
+      onTap: () => onSelected(item.value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? AppTheme.blue : Colors.white,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: isSelected ? AppTheme.blue : const Color(0xFFE0E7EF),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              item.label,
+              style: GoogleFonts.plusJakartaSans(
+                color: isSelected ? Colors.white : AppTheme.ink,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            if (item.count != null) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.22)
+                      : AppTheme.blueBg,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  '${item.count}',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: isSelected ? Colors.white : AppTheme.blue,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class NameSearchField extends StatefulWidget {
+  const NameSearchField({
+    super.key,
+    required this.hint,
+    required this.onChanged,
+  });
+
+  final String hint;
+  final ValueChanged<String> onChanged;
+
+  @override
+  State<NameSearchField> createState() => _NameSearchFieldState();
+}
+
+class _NameSearchFieldState extends State<NameSearchField> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+    child: TextField(
+      key: ValueKey(widget.hint),
+      controller: _controller,
+      onChanged: (value) {
+        widget.onChanged(value);
+        setState(() {});
+      },
+      decoration: InputDecoration(
+        hintText: widget.hint,
+        prefixIcon: const Icon(Icons.search_rounded),
+        suffixIcon: _controller.text.isEmpty
+            ? null
+            : IconButton(
+                tooltip: 'Hapus pencarian',
+                onPressed: () {
+                  _controller.clear();
+                  widget.onChanged('');
+                  setState(() {});
+                },
+                icon: const Icon(Icons.close_rounded),
+              ),
+      ),
+    ),
+  );
+}
+
+class ListCountLabel extends StatelessWidget {
+  const ListCountLabel({super.key, required this.count, required this.label});
+
+  final int count;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(20, 2, 20, 3),
+    child: Row(
+      children: [
+        Text(
+          '$count $label',
+          style: GoogleFonts.plusJakartaSans(
+            color: AppTheme.sub,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const Spacer(),
+        const Tooltip(
+          message: 'Tarik daftar ke bawah untuk memperbarui',
+          child: Icon(
+            Icons.swipe_down_alt_rounded,
+            size: 16,
+            color: AppTheme.sub,
+          ),
+        ),
+      ],
+    ),
+  );
 }

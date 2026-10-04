@@ -10,7 +10,6 @@ import 'beranda/ketua_beranda.dart';
 import 'beranda/siswa_beranda.dart';
 import 'katalog/katalog_screen.dart';
 import 'kegiatan/kegiatan_screen.dart';
-import 'laporan/laporan_screen.dart';
 import 'menu/ketua_menu_screen.dart';
 import 'notifikasi/notifikasi_screen.dart';
 import 'profil/profil_screen.dart';
@@ -164,9 +163,9 @@ class KetuaShell extends StatelessWidget {
           (_) => KegiatanScreen(user: user),
         ),
         _TabItem(
-          'Laporan',
-          Icons.description_outlined,
-          (_) => LaporanScreen(user: user),
+          'Notifikasi',
+          Icons.notifications_outlined,
+          (_) => NotifikasiScreen(isKetua: true),
         ),
         _TabItem(
           'Menu',

@@ -16,6 +16,7 @@ class KetuaFaqScreen extends ConsumerStatefulWidget {
 
 class _KetuaFaqScreenState extends ConsumerState<KetuaFaqScreen> {
   String _status = 'semua';
+  String _query = '';
   late Future<Map<String, dynamic>> _faqs;
 
   @override
@@ -177,15 +178,14 @@ class _KetuaFaqScreenState extends ConsumerState<KetuaFaqScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Kelola FAQ Ekskul'),
-        actions: [
-          IconButton(
-            onPressed: _addFaq,
-            icon: const Icon(Icons.add),
-            tooltip: 'Tambah FAQ',
-          ),
-        ],
+      appBar: AppBar(title: const Text('Kelola FAQ Ekskul')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addFaq,
+        backgroundColor: AppTheme.blue,
+        foregroundColor: Colors.white,
+        shape: const CircleBorder(),
+        tooltip: 'Tambah FAQ',
+        child: const Icon(Icons.add_rounded),
       ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: _faqs,
@@ -203,110 +203,164 @@ class _KetuaFaqScreenState extends ConsumerState<KetuaFaqScreen> {
           }
           final data = snapshot.data!;
           final items = _items(data);
+          final filtered = _filterFaq(items, _query);
           final body = data['data'];
-          final pendingCount = body is Map
-              ? (body['pending_count'] as num?)?.toInt() ?? 0
-              : 0;
 
           return Column(
             children: [
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
-                ),
-                child: Row(
-                  children: [
-                    _statusChip('semua', 'Semua'),
-                    const SizedBox(width: 8),
-                    _statusChip(
-                      'pending',
-                      'Belum dijawab${pendingCount > 0 ? ' ($pendingCount)' : ''}',
-                    ),
-                    const SizedBox(width: 8),
-                    _statusChip('answered', 'Sudah dijawab'),
-                  ],
-                ),
+              NameSearchField(
+                hint: 'Cari FAQ...',
+                onChanged: (value) => setState(() => _query = value),
               ),
-              const Divider(height: 1),
+              StatusFilterChips(
+                items: [
+                  StatusFilter('semua', 'Semua', _intCount(body?['total'])),
+                  StatusFilter(
+                    'pending',
+                    'Belum dijawab',
+                    _intCount(body?['pending_count']),
+                  ),
+                  StatusFilter(
+                    'answered',
+                    'Sudah dijawab',
+                    _intCount(body?['answered_count']),
+                  ),
+                ],
+                selected: _status,
+                onSelected: (value) {
+                  if (_status == value) return;
+                  setState(() {
+                    _status = value;
+                    _faqs = _loadFaqs();
+                  });
+                },
+              ),
+              ListCountLabel(count: filtered.length, label: 'FAQ'),
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: () async => _reload(),
-                  child: items.isEmpty
+                  child: filtered.isEmpty
                       ? ListView(
-                          children: const [
-                            SizedBox(height: 64),
+                          padding: const EdgeInsets.only(top: 40),
+                          children: [
                             EmptyState(
-                              title: 'Belum ada FAQ',
-                              subtitle: 'Pertanyaan siswa dan FAQ yang dibuat akan tampil di sini.',
-                              icon: Icons.help_outline,
+                              title: items.isEmpty
+                                  ? 'Belum ada FAQ'
+                                  : 'FAQ tidak ditemukan',
+                              subtitle: items.isEmpty
+                                  ? _faqEmptySubtitle(_status)
+                                  : 'Coba kata kunci yang lain.',
+                              icon: items.isEmpty
+                                  ? Icons.help_outline
+                                  : Icons.search_off_rounded,
                             ),
                           ],
                         )
                       : ListView.separated(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: items.length,
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+                          itemCount: filtered.length,
                           separatorBuilder: (_, _) =>
                               const SizedBox(height: 12),
                           itemBuilder: (context, index) {
-                            final faq = items[index];
+                            final faq = filtered[index];
                             final pending = faq['status'] == 'pending';
-                            return Card(
-                              color: Colors.white,
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      faq['pertanyaan']?.toString() ?? '',
-                                      style: GoogleFonts.plusJakartaSans(
-                                        color: AppTheme.ink,
-                                        fontSize: 14.5,
-                                        fontWeight: FontWeight.w700,
-                                        height: 1.3,
+                            return Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: const Color(0xFFE8EDF5),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF0F172A)
+                                        .withValues(alpha: 0.035),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: 38,
+                                        height: 38,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFEFF6FF),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.help_outline,
+                                          color: AppTheme.blue,
+                                          size: 20,
+                                        ),
                                       ),
-                                    ),
-                                    if (!pending && faq['jawaban'] != null) ...[
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        faq['jawaban'].toString(),
-                                        style: GoogleFonts.plusJakartaSans(
-                                          color: AppTheme.sub,
-                                          fontSize: 13,
-                                          height: 1.5,
+                                      const SizedBox(width: 11),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              faq['pertanyaan']?.toString() ??
+                                                  '',
+                                              style:
+                                                  GoogleFonts.plusJakartaSans(
+                                                    color: AppTheme.ink,
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w800,
+                                                    height: 1.3,
+                                                  ),
+                                            ),
+                                            if (!pending &&
+                                                faq['jawaban'] != null) ...[
+                                              const SizedBox(height: 6),
+                                              Text(
+                                                faq['jawaban'].toString(),
+                                                style:
+                                                    GoogleFonts.plusJakartaSans(
+                                                      color: AppTheme.sub,
+                                                      fontSize: 12,
+                                                      height: 1.5,
+                                                    ),
+                                              ),
+                                            ],
+                                          ],
                                         ),
                                       ),
                                     ],
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      children: [
-                                        Chip(
-                                          label: Text(
-                                            pending
-                                                ? 'Belum dijawab'
-                                                : 'Sudah dijawab',
-                                          ),
-                                        ),
-                                        const Spacer(),
-                                        if (pending)
-                                          IconButton(
-                                            onPressed: () => _answerFaq(faq),
-                                            tooltip: 'Jawab',
-                                            icon: const Icon(Icons.reply),
-                                          ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      StatusChip(
+                                        pending
+                                            ? 'Belum dijawab'
+                                            : 'Sudah dijawab',
+                                      ),
+                                      const Spacer(),
+                                      if (pending)
                                         IconButton(
-                                          onPressed: () => _deleteFaq(faq),
-                                          tooltip: 'Hapus',
-                                          icon: const Icon(
-                                            Icons.delete_outline,
-                                          ),
+                                          onPressed: () => _answerFaq(faq),
+                                          tooltip: 'Jawab',
+                                          icon: const Icon(Icons.reply),
                                         ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
+                                      IconButton(
+                                        onPressed: () => _deleteFaq(faq),
+                                        tooltip: 'Hapus',
+                                        icon: const Icon(Icons.delete_outline),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                             );
                           },
@@ -320,17 +374,31 @@ class _KetuaFaqScreenState extends ConsumerState<KetuaFaqScreen> {
     );
   }
 
-  Widget _statusChip(String status, String label) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: _status == status,
-      onSelected: (_) {
-        if (_status == status) return;
-        setState(() {
-          _status = status;
-          _faqs = _loadFaqs();
-        });
-      },
-    );
+  int? _intCount(Object? value) {
+    if (value == null) return null;
+    return int.tryParse(value.toString());
+  }
+
+  String _faqEmptySubtitle(String status) => switch (status) {
+    'pending' => 'Belum ada pertanyaan yang perlu dijawab.',
+    'answered' => 'Belum ada FAQ yang sudah dijawab.',
+    _ => 'Pertanyaan siswa dan FAQ yang dibuat akan tampil di sini.',
+  };
+
+  List<Map<String, dynamic>> _filterFaq(
+    List<Map<String, dynamic>> items,
+    String query,
+  ) {
+    if (query.isEmpty) return items;
+    final q = query.toLowerCase();
+    return items
+        .where((item) {
+          final haystack = [
+            item['pertanyaan']?.toString() ?? '',
+            item['jawaban']?.toString() ?? '',
+          ].join(' ').toLowerCase();
+          return haystack.contains(q);
+        })
+        .toList(growable: false);
   }
 }
