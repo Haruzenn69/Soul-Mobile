@@ -16,6 +16,28 @@ class RekapPresensiScreen extends ConsumerStatefulWidget {
       _RekapPresensiScreenState();
 }
 
+String _bulanLabel(String ym) {
+  final parts = ym.split('-');
+  if (parts.length != 2) return ym;
+  const nama = [
+    'Januari',
+    'Februari',
+    'Maret',
+    'April',
+    'Mei',
+    'Juni',
+    'Juli',
+    'Agustus',
+    'September',
+    'Oktober',
+    'November',
+    'Desember',
+  ];
+  final m = int.tryParse(parts[1]);
+  if (m == null || m < 1 || m > 12) return ym;
+  return '${nama[m - 1]} ${parts[0]}';
+}
+
 class _RekapPresensiScreenState extends ConsumerState<RekapPresensiScreen> {
   String? _selectedMonth;
 
@@ -36,6 +58,7 @@ class _RekapPresensiScreenState extends ConsumerState<RekapPresensiScreen> {
       ),
       body: ApiAsyncView(
         value: state,
+        onRetry: () => ref.invalidate(ketuaRekapMonthProvider(_selectedMonth)),
         builder: (context, data) {
           final bulan = data['bulan'] as String? ?? '-';
           final availableMonths =
@@ -71,7 +94,7 @@ class _RekapPresensiScreenState extends ConsumerState<RekapPresensiScreen> {
                       final m = availableMonths[i].toString();
                       final isSelected = (_selectedMonth ?? bulan) == m;
                       return ChoiceChip(
-                        label: Text(m),
+                        label: Text(_bulanLabel(m)),
                         selected: isSelected,
                         onSelected: (val) {
                           if (val) setState(() => _selectedMonth = m);

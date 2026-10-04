@@ -51,6 +51,7 @@ class NotifikasiScreen extends ConsumerWidget {
           Expanded(
             child: ApiAsyncView(
               value: notif,
+              onRetry: () => ref.invalidate(notifikasiProvider),
               builder: (context, data) {
                 final items = listOf(data, 'notifikasis');
                 if (items.isEmpty) {
@@ -172,7 +173,9 @@ class _NotifCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      notifikasi.createdLabel,
+                      notifikasi.createdLabel.isNotEmpty
+                          ? notifikasi.createdLabel
+                          : '-',
                       style: GoogleFonts.plusJakartaSans(
                         color: AppTheme.sub.withValues(alpha: 0.7),
                         fontSize: 11,

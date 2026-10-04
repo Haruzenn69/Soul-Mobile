@@ -33,17 +33,47 @@ class AnggotaScreen extends ConsumerWidget {
               title: 'Anggota',
               subtitle: 'Kelola keanggotaan dan permohonan siswa.',
               eyebrow: 'PENGELOLAAN EKSKUL',
+              topPadding: 25,
             ),
-            const TabBar(
-              labelColor: AppTheme.blue,
-              unselectedLabelColor: AppTheme.sub,
-              indicatorColor: AppTheme.blue,
-              labelStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-              tabs: [
-                Tab(text: 'Anggota'),
-                Tab(text: 'Pendaftaran'),
-                Tab(text: 'Pengajuan'),
-              ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+              child: Container(
+                key: const ValueKey('anggota-pill-tabs'),
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: AppTheme.line),
+                ),
+                child: TabBar(
+                  key: ValueKey('anggota-tab-bar'),
+                  dividerHeight: 0,
+                  overlayColor: WidgetStatePropertyAll(Colors.transparent),
+                  labelColor: AppTheme.blue,
+                  unselectedLabelColor: AppTheme.sub,
+                  indicatorColor: Colors.transparent,
+                  dividerColor: Colors.transparent,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  indicator: BoxDecoration(
+                    color: AppTheme.blueBg,
+                    borderRadius: BorderRadius.all(Radius.circular(24)),
+                  ),
+                  labelPadding: EdgeInsets.zero,
+                  labelStyle: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 11,
+                  ),
+                  unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 11,
+                  ),
+                  tabs: [
+                    Tab(height: 30, text: 'Anggota'),
+                    Tab(height: 30, text: 'Pendaftaran'),
+                    Tab(height: 30, text: 'Pengajuan'),
+                  ],
+                ),
+              ),
             ),
             Expanded(
               child: TabBarView(
@@ -61,42 +91,84 @@ class AnggotaScreen extends ConsumerWidget {
   }
 }
 
-class _AnggotaList extends ConsumerWidget {
+class _AnggotaList extends ConsumerStatefulWidget {
   const _AnggotaList({required this.user});
 
   final AuthUser user;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_AnggotaList> createState() => _AnggotaListState();
+}
+
+class _AnggotaListState extends ConsumerState<_AnggotaList> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
     final data = ref.watch(ketuaAnggotaProvider);
 
-    return RefreshIndicator(
-      onRefresh: () async => ref.invalidate(ketuaAnggotaProvider),
-      child: ApiAsyncView(
-        value: data,
-        builder: (context, d) {
-          final items = listOf(d, 'anggotas');
-          if (items.isEmpty) {
-            return const EmptyState(
-              title: 'Belum ada anggota',
-              icon: Icons.groups_outlined,
-            );
-          }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: items.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 8),
-            itemBuilder: (context, i) {
-              final p = Pendaftaran.fromJson(items[i]);
-              return _AnggotaTile(
-                pendaftaran: p,
-                isSelf: p.siswaRaw?['id'] == user.siswa?.id,
-                onStatus: (status) => _changeStatus(context, ref, p, status),
-              );
-            },
-          );
-        },
-      ),
+    return ApiAsyncView(
+      value: data,
+      onRetry: () => ref.invalidate(ketuaAnggotaProvider),
+      builder: (context, d) {
+        final items = listOf(d, 'anggotas');
+        final filtered = _filterByStudentName(items, _query, (item) {
+          final p = Pendaftaran.fromJson(item);
+          return p.siswaNama;
+        });
+        return Column(
+          children: [
+            _NameSearchField(
+              hint: 'Cari nama anggota...',
+              onChanged: (value) => setState(() => _query = value),
+            ),
+            _ListCountLabel(count: filtered.length, label: 'anggota'),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                ref.invalidate(ketuaAnggotaProvider);
+                try {
+                  await ref.read(ketuaAnggotaProvider.future);
+                } catch (_) {}
+              },
+                child: filtered.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.only(top: 24),
+                        children: [
+                          EmptyState(
+                            title: items.isEmpty
+                                ? 'Belum ada anggota'
+                                : 'Nama anggota tidak ditemukan',
+                            subtitle: items.isEmpty
+                                ? null
+                                : 'Coba kata kunci nama yang lain.',
+                            icon: items.isEmpty
+                                ? Icons.groups_outlined
+                                : Icons.search_off_rounded,
+                          ),
+                        ],
+                      )
+                    : ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, i) {
+                          final p = Pendaftaran.fromJson(filtered[i]);
+                          return _AnggotaTile(
+                            pendaftaran: p,
+                            isSelf: p.siswaRaw?['id'] == widget.user.siswa?.id,
+                            onStatus: (status) =>
+                                _changeStatus(context, ref, p, status),
+                          );
+                        },
+                      ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -223,7 +295,32 @@ class _AnggotaTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 6),
-                  StatusChip(pendaftaran.statusLabel),
+                  Row(
+                    children: [
+                      StatusChip(pendaftaran.statusLabel),
+                      if (isSelf) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.blueBg,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'Anda',
+                            style: GoogleFonts.plusJakartaSans(
+                              color: AppTheme.blue,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -246,85 +343,180 @@ class _AnggotaTile extends StatelessWidget {
   }
 }
 
-class _PendaftaranList extends ConsumerWidget {
+class _PendaftaranList extends ConsumerStatefulWidget {
   const _PendaftaranList();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_PendaftaranList> createState() => _PendaftaranListState();
+}
+
+class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
     final data = ref.watch(ketuaPendaftaranProvider);
 
     return ApiAsyncView(
       value: data,
+      onRetry: () => ref.invalidate(ketuaPendaftaranProvider),
       builder: (context, d) {
         final items = listOf(d, 'pendaftarans');
         final pendings = items.where((e) => e['status'] == 'pending').toList();
-        if (pendings.isEmpty) {
-          return const EmptyState(
-            title: 'Tidak ada pendaftar menunggu',
-            icon: Icons.how_to_reg_outlined,
-          );
-        }
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: pendings.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 8),
-          itemBuilder: (context, i) {
-            final p = Pendaftaran.fromJson(pendings[i]);
-            return Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.line),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    p.siswaNama ?? 'Pendaftar Baru',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.ink,
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (p.alasan?.isNotEmpty == true) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      '“${p.alasan}”',
-                      style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.sub,
-                        fontSize: 12,
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => _proses(context, ref, p, 'ditolak'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFFE11D48),
-                            side: const BorderSide(color: Color(0xFFFECDD3)),
+        final filtered = _filterByStudentName(pendings, _query, (item) {
+          return Pendaftaran.fromJson(item).siswaNama;
+        });
+        return Column(
+          children: [
+            _NameSearchField(
+              hint: 'Cari nama pendaftar...',
+              onChanged: (value) => setState(() => _query = value),
+            ),
+            _ListCountLabel(
+              count: filtered.length,
+              label: 'pendaftar menunggu',
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                ref.invalidate(ketuaPendaftaranProvider);
+                try {
+                  await ref.read(ketuaPendaftaranProvider.future);
+                } catch (_) {}
+              },
+                child: filtered.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.only(top: 24),
+                        children: [
+                          EmptyState(
+                            title: pendings.isEmpty
+                                ? 'Tidak ada pendaftar menunggu'
+                                : 'Nama pendaftar tidak ditemukan',
+                            subtitle: pendings.isEmpty
+                                ? null
+                                : 'Coba kata kunci nama yang lain.',
+                            icon: pendings.isEmpty
+                                ? Icons.how_to_reg_outlined
+                                : Icons.search_off_rounded,
                           ),
-                          child: const Text('Tolak'),
-                        ),
+                        ],
+                      )
+                    : ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, i) {
+                          final p = Pendaftaran.fromJson(filtered[i]);
+                          return Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(17),
+                              border: Border.all(
+                                color: const Color(0xFFE8EDF5),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 21,
+                                      backgroundColor: AppTheme.blueBg,
+                                      child: Text(
+                                        _initials(p.siswaNama),
+                                        style: GoogleFonts.plusJakartaSans(
+                                          color: AppTheme.blue,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            p.siswaNama ?? 'Pendaftar Baru',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              color: AppTheme.ink,
+                                              fontSize: 13.5,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            p.tanggalDaftar ??
+                                                'Permintaan bergabung',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              color: AppTheme.sub,
+                                              fontSize: 10.5,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(
+                                      Icons.person_add_alt_1_outlined,
+                                      color: AppTheme.blue,
+                                      size: 20,
+                                    ),
+                                  ],
+                                ),
+                                if (p.alasan?.isNotEmpty == true) ...[
+                                  const SizedBox(height: 12),
+                                  _RequestNote(text: p.alasan!),
+                                ],
+                                if (p.alasan?.isNotEmpty != true) ...[
+                                  const SizedBox(height: 12),
+                                  const _RequestNote(
+                                    text: 'Tidak ada catatan pendaftaran.',
+                                  ),
+                                ],
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () =>
+                                            _proses(context, ref, p, 'ditolak'),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: const Color(
+                                            0xFFE11D48,
+                                          ),
+                                          side: const BorderSide(
+                                            color: Color(0xFFFECDD3),
+                                          ),
+                                        ),
+                                        child: const Text('Tolak'),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: ElevatedButton(
+                                        onPressed: () => _proses(
+                                          context,
+                                          ref,
+                                          p,
+                                          'diterima',
+                                        ),
+                                        child: const Text('Terima'),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => _proses(context, ref, p, 'diterima'),
-                          child: const Text('Terima'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
               ),
-            );
-          },
+            ),
+          ],
         );
       },
     );
@@ -358,90 +550,178 @@ class _PendaftaranList extends ConsumerWidget {
   }
 }
 
-class _PengajuanList extends ConsumerWidget {
+class _PengajuanList extends ConsumerStatefulWidget {
   const _PengajuanList();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_PengajuanList> createState() => _PengajuanListState();
+}
+
+class _PengajuanListState extends ConsumerState<_PengajuanList> {
+  String _query = '';
+
+  @override
+  Widget build(BuildContext context) {
     final data = ref.watch(ketuaPengajuanProvider);
 
     return ApiAsyncView(
       value: data,
+      onRetry: () => ref.invalidate(ketuaPengajuanProvider),
       builder: (context, d) {
         final items = listOf(d, 'pengajuans');
         final pendings = items.where((e) => e['status'] == 'pending').toList();
-        if (pendings.isEmpty) {
-          return const EmptyState(
-            title: 'Tidak ada pengajuan keluar',
-            icon: Icons.logout_outlined,
-          );
-        }
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: pendings.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 8),
-          itemBuilder: (context, i) {
-            final p = pendings[i];
-            return Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.line),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${p['nama'] ?? '-'}',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: AppTheme.ink,
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
+        final filtered = _filterByStudentName(pendings, _query, (item) {
+          return _studentName(item);
+        });
+        return Column(
+          children: [
+            _NameSearchField(
+              hint: 'Cari nama siswa...',
+              onChanged: (value) => setState(() => _query = value),
+            ),
+            _ListCountLabel(
+              count: filtered.length,
+              label: 'pengajuan menunggu',
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                ref.invalidate(ketuaPengajuanProvider);
+                try {
+                  await ref.read(ketuaPengajuanProvider.future);
+                } catch (_) {}
+              },
+                child: filtered.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.only(top: 24),
+                        children: [
+                          EmptyState(
+                            title: pendings.isEmpty
+                                ? 'Tidak ada pengajuan keluar'
+                                : 'Nama siswa tidak ditemukan',
+                            subtitle: pendings.isEmpty
+                                ? null
+                                : 'Coba kata kunci nama yang lain.',
+                            icon: pendings.isEmpty
+                                ? Icons.logout_outlined
+                                : Icons.search_off_rounded,
                           ),
-                        ),
+                        ],
+                      )
+                    : ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, i) {
+                          final p = filtered[i];
+                          return Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(17),
+                              border: Border.all(
+                                color: const Color(0xFFE8EDF5),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 21,
+                                      backgroundColor: AppTheme.blueBg,
+                                      child: Text(
+                                        _initials(_studentName(p)),
+                                        style: GoogleFonts.plusJakartaSans(
+                                          color: AppTheme.blue,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            _studentName(p) ?? '-',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              color: AppTheme.ink,
+                                              fontSize: 13.5,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            'Permohonan keluar dari ekskul',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              color: AppTheme.sub,
+                                              fontSize: 10.5,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    StatusChip(
+                                      _statusLabel(p['status']?.toString()),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                _RequestNote(
+                                  text:
+                                      p['alasan']
+                                              ?.toString()
+                                              .trim()
+                                              .isNotEmpty ==
+                                          true
+                                      ? p['alasan'].toString()
+                                      : 'Tidak ada alasan yang dicantumkan.',
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton(
+                                        onPressed: () =>
+                                            _proses(context, ref, p, 'ditolak'),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: const Color(
+                                            0xFFE11D48,
+                                          ),
+                                          side: const BorderSide(
+                                            color: Color(0xFFFECDD3),
+                                          ),
+                                        ),
+                                        child: const Text('Tolak'),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: ElevatedButton(
+                                        onPressed: () => _proses(
+                                          context,
+                                          ref,
+                                          p,
+                                          'diterima',
+                                        ),
+                                        child: const Text('Terima'),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
-                      StatusChip('${p['status']}'),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${p['alasan'] ?? '-'}',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.sub,
-                      fontSize: 12,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => _proses(context, ref, p, 'ditolak'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFFE11D48),
-                            side: const BorderSide(color: Color(0xFFFECDD3)),
-                          ),
-                          child: const Text('Tolak'),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => _proses(context, ref, p, 'diterima'),
-                          child: const Text('Terima'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
               ),
-            );
-          },
+            ),
+          ],
         );
       },
     );
@@ -473,4 +753,146 @@ class _PengajuanList extends ConsumerWidget {
       }
     }
   }
+}
+
+class _NameSearchField extends StatefulWidget {
+  const _NameSearchField({required this.hint, required this.onChanged});
+
+  final String hint;
+  final ValueChanged<String> onChanged;
+
+  @override
+  State<_NameSearchField> createState() => _NameSearchFieldState();
+}
+
+class _NameSearchFieldState extends State<_NameSearchField> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+    child: TextField(
+      key: ValueKey(widget.hint),
+      controller: _controller,
+      onChanged: (value) {
+        widget.onChanged(value);
+        setState(() {});
+      },
+      decoration: InputDecoration(
+        hintText: widget.hint,
+        prefixIcon: const Icon(Icons.search_rounded),
+        suffixIcon: _controller.text.isEmpty
+            ? null
+            : IconButton(
+                tooltip: 'Hapus pencarian',
+                onPressed: () {
+                  _controller.clear();
+                  widget.onChanged('');
+                  setState(() {});
+                },
+                icon: const Icon(Icons.close_rounded),
+              ),
+      ),
+    ),
+  );
+}
+
+class _ListCountLabel extends StatelessWidget {
+  const _ListCountLabel({required this.count, required this.label});
+
+  final int count;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(20, 2, 20, 3),
+    child: Row(
+      children: [
+        Text(
+          '$count $label',
+          style: GoogleFonts.plusJakartaSans(
+            color: AppTheme.sub,
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const Spacer(),
+        const Tooltip(
+          message: 'Tarik daftar ke bawah untuk memperbarui',
+          child: Icon(
+            Icons.swipe_down_alt_rounded,
+            size: 16,
+            color: AppTheme.sub,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _RequestNote extends StatelessWidget {
+  const _RequestNote({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(11),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF8FAFC),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Text(
+      text,
+      style: GoogleFonts.plusJakartaSans(
+        color: AppTheme.sub,
+        fontSize: 12,
+        height: 1.4,
+      ),
+    ),
+  );
+}
+
+String _initials(String? name) {
+  final parts = (name ?? '').trim().split(RegExp(r'\s+'));
+  if (parts.first.isEmpty) return 'S';
+  final first = parts.first.substring(0, 1);
+  if (parts.length == 1 || parts.last.isEmpty) return first.toUpperCase();
+  return '$first${parts.last.substring(0, 1)}'.toUpperCase();
+}
+
+String _statusLabel(String? status) => switch (status) {
+  'pending' => 'Menunggu',
+  'diterima' => 'Disetujui',
+  'ditolak' => 'Ditolak',
+  _ => status ?? '-',
+};
+
+String? _studentName(Map<String, dynamic> item) {
+  final siswa = item['siswa'];
+  if (siswa is Map) {
+    return siswa['nama']?.toString();
+  }
+  return item['nama']?.toString();
+}
+
+List<Map<String, dynamic>> _filterByStudentName(
+  List<Map<String, dynamic>> items,
+  String query,
+  String? Function(Map<String, dynamic>) nameOf,
+) {
+  if (query.isEmpty) return items;
+  final normalizedQuery = query.toLowerCase();
+  return items
+      .where((item) {
+        return (nameOf(item) ?? '').toLowerCase().contains(normalizedQuery);
+      })
+      .toList(growable: false);
 }

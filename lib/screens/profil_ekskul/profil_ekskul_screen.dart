@@ -48,8 +48,8 @@ class _ProfilEkskulScreenState extends ConsumerState<ProfilEkskulScreen>
           labelColor: AppTheme.blue,
           unselectedLabelColor: AppTheme.sub,
           indicatorColor: AppTheme.blue,
-          labelStyle: const TextStyle(
-            fontWeight: FontWeight.w700,
+          labelStyle: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.w800,
             fontSize: 13,
           ),
           tabs: const [
@@ -220,6 +220,7 @@ class _ProfilTabState extends ConsumerState<_ProfilTab> {
 
     return ApiAsyncView(
       value: state,
+      onRetry: () => ref.invalidate(ketuaProfilEkskulProvider),
       builder: (context, data) {
         final ekskul = data['ekskul'] is Map
             ? Map<String, dynamic>.from(data['ekskul'] as Map)
@@ -396,6 +397,7 @@ class _GaleriTab extends ConsumerWidget {
 
     return ApiAsyncView(
       value: state,
+      onRetry: () => ref.invalidate(ketuaProfilEkskulProvider),
       builder: (context, data) {
         final galeris = (data['galeris'] as List?) ?? const [];
 
@@ -461,7 +463,7 @@ class _GaleriTab extends ConsumerWidget {
                               onPressed: () => _deleteGaleri(
                                 context,
                                 ref,
-                                (item['id'] as num).toInt(),
+                                (item['id'] as num?)?.toInt() ?? 0,
                               ),
                             ),
                           ),
@@ -624,6 +626,7 @@ class _PrestasiTabState extends ConsumerState<_PrestasiTab> {
     return Scaffold(
       body: ApiAsyncView(
         value: state,
+        onRetry: () => ref.invalidate(ketuaPrestasiProvider),
         builder: (context, data) {
           final items = listOf(data, 'prestasis');
           if (items.isEmpty) {

@@ -187,6 +187,7 @@ class _TestimoniManageScreenState extends ConsumerState<TestimoniManageScreen> {
       ),
       body: ApiAsyncView(
         value: state,
+        onRetry: () => ref.invalidate(ketuaTestimoniProvider(_selectedStatus)),
         builder: (context, data) {
           final pendingCount = (data['pending_count'] as num?)?.toInt() ?? 0;
           final items = listOf(data, 'testimonis');
@@ -222,6 +223,10 @@ class _TestimoniManageScreenState extends ConsumerState<TestimoniManageScreen> {
                 child: RefreshIndicator(
                   onRefresh: () async {
                     ref.invalidate(ketuaTestimoniProvider(_selectedStatus));
+                    try {
+                      await ref
+                          .read(ketuaTestimoniProvider(_selectedStatus).future);
+                    } catch (_) {}
                   },
                   child: items.isEmpty
                       ? ListView(

@@ -30,6 +30,13 @@ class KegiatanScreen extends ConsumerStatefulWidget {
 
 class _KegiatanScreenState extends ConsumerState<KegiatanScreen> {
   String _cari = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -246,72 +253,135 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen> {
   Widget build(BuildContext context) {
     final list = ref.watch(ketuaKegiatanProvider);
 
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          PageHeader(
-            title: 'Kegiatan',
-            subtitle: 'Atur agenda dan dokumentasi ekskul.',
-            eyebrow: 'AKTIVITAS EKSKUL',
-            action: IconButton.filled(
-              onPressed: _buatKegiatan,
-              icon: const Icon(Icons.add),
-              tooltip: 'Buat kegiatan',
+    return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: _buatKegiatan,
+        backgroundColor: AppTheme.blue,
+        foregroundColor: Colors.white,
+        shape: const CircleBorder(),
+        tooltip: 'Buat kegiatan',
+        child: const Icon(Icons.add_rounded),
+      ),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            PageHeader(
+              title: 'Kegiatan',
+              subtitle: 'Atur agenda dan dokumentasi ekskul.',
+              eyebrow: 'AKTIVITAS EKSKUL',
+              topPadding: 25,
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
-            child: TextField(
-              onChanged: (v) => setState(() => _cari = v.trim().toLowerCase()),
-              decoration: const InputDecoration(
-                hintText: 'Cari kegiatan...',
-                prefixIcon: Icon(Icons.search, color: AppTheme.sub),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (v) =>
+                    setState(() => _cari = v.trim().toLowerCase()),
+                decoration: InputDecoration(
+                  hintText: 'Cari kegiatan...',
+                  prefixIcon: const Icon(Icons.search, color: AppTheme.sub),
+                  suffixIcon: _searchController.text.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'Hapus pencarian',
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _cari = '');
+                          },
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                ),
               ),
             ),
-          ),
-          Expanded(
-            child: ApiAsyncView(
-              value: list,
-              builder: (context, data) {
-                final all = listOf(data, 'kegiatans');
-                final filtered = _cari.isEmpty
-                    ? all
-                    : all
-                          .where(
-                            (k) => (k['materi'] as String? ?? '')
-                                .toLowerCase()
-                                .contains(_cari),
-                          )
-                          .toList();
-                if (filtered.isEmpty) {
-                  return const EmptyState(
-                    title: 'Belum ada kegiatan',
-                    subtitle: 'Tekan tombol + untuk membuat kegiatan baru.',
-                    icon: Icons.event_note_outlined,
-                  );
-                }
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                  itemCount: filtered.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, i) {
-                    final k = Kegiatan.fromJson(filtered[i]);
-                    return _KegiatanCard(
-                      kegiatan: k,
-                      onTap: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              KegiatanDetailScreen(kegiatanId: k.id),
+            Expanded(
+              child: ApiAsyncView(
+                value: list,
+                onRetry: () => ref.invalidate(ketuaKegiatanProvider),
+                builder: (context, data) {
+                  final all = listOf(data, 'kegiatans');
+                  final filtered = _cari.isEmpty
+                      ? all
+                      : all
+                            .where(
+                              (k) => (k['materi'] as String? ?? '')
+                                  .toLowerCase()
+                                  .contains(_cari),
+                            )
+                            .toList();
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                        child: Row(
+                          children: [
+                            Text(
+                              _cari.isEmpty
+                                  ? '${filtered.length} kegiatan'
+                                  : '${filtered.length} hasil pencarian',
+                              style: GoogleFonts.plusJakartaSans(
+                                color: AppTheme.sub,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (_cari.isNotEmpty)
+                              TextButton(
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _cari = '');
+                                },
+                                child: const Text('Hapus filter'),
+                              ),
+                          ],
                         ),
                       ),
-                    );
-                  },
-                );
-              },
+                      Expanded(
+                        child: filtered.isEmpty
+                            ? EmptyState(
+                                title: _cari.isEmpty
+                                    ? 'Belum ada kegiatan'
+                                    : 'Kegiatan tidak ditemukan',
+                                subtitle: _cari.isEmpty
+                                    ? 'Tekan tombol + untuk membuat kegiatan baru.'
+                                    : 'Coba kata kunci lain atau hapus pencarian.',
+                                icon: _cari.isEmpty
+                                    ? Icons.event_note_outlined
+                                    : Icons.search_off_rounded,
+                              )
+                            : ListView.separated(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  4,
+                                  16,
+                                  24,
+                                ),
+                                itemCount: filtered.length,
+                                separatorBuilder: (_, _) =>
+                                    const SizedBox(height: 10),
+                                itemBuilder: (context, i) {
+                                  final k = Kegiatan.fromJson(filtered[i]);
+                                  return _KegiatanCard(
+                                    kegiatan: k,
+                                    onTap: () => Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => KegiatanDetailScreen(
+                                          kegiatanId: k.id,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -327,24 +397,31 @@ class _KegiatanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(18),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(18),
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppTheme.line),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: const Color(0xFFE8EDF5)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.025),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: Row(
             children: [
               Container(
-                width: 46,
-                height: 46,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
-                  color: AppTheme.blue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppTheme.blueBg,
+                  borderRadius: BorderRadius.circular(15),
                 ),
                 child: const Icon(
                   Icons.event_note,
@@ -359,32 +436,65 @@ class _KegiatanCard extends StatelessWidget {
                   children: [
                     Text(
                       kegiatan.materi,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
                         color: AppTheme.ink,
                         fontSize: 14,
-                        fontWeight: FontWeight.w700,
+                        height: 1.3,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     const SizedBox(height: 3),
-                    Text(
-                      kegiatan.tanggalText,
-                      style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.sub,
-                        fontSize: 12,
-                      ),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.calendar_today_outlined,
+                          color: AppTheme.sub,
+                          size: 12,
+                        ),
+                        const SizedBox(width: 5),
+                        Expanded(
+                          child: Text(
+                            kegiatan.tanggalText,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: AppTheme.sub,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                        if (kegiatan.presensisCount != null) ...[
+                          const SizedBox(width: 7),
+                          const Icon(
+                            Icons.people_alt_outlined,
+                            color: AppTheme.sub,
+                            size: 13,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            '${kegiatan.presensisCount}',
+                            style: GoogleFonts.plusJakartaSans(
+                              color: AppTheme.sub,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
               ),
-              if (kegiatan.isEvent) const StatusChip('Event'),
-              const SizedBox(width: 4),
-              if (kegiatan.presensisCount != null)
-                Text(
-                  '${kegiatan.presensisCount} hadir',
-                  style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.sub,
-                    fontSize: 11,
-                  ),
+              const SizedBox(width: 8),
+              if (kegiatan.isEvent)
+                const StatusChip('Event')
+              else
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppTheme.sub,
+                  size: 22,
                 ),
             ],
           ),

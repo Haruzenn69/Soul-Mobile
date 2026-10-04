@@ -18,7 +18,14 @@ class KatalogScreen extends ConsumerStatefulWidget {
 }
 
 class _KatalogScreenState extends ConsumerState<KatalogScreen> {
+  final _searchCtrl = TextEditingController();
   String _cari = '';
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,16 +43,27 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
             child: TextField(
+              controller: _searchCtrl,
               onChanged: (v) => setState(() => _cari = v.trim().toLowerCase()),
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Cari ekskul atau pembina...',
-                prefixIcon: Icon(Icons.search, color: AppTheme.sub),
+                prefixIcon: const Icon(Icons.search, color: AppTheme.sub),
+                suffixIcon: _cari.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.clear, size: 20),
+                        onPressed: () {
+                          _searchCtrl.clear();
+                          setState(() => _cari = '');
+                        },
+                      ),
               ),
             ),
           ),
           Expanded(
             child: ApiAsyncView(
               value: katalog,
+              onRetry: () => ref.invalidate(katalogProvider),
               builder: (context, data) {
                 return _body(context, data);
               },
@@ -63,6 +81,8 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
     final pendaftaran = data['pendaftaran'] is Map
         ? Map<String, dynamic>.from(data['pendaftaran'] as Map)
         : null;
+    final adaJoinable =
+        (data['joinable'] is List) && (data['joinable'] as List).isNotEmpty;
     final joinable = listOf(data, 'joinable');
 
     final filtered = _cari.isEmpty
@@ -76,93 +96,142 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
             return nama.contains(_cari) || pembina.contains(_cari);
           }).toList();
 
-    return ListView(
+    final itemCount =
+        (pending != null ? 1 : 0) + (pendaftaran != null ? 1 : 0) + filtered.length;
+
+    if (itemCount == 0) {
+      return EmptyState(
+        title: adaJoinable ? 'Tidak ada yang cocok' : 'Belum ada ekskul',
+        subtitle: adaJoinable
+            ? 'Coba kata kunci lain.'
+            : 'Belum ada ekskul yang bisa didaftar saat ini.',
+        icon: Icons.unfold_more_outlined,
+      );
+    }
+
+    return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-      children: [
-        if (pending != null) ...[
-          Container(
-            padding: const EdgeInsets.all(14),
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
+      itemCount: itemCount,
+      itemBuilder: (context, index) {
+        var i = index;
+        if (pending != null) {
+          i -= 1;
+          if (i < 0) {
+            return _InfoBanner(
               color: const Color(0xFFFFF7E6),
+              border: const Color(0xFFF0B429),
+              icon: const Icon(
+                Icons.hourglass_top,
+                color: Color(0xFFB45309),
+                size: 20,
+              ),
+              text:
+                  'Pendaftaran kamu ke ${((pending['ekskul'] is Map) ? (pending['ekskul'] as Map)['nama_ekskul'] : 'ekskul').toString()} masih menunggu persetujuan ketua.',
+              textColor: const Color(0xFF92400E),
+              onTap: () => _openDetail(context, pending),
+            );
+          }
+        }
+        if (pendaftaran != null) {
+          i -= 1;
+          if (i < 0) {
+            return _InfoBanner(
+              color: const Color(0xFFEDF7EF),
+              border: const Color(0xFFBBE7C5),
+              icon: const Icon(
+                Icons.check_circle,
+                color: Color(0xFF16803C),
+                size: 20,
+              ),
+              text:
+                  'Kamu sudah aktif di ${((pendaftaran['ekskul'] is Map) ? (pendaftaran['ekskul'] as Map)['nama_ekskul'] : 'ekskul').toString()}.',
+              textColor: const Color(0xFF14532D),
+              onTap: () => _openDetail(context, pendaftaran),
+            );
+          }
+        }
+        if (i < filtered.length) {
+          final raw = filtered[i];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _EkskulCard(
+              ekskul: Ekskul.fromJson(raw),
+              onTap: () => _openDetail(context, raw),
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
+  void _openDetail(BuildContext context, Map<String, dynamic> data) {
+    final ekskulRaw = data['ekskul'] is Map ? data['ekskul'] as Map : data;
+    final id = (ekskulRaw['id'] as num?)?.toInt();
+    if (id == null) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => EkskulDetailScreen(ekskulId: id),
+      ),
+    );
+  }
+}
+
+class _InfoBanner extends StatelessWidget {
+  const _InfoBanner({
+    required this.color,
+    required this.border,
+    required this.icon,
+    required this.text,
+    required this.textColor,
+    this.onTap,
+  });
+
+  final Color color;
+  final Color border;
+  final Widget icon;
+  final String text;
+  final Color textColor;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFF0B429)),
+              border: Border.all(color: border),
             ),
             child: Row(
               children: [
-                const Icon(
-                  Icons.hourglass_top,
-                  color: Color(0xFFB45309),
-                  size: 20,
-                ),
+                icon,
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Pendaftaran kamu ke ${((pending['ekskul'] is Map) ? (pending['ekskul'] as Map)['nama_ekskul'] : 'ekskul').toString()} masih menunggu persetujuan ketua.',
+                    text,
                     style: GoogleFonts.plusJakartaSans(
-                      color: const Color(0xFF92400E),
+                      color: textColor,
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
                       height: 1.4,
                     ),
                   ),
                 ),
+                if (onTap != null)
+                  const Icon(Icons.chevron_right, color: Colors.black26, size: 20),
               ],
             ),
           ),
-        ],
-        if (pendaftaran != null) ...[
-          Container(
-            padding: const EdgeInsets.all(14),
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEDF7EF),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFBBE7C5)),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.check_circle,
-                  color: Color(0xFF16803C),
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Kamu sudah aktif di ',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: const Color(0xFF14532D),
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-        const SizedBox(height: 4),
-        for (final raw in filtered)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _EkskulCard(
-              ekskul: Ekskul.fromJson(raw),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) =>
-                      EkskulDetailScreen(ekskulId: Ekskul.fromJson(raw).id),
-                ),
-              ),
-            ),
-          ),
-        if (filtered.isEmpty)
-          const EmptyState(
-            title: 'Tidak ada ekskul',
-            subtitle: 'Coba kata kunci lain atau cek kembali nanti.',
-            icon: Icons.unfold_more_outlined,
-          ),
-      ],
+        ),
+      ),
     );
   }
 }

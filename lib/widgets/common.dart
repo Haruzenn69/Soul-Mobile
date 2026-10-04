@@ -7,14 +7,21 @@ import '../core/providers.dart';
 import '../theme/app_theme.dart';
 
 class ApiAsyncView<T> extends ConsumerWidget {
-  const ApiAsyncView({super.key, required this.value, required this.builder});
+  const ApiAsyncView({
+    super.key,
+    required this.value,
+    required this.builder,
+    this.onRetry,
+  });
 
   final AsyncValue<T> value;
   final Widget Function(BuildContext context, T data) builder;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return value.when(
+      skipLoadingOnRefresh: true,
       loading: () => const _LoadingState(),
       error: (e, _) {
         if (e is ApiException && e.isUnauthorized) {
@@ -22,7 +29,7 @@ class ApiAsyncView<T> extends ConsumerWidget {
             () => ref.read(authControllerProvider.notifier).logout(),
           );
         }
-        return BuildErrorCard(message: _messageOf(e));
+        return BuildErrorCard(message: _messageOf(e), onRetry: onRetry);
       },
       data: (data) => builder(context, data),
     );
@@ -71,16 +78,18 @@ class PageHeader extends StatelessWidget {
     this.subtitle,
     this.eyebrow,
     this.action,
+    this.topPadding = 12,
   });
 
   final String title;
   final String? subtitle;
   final String? eyebrow;
   final Widget? action;
+  final double topPadding;
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
+    padding: EdgeInsets.fromLTRB(16, topPadding, 16, 10),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -134,9 +143,10 @@ class PageHeader extends StatelessWidget {
 }
 
 class BuildErrorCard extends StatelessWidget {
-  const BuildErrorCard({super.key, required this.message});
+  const BuildErrorCard({super.key, required this.message, this.onRetry});
 
   final String message;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -169,6 +179,18 @@ class BuildErrorCard extends StatelessWidget {
                 height: 1.4,
               ),
             ),
+            if (onRetry != null) ...[
+              const SizedBox(height: 14),
+              OutlinedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Coba Lagi'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.blue,
+                  side: const BorderSide(color: AppTheme.blue),
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -224,17 +246,19 @@ class StatCard extends StatelessWidget {
     required this.value,
     this.icon,
     this.color = AppTheme.blue,
+    this.compact = false,
   });
 
   final String label;
   final String value;
   final IconData? icon;
   final Color color;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(compact ? 12 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -252,20 +276,22 @@ class StatCard extends StatelessWidget {
         children: [
           if (icon != null) ...[
             Icon(icon, color: color, size: 22),
-            const SizedBox(height: 10),
+            SizedBox(height: compact ? 1 : 10),
           ],
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: GoogleFonts.plusJakartaSans(
               color: color,
-              fontSize: 24,
+              fontSize: compact ? 18 : 24,
               fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 2),
+          SizedBox(height: compact ? 0 : 2),
           Text(
             label,
-            maxLines: 2,
+            maxLines: compact ? 1 : 2,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.plusJakartaSans(
               color: AppTheme.sub,
@@ -306,8 +332,24 @@ class StatusChip extends StatelessWidget {
   }
 
   Color _colorOf(String raw) {
-    final s = raw.toLowerCase();
-    if (s.contains('aktif') || s.contains('diterima') || s == 'hadir') {
+    final s = raw.toLowerCase().trim();
+    if (s.contains('nonaktif') ||
+        s.contains('tidak aktif') ||
+        s.contains('ditolak') ||
+        s.contains('alpha') ||
+        s.contains('belum aktif')) {
+      return const Color(0xFFE11D48);
+    }
+    if (s == 'izin') {
+      return AppTheme.blue;
+    }
+    if (s == 'sakit') {
+      return const Color(0xFFC77700);
+    }
+    if (s == 'aktif' ||
+        s.contains('aktif') ||
+        s == 'hadir' ||
+        s.contains('diterima')) {
       return const Color(0xFF16803C);
     }
     if (s.contains('pending') || s.contains('menunggu')) {
@@ -315,11 +357,6 @@ class StatusChip extends StatelessWidget {
     }
     if (s.contains('peringatan')) {
       return const Color(0xFFC77700);
-    }
-    if (s.contains('ditolak') ||
-        s.contains('nonaktif') ||
-        s.contains('alpha')) {
-      return const Color(0xFFE11D48);
     }
     if (s.contains('terkirim') ||
         s.contains('diserahkan') ||

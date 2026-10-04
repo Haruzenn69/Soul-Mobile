@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
@@ -19,7 +20,7 @@ class KetuaMenuScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
         children: [
           const PageHeader(
             title: 'Menu Ketua',
@@ -28,7 +29,7 @@ class KetuaMenuScreen extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           _IdentityCard(user: user),
-          const SizedBox(height: 24),
+          const SizedBox(height: 26),
           _MenuSection(
             title: 'Kegiatan',
             children: [
@@ -40,7 +41,7 @@ class KetuaMenuScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 26),
           _MenuSection(
             title: 'Kelola Katalog',
             children: [
@@ -64,7 +65,7 @@ class KetuaMenuScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 26),
           _MenuSection(
             title: 'Akun',
             children: [
@@ -108,51 +109,97 @@ class _IdentityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ekskulName = user.aktivEkskul?.namaEkskul ?? 'Ekstrakurikuler';
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
+          colors: [AppTheme.sky, Color(0xFF60A5FA), AppTheme.blue],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppTheme.sky, Color(0xFF60A5FA), AppTheme.blue],
         ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: Colors.white.withValues(alpha: 0.2),
-            foregroundColor: Colors.white,
-            child: Text(
-              user.namaTampilan.isEmpty ? '?' : user.namaTampilan[0],
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.blue.withValues(alpha: 0.18),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user.namaTampilan,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Text(
+                  user.namaTampilan.isEmpty ? '?' : user.namaTampilan[0],
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(
                     color: Colors.white,
+                    fontSize: 18,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  user.aktivEkskul?.namaEkskul ?? 'Ketua ekstrakurikuler',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 12,
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 11,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Text(
+                  'KETUA',
+                  style: GoogleFonts.plusJakartaSans(
+                    color: const Color(0xFF1D4ED8),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 22),
+          Text(
+            'EKSTRAKURIKULER',
+            style: GoogleFonts.plusJakartaSans(
+              color: Colors.white.withValues(alpha: 0.78),
+              fontSize: 10,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            ekskulName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.plusJakartaSans(
+              color: Colors.white,
+              fontSize: 25,
+              height: 1.2,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Dikelola oleh ${user.namaTampilan}',
+            style: GoogleFonts.plusJakartaSans(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 13,
+              height: 1.45,
             ),
           ),
         ],
@@ -173,26 +220,20 @@ class _MenuSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.only(left: 2, bottom: 8),
+          padding: const EdgeInsets.only(left: 4, bottom: 10),
           child: Text(
-            title.toUpperCase(),
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: AppTheme.sub,
+            title,
+            style: GoogleFonts.plusJakartaSans(
+              color: AppTheme.ink,
+              fontSize: 17,
               fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
             ),
           ),
         ),
-        Card(
-          child: Column(
-            children: [
-              for (var i = 0; i < children.length; i++) ...[
-                if (i > 0) const Divider(height: 1, indent: 56),
-                children[i],
-              ],
-            ],
-          ),
-        ),
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0) const SizedBox(height: 12),
+          children[i],
+        ],
       ],
     );
   }
@@ -213,13 +254,73 @@ class _MenuTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      minVerticalPadding: 10,
-      leading: Icon(icon, color: AppTheme.blue),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-      subtitle: Text(subtitle),
-      trailing: const Icon(Icons.chevron_right, color: AppTheme.sub),
-      onTap: onTap,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE8EDF5)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.035),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: AppTheme.blue, size: 20),
+                ),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: GoogleFonts.plusJakartaSans(
+                          color: AppTheme.ink,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: GoogleFonts.plusJakartaSans(
+                          color: AppTheme.sub,
+                          fontSize: 11,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Padding(
+                  padding: const EdgeInsets.only(top: 9),
+                  child: Icon(Icons.chevron_right, color: AppTheme.sub, size: 22),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

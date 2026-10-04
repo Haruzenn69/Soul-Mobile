@@ -22,12 +22,13 @@ class ProfilScreen extends ConsumerWidget {
 
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
           const PageHeader(
             title: 'Profil & Pengaturan',
             subtitle: 'Informasi akun dan preferensi keamanan.',
             eyebrow: 'AKUN',
+            topPadding: 25,
           ),
           Container(
             padding: const EdgeInsets.all(18),

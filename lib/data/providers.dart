@@ -83,7 +83,7 @@ final kegiatanDetailProvider = FutureProvider.family<Map<String, dynamic>, int>(
     return {
       'kegiatan': data?['kegiatan'],
       'presensi': data?['presensi'],
-      'rekap': data?['rekap'],
+      'ringkasan': data?['ringkasan'] ?? data?['rekap'],
     };
   },
 );

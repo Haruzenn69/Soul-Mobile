@@ -35,6 +35,7 @@ class BerandaKetua extends ConsumerWidget {
               sliver: SliverToBoxAdapter(
                 child: ApiAsyncView(
                   value: dashboard,
+                  onRetry: () => ref.invalidate(ketuaDashboardProvider),
                   builder: (context, data) {
                     final totalAnggota =
                         (data['total_anggota'] as num?)?.toInt() ?? 0;
@@ -593,7 +594,7 @@ class _ClassDistribution extends StatelessWidget {
                       width: 68,
                       child: Text(
                         i < labels.length ? '${labels[i]}' : 'Kelas',
-                        style: const TextStyle(
+                        style: GoogleFonts.plusJakartaSans(
                           color: AppTheme.sub,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -620,7 +621,7 @@ class _ClassDistribution extends StatelessWidget {
                       child: Text(
                         '${counts[i]}',
                         textAlign: TextAlign.end,
-                        style: const TextStyle(
+                        style: GoogleFonts.plusJakartaSans(
                           color: AppTheme.ink,
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
@@ -734,7 +735,7 @@ class _ModerationTile extends StatelessWidget {
                 children: [
                   Text(
                     '$count',
-                    style: TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       color: color,
                       fontSize: 20,
                       fontWeight: FontWeight.w900,
@@ -746,7 +747,7 @@ class _ModerationTile extends StatelessWidget {
                     '$title · ${count > 0 ? 'pending' : 'antrian kosong'}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: GoogleFonts.plusJakartaSans(
                       color: AppTheme.sub,
                       fontSize: 9,
                       fontWeight: FontWeight.w600,
@@ -853,7 +854,10 @@ class _PriorityTile extends StatelessWidget {
         ),
         title: Text(
           title,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         subtitle: Text(subtitle),
         trailing: Icon(Icons.chevron_right, color: color),
@@ -925,7 +929,10 @@ class _QuickActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListTile(
     leading: Icon(icon, color: AppTheme.blue),
-    title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+    title: Text(
+      title,
+      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+    ),
     subtitle: Text(subtitle),
     trailing: const Icon(Icons.chevron_right, color: AppTheme.sub),
     onTap: onTap,

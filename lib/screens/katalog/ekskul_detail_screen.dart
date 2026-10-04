@@ -158,6 +158,7 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
       appBar: AppBar(title: const Text('Detail Ekskul')),
       body: ApiAsyncView(
         value: detail,
+        onRetry: () => ref.invalidate(ekskulDetailProvider(widget.ekskulId)),
         builder: (context, data) {
           final detailData =
               data['ekskul'] is Map && (data['ekskul'] as Map)['ekskul'] is Map
@@ -180,29 +181,6 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
               auth.user?.role == 'siswa';
           final hasSubmittedTestimoni =
               detailData['has_submitted_testimoni'] == true;
-          final catalogData = ref.watch(katalogProvider).asData?.value;
-          final sudahAktif = catalogData?['pendaftaran'] is Map;
-          final sedangMenunggu = catalogData?['pending'] is Map;
-          final profilLengkap = catalogData?['profile_complete'] == true;
-          final recruitmentOpen = ekskul.isOpenRecruitment && ekskul.status;
-          final canJoin =
-              canSendFeedback &&
-              recruitmentOpen &&
-              catalogData != null &&
-              !sudahAktif &&
-              !sedangMenunggu &&
-              profilLengkap;
-          final joinLabel = catalogData == null
-              ? 'Memuat status pendaftaran'
-              : sudahAktif
-              ? 'Kamu sudah terdaftar di ekskul'
-              : sedangMenunggu
-              ? 'Menunggu persetujuan pendaftaran'
-              : !profilLengkap
-              ? 'Lengkapi profil sebelum mendaftar'
-              : recruitmentOpen
-              ? 'Daftar sekarang'
-              : 'Pendaftaran ditutup';
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
@@ -369,14 +347,6 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
                         ),
                 ),
               ],
-              const SizedBox(height: 20),
-              _JoinCallout(
-                ekskul: ekskul,
-                onJoin: canJoin && !_loading ? () => _daftar(ekskul) : null,
-                loading: _loading,
-                actionLabel: joinLabel,
-              ),
-              const SizedBox(height: 8),
             ],
           );
         },
@@ -1018,91 +988,6 @@ class _FeedbackActionCard extends StatelessWidget {
             buttonLabel,
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-class _JoinCallout extends StatelessWidget {
-  const _JoinCallout({
-    required this.ekskul,
-    required this.onJoin,
-    required this.loading,
-    required this.actionLabel,
-  });
-
-  final Ekskul ekskul;
-  final VoidCallback? onJoin;
-  final bool loading;
-  final String actionLabel;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(17),
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [AppTheme.sky, Color(0xFF3B82F6), AppTheme.blue],
-      ),
-      borderRadius: BorderRadius.circular(20),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'PILIHAN EKSKUL',
-          style: GoogleFonts.plusJakartaSans(
-            color: Colors.white.withValues(alpha: 0.8),
-            fontSize: 9,
-            fontWeight: FontWeight.w900,
-            letterSpacing: 1,
-          ),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          'Tertarik bergabung dengan ${ekskul.namaEkskul}?',
-          style: GoogleFonts.plusJakartaSans(
-            color: Colors.white,
-            fontSize: 17,
-            fontWeight: FontWeight.w900,
-            height: 1.2,
-          ),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          'Kembangkan potensi, raih prestasi, dan jalin persahabatan baru.',
-          style: GoogleFonts.plusJakartaSans(
-            color: Colors.white.withValues(alpha: 0.88),
-            fontSize: 11.5,
-            height: 1.4,
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: ekskul.isOpenRecruitment && ekskul.status
-                ? onJoin
-                : null,
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFFBBF24),
-              foregroundColor: const Color(0xFF1E293B),
-              disabledBackgroundColor: Colors.white.withValues(alpha: 0.2),
-              disabledForegroundColor: Colors.white70,
-            ),
-            child: loading
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Color(0xFF1E293B),
-                    ),
-                  )
-                : Text(actionLabel),
           ),
         ),
       ],

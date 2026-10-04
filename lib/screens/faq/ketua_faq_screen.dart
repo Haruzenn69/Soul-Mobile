@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import '../../core/api_client.dart';
 import '../../core/providers.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
@@ -28,8 +30,10 @@ class _KetuaFaqScreenState extends ConsumerState<KetuaFaqScreen> {
         .get('/ketua/faq', query: {'status': _status});
   }
 
-  void _reload() {
-    if (mounted) setState(() => _faqs = _loadFaqs());
+  Future<void> _reload() {
+    final future = _loadFaqs();
+    if (mounted) setState(() => _faqs = future);
+    return future.then<void>((_) {}, onError: (_) {});
   }
 
   List<Map<String, dynamic>> _items(Map<String, dynamic> response) {
@@ -190,11 +194,11 @@ class _KetuaFaqScreenState extends ConsumerState<KetuaFaqScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(
-              child: TextButton(
-                onPressed: _reload,
-                child: const Text('Gagal memuat FAQ. Coba lagi.'),
-              ),
+            return BuildErrorCard(
+              message: snapshot.error is ApiException
+                  ? (snapshot.error as ApiException).message
+                  : 'Gagal memuat FAQ. Coba lagi.',
+              onRetry: _reload,
             );
           }
           final data = snapshot.data!;
@@ -257,14 +261,23 @@ class _KetuaFaqScreenState extends ConsumerState<KetuaFaqScreen> {
                                   children: [
                                     Text(
                                       faq['pertanyaan']?.toString() ?? '',
-                                      style: const TextStyle(
+                                      style: GoogleFonts.plusJakartaSans(
                                         color: AppTheme.ink,
+                                        fontSize: 14.5,
                                         fontWeight: FontWeight.w700,
+                                        height: 1.3,
                                       ),
                                     ),
                                     if (!pending && faq['jawaban'] != null) ...[
                                       const SizedBox(height: 8),
-                                      Text(faq['jawaban'].toString()),
+                                      Text(
+                                        faq['jawaban'].toString(),
+                                        style: GoogleFonts.plusJakartaSans(
+                                          color: AppTheme.sub,
+                                          fontSize: 13,
+                                          height: 1.5,
+                                        ),
+                                      ),
                                     ],
                                     const SizedBox(height: 8),
                                     Row(

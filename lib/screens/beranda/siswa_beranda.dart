@@ -60,6 +60,7 @@ class BerandaSiswa extends ConsumerWidget {
               sliver: SliverToBoxAdapter(
                 child: ApiAsyncView(
                   value: dashboard,
+                  onRetry: () => ref.invalidate(siswaDashboardProvider),
                   builder: (context, data) {
                     final rawPendaftaran = data['pendaftaran'];
                     final pendaftaran = rawPendaftaran is Map

@@ -7,6 +7,29 @@ import '../../data/providers.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
 
+const _bulanPendek = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'Mei',
+  'Jun',
+  'Jul',
+  'Agu',
+  'Sep',
+  'Okt',
+  'Nov',
+  'Des',
+];
+
+String _labelBulan(String ym) {
+  final parts = ym.split('-');
+  if (parts.length != 2) return ym;
+  final month = int.tryParse(parts[1]);
+  if (month == null || month < 1 || month > 12) return ym;
+  return '${_bulanPendek[month - 1]} ${parts[0]}';
+}
+
 class SiswaAktivitasScreen extends ConsumerStatefulWidget {
   const SiswaAktivitasScreen({super.key, this.initialTab = 0});
 
@@ -93,6 +116,7 @@ class _PresensiTabState extends ConsumerState<_PresensiTab> {
     final value = ref.watch(siswaPresensiProvider);
     return ApiAsyncView(
       value: value,
+      onRetry: () => ref.invalidate(siswaPresensiProvider),
       builder: (context, data) {
         final rows = listOf(data, 'presensi');
         if (rows.isEmpty) {
@@ -125,7 +149,12 @@ class _PresensiTabState extends ConsumerState<_PresensiTab> {
         }).toList();
 
         return RefreshIndicator(
-          onRefresh: () async => ref.invalidate(siswaPresensiProvider),
+          onRefresh: () async {
+            ref.invalidate(siswaPresensiProvider);
+            try {
+              await ref.read(siswaPresensiProvider.future);
+            } catch (_) {}
+          },
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -148,7 +177,7 @@ class _PresensiTabState extends ConsumerState<_PresensiTab> {
                     itemBuilder: (context, index) {
                       final month = index == 0 ? null : months[index - 1];
                       return ChoiceChip(
-                        label: Text(month ?? 'Semua bulan'),
+                        label: Text(month == null ? 'Semua bulan' : _labelBulan(month)),
                         selected: _month == month,
                         onSelected: (selected) {
                           if (selected) setState(() => _month = month);
@@ -204,6 +233,7 @@ class _RekapTabState extends ConsumerState<_RekapTab> {
     final value = ref.watch(siswaRekapMonthProvider(_selectedMonth));
     return ApiAsyncView(
       value: value,
+      onRetry: () => ref.invalidate(siswaRekapMonthProvider(_selectedMonth)),
       builder: (context, data) {
         final row = data['rekap'] is Map
             ? Map<String, dynamic>.from(data['rekap'] as Map)
@@ -231,7 +261,7 @@ class _RekapTabState extends ConsumerState<_RekapTab> {
                     final month = (data['available_months'] as List)[index]
                         .toString();
                     return ChoiceChip(
-                      label: Text(month),
+                      label: Text(_labelBulan(month)),
                       selected: (_selectedMonth ?? data['bulan']) == month,
                       onSelected: (selected) {
                         if (selected) setState(() => _selectedMonth = month);
@@ -243,7 +273,7 @@ class _RekapTabState extends ConsumerState<_RekapTab> {
               const SizedBox(height: 12),
             ],
             _SummaryCard(
-              title: 'Rekap ${data['bulan'] ?? ''}',
+              title: 'Rekap ${_labelBulan(data['bulan']?.toString() ?? '')}',
               values: {
                 'Hadir': row['hadir'],
                 'Izin': row['izin'],
@@ -267,6 +297,7 @@ class _NilaiTab extends ConsumerWidget {
     final value = ref.watch(siswaNilaiProvider);
     return ApiAsyncView(
       value: value,
+      onRetry: () => ref.invalidate(siswaNilaiProvider),
       builder: (context, data) {
         final nilai = data['penilaian'] is Map
             ? Map<String, dynamic>.from(data['penilaian'] as Map)
@@ -329,6 +360,7 @@ class _PengajuanTabState extends ConsumerState<_PengajuanTab> {
     final value = ref.watch(siswaPengajuanProvider);
     return ApiAsyncView(
       value: value,
+      onRetry: () => ref.invalidate(siswaPengajuanProvider),
       builder: (context, data) {
         final items = listOf(data, 'pengajuans');
         final hasPending = items.any((e) => e['status'] == 'pending');

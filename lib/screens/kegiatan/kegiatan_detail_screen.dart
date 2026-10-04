@@ -13,6 +13,7 @@ import '../../data/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/photo_viewer.dart';
 import 'presensi_input_screen.dart';
 
 class KegiatanDetailScreen extends ConsumerStatefulWidget {
@@ -26,6 +27,8 @@ class KegiatanDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
+  bool _showAllAttendance = false;
+
   Future<void> _editKegiatan(Kegiatan keg) async {
     final materiCtrl = TextEditingController(text: keg.materi);
     final deskripsiCtrl = TextEditingController(text: keg.deskripsi ?? '');
@@ -300,7 +303,7 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
                       ],
                     ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'hapus',
                     child: Row(
                       children: [
@@ -312,7 +315,9 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
                         SizedBox(width: 8),
                         Text(
                           'Hapus Kegiatan',
-                          style: TextStyle(color: Color(0xFFE11D48)),
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Color(0xFFE11D48),
+                          ),
                         ),
                       ],
                     ),
@@ -326,6 +331,7 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
       ),
       body: ApiAsyncView(
         value: detail,
+        onRetry: () => ref.invalidate(kegiatanDetailProvider(widget.kegiatanId)),
         builder: (context, data) {
           final keg = Kegiatan.fromJson(
             data['kegiatan'] is Map
@@ -334,83 +340,56 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
           );
           final ringkasan = data['ringkasan'] is Map
               ? Map<String, dynamic>.from(data['ringkasan'] as Map)
+              : data['rekap'] is Map
+              ? Map<String, dynamic>.from(data['rekap'] as Map)
               : <String, dynamic>{};
           final presensi = (data['presensi'] as List?) ?? const [];
 
           return RefreshIndicator(
             onRefresh: () async {
               ref.invalidate(kegiatanDetailProvider(widget.kegiatanId));
+              try {
+                await ref
+                    .read(kegiatanDetailProvider(widget.kegiatanId).future);
+              } catch (_) {}
             },
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
               children: [
-                Text(
-                  keg.materi,
-                  style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.ink,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(Icons.schedule, color: AppTheme.sub, size: 15),
-                    const SizedBox(width: 6),
-                    Text(
-                      keg.tanggalText,
-                      style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.sub,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    if (keg.isEvent) const StatusChip('Event'),
-                  ],
-                ),
+                _activityHero(keg),
                 if (keg.dokumentasi?.isNotEmpty == true) ...[
                   const SizedBox(height: 14),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: Image.network(
-                      AppConfig.imageUrl(keg.dokumentasi),
-                      width: double.infinity,
-                      height: 200,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        height: 200,
-                        color: Colors.black12,
-                        child: const Icon(
-                          Icons.image_not_supported_outlined,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                  _activityContentCard(
+                    title: 'Dokumentasi Kegiatan',
+                    subtitle: 'Ketuk foto untuk memperbesar.',
+                    icon: Icons.photo_library_outlined,
+                    child: _activityPhoto(AppConfig.imageUrl(keg.dokumentasi)),
                   ),
                 ],
-                if (keg.deskripsi?.isNotEmpty == true) ...[
+                if (keg.deskripsi?.trim().isNotEmpty == true) ...[
                   const SizedBox(height: 14),
-                  Text(
-                    keg.deskripsi!,
-                    style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.sub,
-                      fontSize: 13,
-                      height: 1.5,
+                  _activityContentCard(
+                    title: 'Tentang Kegiatan',
+                    subtitle: 'Informasi tambahan kegiatan ini.',
+                    icon: Icons.subject_outlined,
+                    child: Text(
+                      keg.deskripsi!,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppTheme.ink,
+                        fontSize: 13,
+                        height: 1.55,
+                      ),
                     ),
                   ),
                 ],
                 const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const SectionTitle('Ringkasan Kehadiran'),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 8,
-                        ),
-                      ),
+                _activityContentCard(
+                  title: 'Ringkasan Kehadiran',
+                  subtitle: 'Rekap status kehadiran peserta kegiatan.',
+                  icon: Icons.fact_check_outlined,
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
                       onPressed: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
@@ -424,75 +403,360 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
                       icon: const Icon(Icons.checklist_rtl, size: 18),
                       label: const Text('Isi Presensi'),
                     ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 10),
-                Row(
+                const SizedBox(height: 12),
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  mainAxisExtent: 100,
                   children: [
                     for (final entry in [
-                      ('hadir', 'Hadir'),
-                      ('izin', 'Izin'),
-                      ('sakit', 'Sakit'),
-                      ('alpha', 'Alpha'),
+                      ('hadir', 'Hadir', Icons.check_circle_outline_rounded),
+                      ('sakit', 'Sakit', Icons.sick_outlined),
+                      ('izin', 'Izin', Icons.event_note_outlined),
+                      ('alpha', 'Alpha', Icons.cancel_outlined),
                     ])
-                      Expanded(
-                        child: StatCard(
-                          label: entry.$2,
-                          value:
-                              '${(ringkasan[entry.$1] as num?)?.toInt() ?? 0}',
-                          color: _colorFor(entry.$1),
-                        ),
+                      StatCard(
+                        label: entry.$2,
+                        value: '${(ringkasan[entry.$1] as num?)?.toInt() ?? 0}',
+                        color: _colorFor(entry.$1),
+                        icon: entry.$3,
+                        compact: true,
                       ),
                   ],
                 ),
-                const SizedBox(height: 22),
-                const SectionTitle('Rekap Presensi'),
-                const SizedBox(height: 8),
-                if (presensi.isEmpty)
-                  const EmptyState(
-                    title: 'Belum ada data presensi',
-                    icon: Icons.assignment_outlined,
-                  )
-                else
-                  Column(
-                    children: [
-                      for (final p in presensi)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.black.withValues(alpha: 0.05),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    '${p['nama'] ?? '-'}',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      color: AppTheme.ink,
-                                      fontSize: 13.5,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                                StatusChip('${p['status'] ?? '-'}'),
-                              ],
+                const SizedBox(height: 20),
+                _activityContentCard(
+                  title: 'Rekap Presensi',
+                  subtitle: presensi.isEmpty
+                      ? 'Belum ada peserta yang mengisi presensi.'
+                      : '${presensi.length} siswa tercatat pada kegiatan ini.',
+                  icon: Icons.groups_2_outlined,
+                  child: presensi.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Text(
+                            'Data presensi akan muncul setelah diisi.',
+                            style: GoogleFonts.plusJakartaSans(
+                              color: AppTheme.sub,
+                              fontSize: 13,
                             ),
                           ),
+                        )
+                      : Column(
+                          children: [
+                            for (final p
+                                in (_showAllAttendance
+                                    ? presensi
+                                    : presensi.take(5)))
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 17,
+                                        backgroundColor: AppTheme.blueBg,
+                                        child: Text(
+                                          _initials(p['nama']?.toString()),
+                                          style: GoogleFonts.plusJakartaSans(
+                                            color: AppTheme.blue,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          '${p['nama'] ?? '-'}',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            color: AppTheme.ink,
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      StatusChip('${p['status'] ?? '-'}'),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            if (presensi.length > 5)
+                              Align(
+                                alignment: Alignment.center,
+                                child: TextButton.icon(
+                                  onPressed: () => setState(
+                                    () => _showAllAttendance =
+                                        !_showAllAttendance,
+                                  ),
+                                  icon: Icon(
+                                    _showAllAttendance
+                                        ? Icons.expand_less
+                                        : Icons.expand_more,
+                                  ),
+                                  label: Text(
+                                    _showAllAttendance
+                                        ? 'Tampilkan lebih sedikit'
+                                        : 'Lihat semua ${presensi.length} siswa',
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                    ],
-                  ),
-                const SizedBox(height: 24),
+                ),
               ],
             ),
           );
         },
       ),
+    );
+  }
+
+  Widget _activityHero(Kegiatan keg) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppTheme.sky, Color(0xFF60A5FA), AppTheme.blue],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.blue.withValues(alpha: 0.18),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.event_available_outlined,
+                  color: Colors.white,
+                ),
+              ),
+              const Spacer(),
+              if (keg.isEvent)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 11,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Text(
+                    'Event / Lomba',
+                    style: GoogleFonts.plusJakartaSans(
+                      color: const Color(0xFF1D4ED8),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 22),
+          Text(
+            'DETAIL KEGIATAN',
+            style: GoogleFonts.plusJakartaSans(
+              color: Colors.white.withValues(alpha: 0.78),
+              fontSize: 10,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            keg.materi,
+            style: GoogleFonts.plusJakartaSans(
+              color: Colors.white,
+              fontSize: 25,
+              height: 1.2,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(Icons.schedule, color: Colors.white70, size: 15),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  keg.tanggalText,
+                  style: GoogleFonts.plusJakartaSans(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _activityContentCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Widget child,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE8EDF5)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.035),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: AppTheme.blue, size: 20),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppTheme.ink,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppTheme.sub,
+                        fontSize: 11,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          child,
+        ],
+      ),
+    );
+  }
+
+  Widget _activityPhoto(String imageUrl) {
+    return Semantics(
+      button: true,
+      label: 'Perbesar foto dokumentasi',
+      child: GestureDetector(
+        onTap: () => _showPhoto(context, imageUrl),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Image.network(
+            imageUrl,
+            width: double.infinity,
+            height: 200,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, progress) {
+              if (progress == null) return child;
+              return Container(
+                width: double.infinity,
+                height: 200,
+                color: const Color(0xFFF1F5F9),
+                alignment: Alignment.center,
+                child: const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              );
+            },
+            errorBuilder: (_, _, _) => Container(
+              width: double.infinity,
+              height: 200,
+              color: const Color(0xFFF1F5F9),
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.broken_image_outlined,
+                    color: AppTheme.sub,
+                    size: 25,
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    'Foto tidak tersedia',
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.sub,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showPhoto(BuildContext context, String imageUrl) {
+    PhotoViewDialog.show(
+      context,
+      imageUrl: imageUrl,
+      title: 'Dokumentasi Kegiatan',
     );
   }
 
@@ -508,4 +772,12 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
         return const Color(0xFFE11D48);
     }
   }
+}
+
+String _initials(String? name) {
+  final parts = (name ?? '').trim().split(RegExp(r'\s+'));
+  if (parts.first.isEmpty) return 'S';
+  final first = parts.first.substring(0, 1);
+  if (parts.length == 1 || parts.last.isEmpty) return first.toUpperCase();
+  return '$first${parts.last.substring(0, 1)}'.toUpperCase();
 }

@@ -282,6 +282,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             controller: _identifier,
                             keyboardType: TextInputType.text,
                             textInputAction: TextInputAction.next,
+                            onChanged: (_) => ref
+                                .read(authControllerProvider.notifier)
+                                .clearLoginError(),
                             decoration: const InputDecoration(
                               labelText: 'NIS / Username',
                             ),
@@ -292,6 +295,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             obscureText: !_showPassword,
                             textInputAction: TextInputAction.done,
                             onSubmitted: (_) => _submit(),
+                            onChanged: (_) => ref
+                                .read(authControllerProvider.notifier)
+                                .clearLoginError(),
                             decoration: InputDecoration(
                               labelText: 'Password',
                               suffixIcon: IconButton(

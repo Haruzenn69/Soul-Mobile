@@ -10,6 +10,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
 import '../kegiatan/rekap_presensi_screen.dart';
 import 'laporan_detail_screen.dart';
+import 'laporan_create_screen.dart';
 
 class LaporanScreen extends ConsumerWidget {
   const LaporanScreen({super.key, required this.user});
@@ -28,6 +29,7 @@ class LaporanScreen extends ConsumerWidget {
             title: 'Laporan Bulanan',
             subtitle: 'Pantau dan unduh ringkasan kegiatan ekskul.',
             eyebrow: 'DOKUMENTASI',
+            topPadding: 25,
             action: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -41,9 +43,13 @@ class LaporanScreen extends ConsumerWidget {
                   tooltip: 'Rekap kehadiran',
                 ),
                 IconButton.filled(
-                  onPressed: () => _buatLaporan(context, ref),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const LaporanCreateScreen(),
+                    ),
+                  ),
                   icon: const Icon(Icons.add),
-                  tooltip: 'Buat laporan bulan ini',
+                  tooltip: 'Buat laporan baru',
                 ),
               ],
             ),
@@ -51,31 +57,69 @@ class LaporanScreen extends ConsumerWidget {
           Expanded(
             child: ApiAsyncView(
               value: laporan,
+              onRetry: () => ref.invalidate(ketuaLaporanProvider),
               builder: (context, data) {
                 final items = listOf(data, 'laporans');
                 if (items.isEmpty) {
                   return const EmptyState(
                     title: 'Belum ada laporan',
-                    subtitle: 'Tekan + untuk membuat laporan bulan ini.',
+                    subtitle: 'Buat laporan untuk memulai dokumentasi bulanan.',
                     icon: Icons.description_outlined,
                   );
                 }
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-                  itemCount: items.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, i) => _LaporanCard(
-                    data: items[i],
-                    onTap: () {
-                      final id = (items[i]['id'] as num?)?.toInt();
-                      if (id == null) return;
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => LaporanDetailScreen(laporanId: id),
-                        ),
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    ref.invalidate(ketuaLaporanProvider);
+                    try {
+                      await ref.read(ketuaLaporanProvider.future);
+                    } catch (_) {}
+                  },
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                    itemCount: items.length + 1,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (context, i) {
+                      if (i == 0) {
+                        return Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 2, 4, 2),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 11,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: AppTheme.line),
+                            ),
+                            child: Text(
+                              '${items.length} laporan tersimpan',
+                              style: GoogleFonts.plusJakartaSans(
+                                color: AppTheme.ink,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      final report = items[i - 1];
+                      return _LaporanCard(
+                        data: report,
+                        onTap: () {
+                          final id = (report['id'] as num?)?.toInt();
+                          if (id == null) return;
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  LaporanDetailScreen(laporanId: id),
+                            ),
+                          );
+                        },
+                        onDownload: () => _downloadPdf(context, ref, report),
                       );
                     },
-                    onDownload: () => _downloadPdf(context, ref, items[i]),
                   ),
                 );
               },
@@ -109,53 +153,6 @@ class LaporanScreen extends ConsumerWidget {
       if (context.mounted) await showErrorDialog(context, ref, error);
     }
   }
-
-  Future<void> _buatLaporan(BuildContext context, WidgetRef ref) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Buat Laporan Bulan Ini',
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
-        ),
-        content: Text(
-          'Laporan akan digenerate otomatis berdasarkan kegiatan dan presensi bulan ini.',
-          style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.sub,
-            fontSize: 13,
-            height: 1.5,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Buat'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !context.mounted) return;
-    try {
-      await ref
-          .read(apiClientProvider)
-          .post('/ketua/laporan-bulanan', data: {});
-      ref.invalidate(ketuaLaporanProvider);
-      ref.invalidate(ketuaDashboardProvider);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Laporan bulanan berhasil dibuat.')),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        await showErrorDialog(context, ref, e);
-      }
-    }
-  }
 }
 
 class _LaporanCard extends StatelessWidget {
@@ -175,49 +172,113 @@ class _LaporanCard extends StatelessWidget {
     final status = data['status'] as String? ?? '-';
     final ringkasan = data['ringkasan'] as String?;
 
-    return Card(
+    return Material(
       color: Colors.white,
+      borderRadius: BorderRadius.circular(19),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
+        borderRadius: BorderRadius.circular(19),
+        child: Container(
+          padding: const EdgeInsets.all(15),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(19),
+            border: Border.all(color: const Color(0xFFE8EDF5)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.025),
+                blurRadius: 12,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
+                  Container(
+                    width: 43,
+                    height: 43,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(
+                      Icons.description_outlined,
+                      color: AppTheme.blue,
+                      size: 21,
+                    ),
+                  ),
+                  const SizedBox(width: 11),
                   Expanded(
-                    child: Text(
-                      _formatBulan(bulan),
-                      style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.ink,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _formatBulan(bulan),
+                          style: GoogleFonts.plusJakartaSans(
+                            color: AppTheme.ink,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          _statusDescription(status),
+                          style: GoogleFonts.plusJakartaSans(
+                            color: AppTheme.sub,
+                            fontSize: 10.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   StatusChip(_labelStatus(status)),
-                  IconButton(
-                    onPressed: onDownload,
-                    icon: const Icon(Icons.download_outlined),
-                    tooltip: 'Unduh PDF',
-                  ),
                 ],
               ),
-              if (ringkasan?.isNotEmpty == true) ...[
-                const SizedBox(height: 8),
+              if (ringkasan?.trim().isNotEmpty == true) ...[
+                const SizedBox(height: 12),
                 Text(
-                  ringkasan!,
+                  ringkasan!.trim(),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.plusJakartaSans(
                     color: AppTheme.sub,
-                    fontSize: 12.5,
+                    fontSize: 12,
                     height: 1.45,
                   ),
                 ),
               ],
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.open_in_new_rounded,
+                    color: AppTheme.blue,
+                    size: 15,
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    'Buka detail laporan',
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.blue,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: onDownload,
+                    icon: const Icon(Icons.download_outlined, size: 20),
+                    tooltip: 'Unduh PDF',
+                    style: IconButton.styleFrom(
+                      foregroundColor: AppTheme.blue,
+                      backgroundColor: const Color(0xFFEFF6FF),
+                      minimumSize: const Size(38, 38),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -256,8 +317,26 @@ class _LaporanCard extends StatelessWidget {
         return 'Diserahkan';
       case 'disetujui':
         return 'Disetujui';
+      case 'ditolak':
+        return 'Perlu Revisi';
       default:
         return raw;
+    }
+  }
+
+  String _statusDescription(String raw) {
+    switch (raw) {
+      case 'draft':
+        return 'Belum diserahkan ke pembina';
+      case 'diserahkan':
+      case 'menunggu':
+        return 'Menunggu pemeriksaan pembina';
+      case 'disetujui':
+        return 'Sudah disetujui pembina';
+      case 'ditolak':
+        return 'Perlu diperbaiki dan dikirim ulang';
+      default:
+        return 'Laporan kegiatan ekskul';
     }
   }
 }

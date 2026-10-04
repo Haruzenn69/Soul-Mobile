@@ -49,19 +49,21 @@ class PhotoViewDialog extends StatelessWidget {
                     child: CircularProgressIndicator(color: Colors.white),
                   );
                 },
-                errorBuilder: (context, error, stackTrace) => const Center(
+                errorBuilder: (context, error, stackTrace) => Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.broken_image_outlined,
                         color: Colors.white70,
                         size: 48,
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text(
                         'Gagal memuat gambar',
-                        style: TextStyle(color: Colors.white70),
+                        style: GoogleFonts.plusJakartaSans(
+                          color: Colors.white70,
+                        ),
                       ),
                     ],
                   ),
