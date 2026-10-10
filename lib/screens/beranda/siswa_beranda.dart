@@ -9,8 +9,10 @@ import '../../data/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
+import '../../core/app_config.dart';
 import '../aktivitas/siswa_aktivitas_screen.dart';
 import '../katalog/ekskul_detail_screen.dart';
+import '../profil/pengajuan_keluar_screen.dart';
 
 const _bulanIndonesia = [
   'Januari',
@@ -32,6 +34,14 @@ String _formatIndonesianDate(DateTime date) =>
 
 String _monthAbbreviation(int month) =>
     _bulanIndonesia[month - 1].substring(0, 3).toUpperCase();
+
+Color _attendanceColor(String status) => switch (status.toLowerCase()) {
+  'hadir' => const Color(0xFF15803D),
+  'izin' => const Color(0xFF1E5AA8),
+  'sakit' => const Color(0xFFC77700),
+  'alpha' => const Color(0xFFE11D48),
+  _ => AppTheme.sub,
+};
 
 class BerandaSiswa extends ConsumerWidget {
   const BerandaSiswa({super.key, required this.user});
@@ -161,43 +171,54 @@ class BerandaSiswa extends ConsumerWidget {
                                 ref.read(shellTabProvider.notifier).set(3),
                           ),
                         const SizedBox(height: 14),
-                        Row(
+                        Column(
                           children: [
-                            Expanded(
-                              child: _DashboardStat(
-                                label: 'Status Ekskul',
-                                value: isJoined ? '1' : '0',
-                                detail: isJoined ? 'Terdaftar' : 'Belum',
-                                icon: Icons.groups_2_outlined,
-                                color: isJoined
-                                    ? const Color(0xFF15803D)
-                                    : const Color(0xFFD97706),
-                                tint: isJoined
-                                    ? const Color(0xFFECFDF5)
-                                    : const Color(0xFFFFFBEB),
-                              ),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: StatCard(
+                                    label: 'Status Ekskul',
+                                    value: isJoined ? 'Aktif' : 'Belum',
+                                    icon: Icons.groups_2_outlined,
+                                    color: isJoined
+                                        ? const Color(0xFF15803D)
+                                        : const Color(0xFFB45309),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: StatCard(
+                                    label: 'Kehadiran',
+                                    value: '$hadir',
+                                    icon: Icons.fact_check_outlined,
+                                    color: const Color(0xFFB45309),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _DashboardStat(
-                                label: 'Total Kehadiran',
-                                value: '$hadir',
-                                detail: 'Pertemuan',
-                                icon: Icons.fact_check_outlined,
-                                color: const Color(0xFFB45309),
-                                tint: const Color(0xFFFFF7ED),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _DashboardStat(
-                                label: 'Kegiatan',
-                                value: '${upcoming.length}',
-                                detail: 'Agenda',
-                                icon: Icons.event_available_outlined,
-                                color: AppTheme.blue,
-                                tint: const Color(0xFFEFF6FF),
-                              ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: StatCard(
+                                    label: 'Kegiatan',
+                                    value: '${upcoming.length}',
+                                    icon: Icons.event_available_outlined,
+                                    color: AppTheme.blue,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: StatCard(
+                                    label: 'Peringatan',
+                                    value: data['is_warned'] == true
+                                        ? '1'
+                                        : '0',
+                                    icon: Icons.warning_amber_rounded,
+                                    color: const Color(0xFFE11D48),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -237,8 +258,7 @@ class BerandaSiswa extends ConsumerWidget {
                             ),
                             onLeave: () => Navigator.of(context).push(
                               MaterialPageRoute<void>(
-                                builder: (_) =>
-                                    const _SiswaActivityPage(initialTab: 3),
+                                builder: (_) => const PengajuanKeluarScreen(),
                               ),
                             ),
                           ),
@@ -257,8 +277,6 @@ class BerandaSiswa extends ConsumerWidget {
                         _KegiatanMendatang(data: data),
                         const SizedBox(height: 18),
                         _AttendanceTrend(totalHadir: hadir),
-                        const SizedBox(height: 18),
-                        _UpcomingHighlight(items: upcoming),
                         if (ekskul['id'] is num) ...[
                           const SizedBox(height: 18),
                           _StudentFeedback(
@@ -269,6 +287,28 @@ class BerandaSiswa extends ConsumerWidget {
                                 data['has_submitted_testimoni'] == true,
                           ),
                         ],
+                        const SizedBox(height: 18),
+                        _QuickAccess(
+                          onPresensi: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const _SiswaActivityPage(),
+                            ),
+                          ),
+                          onRekap: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  const _SiswaActivityPage(initialTab: 1),
+                            ),
+                          ),
+                          onNilai: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  const _SiswaActivityPage(initialTab: 2),
+                            ),
+                          ),
+                          onEkskul: () =>
+                              ref.read(shellTabProvider.notifier).set(1),
+                        ),
                       ],
                     );
                   },
@@ -335,14 +375,22 @@ class _Hero extends StatelessWidget {
                   CircleAvatar(
                     radius: 22,
                     backgroundColor: Colors.white.withValues(alpha: 0.2),
-                    child: Text(
-                      user.namaTampilan.isEmpty ? '?' : user.namaTampilan[0],
-                      style: GoogleFonts.plusJakartaSans(
-                        color: Colors.white,
-                        fontSize: 19,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
+                    backgroundImage:
+                        (user.fotoUrl != null && user.fotoUrl!.isNotEmpty)
+                        ? NetworkImage(AppConfig.imageUrl(user.fotoUrl))
+                        : null,
+                    child: (user.fotoUrl == null || user.fotoUrl!.isEmpty)
+                        ? Text(
+                            user.namaTampilan.isEmpty
+                                ? '?'
+                                : user.namaTampilan[0],
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.white,
+                              fontSize: 19,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 11),
                   Expanded(
@@ -355,7 +403,7 @@ class _Hero extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.plusJakartaSans(
                             color: Colors.white,
-                            fontSize: 17,
+                            fontSize: 16,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -419,7 +467,7 @@ class _Hero extends StatelessWidget {
                     : 'Temukan kegiatan yang sesuai dengan minatmu.',
                 style: GoogleFonts.plusJakartaSans(
                   color: Colors.white.withValues(alpha: 0.92),
-                  fontSize: 12.5,
+                  fontSize: 12,
                   height: 1.35,
                 ),
               ),
@@ -494,85 +542,6 @@ Future<void> _completeOnboarding(
     await ref.read(authControllerProvider.notifier).refreshSession();
   } catch (error) {
     if (context.mounted) await showErrorDialog(context, ref, error);
-  }
-}
-
-class _DashboardStat extends StatelessWidget {
-  const _DashboardStat({
-    required this.label,
-    required this.value,
-    required this.detail,
-    required this.icon,
-    required this.color,
-    required this.tint,
-  });
-
-  final String label;
-  final String value;
-  final String detail;
-  final IconData icon;
-  final Color color;
-  final Color tint;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 112),
-      padding: const EdgeInsets.all(11),
-      decoration: BoxDecoration(
-        color: tint,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.16)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 17, color: color),
-          const SizedBox(height: 7),
-          Text(
-            label,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.plusJakartaSans(
-              color: AppTheme.sub,
-              fontSize: 9.5,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Flexible(
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  style: GoogleFonts.plusJakartaSans(
-                    color: color,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(
-                  detail,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(
-                    color: color,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -1017,6 +986,14 @@ class _AttendanceTrend extends ConsumerWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 3),
+            Text(
+              'Statistik kehadiranmu pada 8 pertemuan terakhir.',
+              style: GoogleFonts.plusJakartaSans(
+                color: AppTheme.sub,
+                fontSize: 11,
+              ),
+            ),
             const SizedBox(height: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -1084,52 +1061,67 @@ class _AttendanceTrend extends ConsumerWidget {
                     ),
                   );
                 }
+                final statuses = ['hadir', 'izin', 'sakit', 'alpha'];
+                final counts = {
+                  for (final status in statuses)
+                    status: rows.where((row) => row['status'] == status).length,
+                };
                 return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      height: 76,
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          for (final row in recentRows)
-                            Expanded(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    Container(
-                                      width: double.infinity,
-                                      height: row['status'] == 'hadir'
-                                          ? 42
-                                          : 18,
-                                      decoration: BoxDecoration(
-                                        color: row['status'] == 'hadir'
-                                            ? AppTheme.blue
-                                            : const Color(0xFFE2E8F0),
-                                        borderRadius: BorderRadius.circular(5),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        for (final row in recentRows)
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  Container(
+                                    width: double.infinity,
+                                    height: row['status'] == 'hadir' ? 54 : 34,
+                                    decoration: BoxDecoration(
+                                      color: _attendanceColor(
+                                        row['status']?.toString() ?? '',
+                                      ),
+                                      borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(6),
                                       ),
                                     ),
-                                    const SizedBox(height: 5),
-                                    Text(
-                                      row['status']?.toString() ?? '-',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        color: AppTheme.sub,
-                                        fontSize: 8,
-                                      ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    _trendDate(row),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: AppTheme.sub,
+                                      fontSize: 8,
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
-                        ],
-                      ),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 8,
+                      children: [
+                        for (final status in statuses)
+                          _AttendanceLegend(
+                            color: _attendanceColor(status),
+                            label: '${_capitalize(status)} ${counts[status]}',
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
                     const Divider(height: 1),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
@@ -1146,36 +1138,6 @@ class _AttendanceTrend extends ConsumerWidget {
                 );
               },
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _UpcomingHighlight extends StatelessWidget {
-  const _UpcomingHighlight({required this.items});
-
-  final List<Map<String, dynamic>> items;
-
-  @override
-  Widget build(BuildContext context) {
-    final closest = items.isEmpty ? null : Kegiatan.fromJson(items.first);
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SectionTitle('Kegiatan Terdekat'),
-            const SizedBox(height: 10),
-            if (closest == null)
-              const Text(
-                'Belum ada agenda mendatang. Agenda ekskul akan muncul di sini.',
-                style: TextStyle(color: AppTheme.sub, fontSize: 12),
-              )
-            else
-              _KegiatanCard(kegiatan: closest),
           ],
         ),
       ),
@@ -1337,6 +1299,127 @@ class _StudentFeedbackState extends ConsumerState<_StudentFeedback> {
       ),
     );
   }
+}
+
+class _QuickAccess extends StatelessWidget {
+  const _QuickAccess({
+    required this.onPresensi,
+    required this.onRekap,
+    required this.onNilai,
+    required this.onEkskul,
+  });
+
+  final VoidCallback onPresensi;
+  final VoidCallback onRekap;
+  final VoidCallback onNilai;
+  final VoidCallback onEkskul;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const SectionTitle('Akses Cepat'),
+      const SizedBox(height: 8),
+      Card(
+        child: Column(
+          children: [
+            _QuickAccessTile(
+              icon: Icons.fact_check_outlined,
+              title: 'Presensi',
+              subtitle: 'Lihat riwayat kehadiran',
+              onTap: onPresensi,
+            ),
+            const Divider(height: 1, indent: 56),
+            _QuickAccessTile(
+              icon: Icons.analytics_outlined,
+              title: 'Rekap Kehadiran',
+              subtitle: 'Ringkasan per bulan',
+              onTap: onRekap,
+            ),
+            const Divider(height: 1, indent: 56),
+            _QuickAccessTile(
+              icon: Icons.workspace_premium_outlined,
+              title: 'Nilai',
+              subtitle: 'Hasil penilaian periodik',
+              onTap: onNilai,
+            ),
+            const Divider(height: 1, indent: 56),
+            _QuickAccessTile(
+              icon: Icons.explore_outlined,
+              title: 'Ekskul',
+              subtitle: 'Jelajahi katalog ekskul',
+              onTap: onEkskul,
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+class _QuickAccessTile extends StatelessWidget {
+  const _QuickAccessTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+    leading: Icon(icon, color: AppTheme.blue),
+    title: Text(
+      title,
+      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+    ),
+    subtitle: Text(subtitle),
+    trailing: const Icon(Icons.chevron_right, color: AppTheme.sub),
+    onTap: onTap,
+  );
+}
+
+String _trendDate(Map<String, dynamic> row) {
+  final raw = row['kegiatan'] is Map
+      ? (row['kegiatan'] as Map)['tanggal_kegiatan']?.toString()
+      : null;
+  final date = raw == null ? null : DateTime.tryParse(raw);
+  return date == null ? '-' : '${date.day}/${date.month}';
+}
+
+String _capitalize(String value) =>
+    value.isEmpty ? value : '${value[0].toUpperCase()}${value.substring(1)}';
+
+class _AttendanceLegend extends StatelessWidget {
+  const _AttendanceLegend({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      ),
+      const SizedBox(width: 5),
+      Text(
+        label,
+        style: GoogleFonts.plusJakartaSans(
+          color: AppTheme.sub,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ],
+  );
 }
 
 class _OnboardingBanner extends StatelessWidget {

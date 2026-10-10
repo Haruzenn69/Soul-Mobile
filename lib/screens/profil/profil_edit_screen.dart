@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/api_client.dart';
 import '../../core/providers.dart';
+import '../../core/app_config.dart';
 import '../../core/upload_check.dart';
 import '../../data/providers.dart';
 import '../../models/models.dart';
@@ -112,9 +113,8 @@ class _ProfilEditScreenState extends ConsumerState<ProfilEditScreen> {
       });
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(error.toString())));
       }
     }
   }
@@ -266,10 +266,15 @@ class _ProfilEditScreenState extends ConsumerState<ProfilEditScreen> {
         CircleAvatar(
           radius: 34,
           backgroundColor: AppTheme.blueBg,
-          backgroundImage: _photoBytes == null
-              ? null
-              : MemoryImage(_photoBytes!),
-          child: _photoBytes == null
+          backgroundImage: _photoBytes != null
+              ? MemoryImage(_photoBytes!)
+              : ((widget.user.fotoUrl != null &&
+                        widget.user.fotoUrl!.isNotEmpty)
+                    ? NetworkImage(AppConfig.imageUrl(widget.user.fotoUrl))
+                    : null),
+          child:
+              (_photoBytes == null &&
+                  (widget.user.fotoUrl == null || widget.user.fotoUrl!.isEmpty))
               ? const Icon(Icons.person_outline, color: AppTheme.blue, size: 34)
               : null,
         ),

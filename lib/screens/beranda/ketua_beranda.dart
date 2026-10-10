@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/providers.dart';
+import '../../core/app_config.dart';
 import '../../data/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
@@ -194,14 +195,22 @@ class _Header extends StatelessWidget {
                   CircleAvatar(
                     radius: 24,
                     backgroundColor: Colors.white.withValues(alpha: 0.18),
-                    child: Text(
-                      user.namaTampilan.isEmpty ? '?' : user.namaTampilan[0],
-                      style: GoogleFonts.plusJakartaSans(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
+                    backgroundImage:
+                        (user.fotoUrl != null && user.fotoUrl!.isNotEmpty)
+                        ? NetworkImage(AppConfig.imageUrl(user.fotoUrl))
+                        : null,
+                    child: (user.fotoUrl == null || user.fotoUrl!.isEmpty)
+                        ? Text(
+                            user.namaTampilan.isEmpty
+                                ? '?'
+                                : user.namaTampilan[0],
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 12),
                   Expanded(

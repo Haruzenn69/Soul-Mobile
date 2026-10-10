@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/providers.dart';
+import '../../core/app_config.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
 import 'profil_edit_screen.dart';
+import 'pengajuan_keluar_screen.dart';
 
 class ProfilScreen extends ConsumerWidget {
   const ProfilScreen({super.key, required this.user, this.showHeader = true});
@@ -54,16 +56,22 @@ class ProfilScreen extends ConsumerWidget {
                     CircleAvatar(
                       radius: 28,
                       backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      child: Text(
-                        user.namaTampilan.isEmpty
-                            ? '?'
-                            : user.namaTampilan[0].toUpperCase(),
-                        style: GoogleFonts.plusJakartaSans(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
+                      backgroundImage:
+                          (user.fotoUrl != null && user.fotoUrl!.isNotEmpty)
+                          ? NetworkImage(AppConfig.imageUrl(user.fotoUrl))
+                          : null,
+                      child: (user.fotoUrl == null || user.fotoUrl!.isEmpty)
+                          ? Text(
+                              user.namaTampilan.isEmpty
+                                  ? '?'
+                                  : user.namaTampilan[0].toUpperCase(),
+                              style: GoogleFonts.plusJakartaSans(
+                                color: Colors.white,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            )
+                          : null,
                     ),
                     const Spacer(),
                     Container(
@@ -149,6 +157,29 @@ class ProfilScreen extends ConsumerWidget {
                     user.aktivEkskul!.namaEkskul,
                   ),
                 ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          _contentCard(
+            icon: Icons.exit_to_app_outlined,
+            title: 'Ekskul',
+            subtitle: 'Keanggotaan ekskul aktifmu.',
+            child: Column(
+              children: [
+                _actionRow(
+                  icon: Icons.logout_rounded,
+                  label: 'Pengajuan Keluar',
+                  subtitle: 'Ajukan pengunduran diri dari ekskul aktif.',
+                  color: const Color(0xFFB45309),
+                  iconBackground: const Color(0xFFFFFBEB),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PengajuanKeluarScreen(),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

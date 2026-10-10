@@ -586,6 +586,39 @@ class _DetailHero extends StatelessWidget {
                           ),
                         ],
                       ),
+                      if (ekskul.kategori?.isNotEmpty == true) ...[
+                        const SizedBox(height: 9),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.blueBg,
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.category_outlined,
+                                color: AppTheme.blue,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                ekskul.kategori!,
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: AppTheme.blue,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                       if (ekskul.tagline?.isNotEmpty == true) ...[
                         const SizedBox(height: 5),
                         Text(

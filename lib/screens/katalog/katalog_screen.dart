@@ -8,6 +8,15 @@ import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
 import 'ekskul_detail_screen.dart';
 
+const _kategoriEkskul = [
+  'Semua',
+  'Olahraga',
+  'Seni',
+  'Bela Diri',
+  'Bahasa',
+  'Lainnya',
+];
+
 class KatalogScreen extends ConsumerStatefulWidget {
   const KatalogScreen({super.key, required this.user});
 
@@ -20,6 +29,7 @@ class KatalogScreen extends ConsumerStatefulWidget {
 class _KatalogScreenState extends ConsumerState<KatalogScreen> {
   final _searchCtrl = TextEditingController();
   String _cari = '';
+  String _kategori = 'Semua';
 
   @override
   void dispose() {
@@ -60,6 +70,36 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
               ),
             ),
           ),
+          SizedBox(
+            height: 48,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              scrollDirection: Axis.horizontal,
+              itemCount: _kategoriEkskul.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                final kategori = _kategoriEkskul[index];
+                final selected = kategori == _kategori;
+                return ChoiceChip(
+                  label: Text(kategori),
+                  selected: selected,
+                  showCheckmark: false,
+                  onSelected: (_) => setState(() => _kategori = kategori),
+                  labelStyle: GoogleFonts.plusJakartaSans(
+                    color: selected ? Colors.white : AppTheme.sub,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  selectedColor: AppTheme.blue,
+                  backgroundColor: Colors.white,
+                  side: BorderSide(
+                    color: selected ? AppTheme.blue : AppTheme.line,
+                  ),
+                  shape: const StadiumBorder(),
+                );
+              },
+            ),
+          ),
           Expanded(
             child: ApiAsyncView(
               value: katalog,
@@ -89,21 +129,34 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
         ? joinable
         : joinable.where((e) {
             final nama = (e['nama_ekskul'] as String? ?? '').toLowerCase();
+            final kategori = (e['kategori'] as String? ?? '').toLowerCase();
             final pembinaRaw = e['pembina'];
             final pembina = pembinaRaw is Map
                 ? (pembinaRaw['nama'] as String? ?? '').toLowerCase()
                 : (pembinaRaw as String? ?? '').toLowerCase();
-            return nama.contains(_cari) || pembina.contains(_cari);
+            final tagline = (e['tagline'] as String? ?? '').toLowerCase();
+            return nama.contains(_cari) ||
+                pembina.contains(_cari) ||
+                kategori.contains(_cari) ||
+                tagline.contains(_cari);
+          }).toList();
+    final filteredByCategory = _kategori == 'Semua'
+        ? filtered
+        : filtered.where((ekskul) {
+            final category = (ekskul['kategori']?.toString() ?? '').trim();
+            return (category.isEmpty ? 'Lainnya' : category) == _kategori;
           }).toList();
 
     final itemCount =
-        (pending != null ? 1 : 0) + (pendaftaran != null ? 1 : 0) + filtered.length;
+        (pending != null ? 1 : 0) +
+        (pendaftaran != null ? 1 : 0) +
+        filteredByCategory.length;
 
     if (itemCount == 0) {
       return EmptyState(
         title: adaJoinable ? 'Tidak ada yang cocok' : 'Belum ada ekskul',
         subtitle: adaJoinable
-            ? 'Coba kata kunci lain.'
+            ? 'Coba ubah kata kunci atau pilih kategori lain.'
             : 'Belum ada ekskul yang bisa didaftar saat ini.',
         icon: Icons.unfold_more_outlined,
       );
@@ -150,8 +203,8 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
             );
           }
         }
-        if (i < filtered.length) {
-          final raw = filtered[i];
+        if (i < filteredByCategory.length) {
+          final raw = filteredByCategory[i];
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: _EkskulCard(
@@ -169,11 +222,9 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
     final ekskulRaw = data['ekskul'] is Map ? data['ekskul'] as Map : data;
     final id = (ekskulRaw['id'] as num?)?.toInt();
     if (id == null) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => EkskulDetailScreen(ekskulId: id),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => EkskulDetailScreen(ekskulId: id)));
   }
 }
 
@@ -226,7 +277,11 @@ class _InfoBanner extends StatelessWidget {
                   ),
                 ),
                 if (onTap != null)
-                  const Icon(Icons.chevron_right, color: Colors.black26, size: 20),
+                  const Icon(
+                    Icons.chevron_right,
+                    color: Colors.black26,
+                    size: 20,
+                  ),
               ],
             ),
           ),
@@ -285,6 +340,8 @@ class _EkskulCard extends StatelessWidget {
                   children: [
                     Text(
                       ekskul.namaEkskul,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
                         color: AppTheme.ink,
                         fontSize: 15,
@@ -304,10 +361,15 @@ class _EkskulCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Row(
+                    Wrap(
+                      spacing: 7,
+                      runSpacing: 5,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         StatusChip(ekskul.isOpenRecruitment ? 'Buka' : 'Tutup'),
-                        const SizedBox(width: 8),
+                        if (ekskul.kategori?.isNotEmpty == true) ...[
+                          _KategoriBadge(kategori: ekskul.kategori!),
+                        ],
                         Text(
                           '${ekskul.anggotaCount} anggota',
                           style: GoogleFonts.plusJakartaSans(
@@ -327,4 +389,29 @@ class _EkskulCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _KategoriBadge extends StatelessWidget {
+  const _KategoriBadge({required this.kategori});
+
+  final String kategori;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: const Color(0xFFEFF6FF),
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Text(
+      kategori,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: GoogleFonts.plusJakartaSans(
+        color: AppTheme.blue,
+        fontSize: 9,
+        fontWeight: FontWeight.w800,
+      ),
+    ),
+  );
 }

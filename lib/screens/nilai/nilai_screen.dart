@@ -46,13 +46,15 @@ Color _predikatBg(String predikat) => switch (predikat) {
 };
 
 class NilaiScreen extends ConsumerWidget {
-  const NilaiScreen({super.key});
+  const NilaiScreen({super.key, this.showAppBar = true});
+
+  final bool showAppBar;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final value = ref.watch(siswaNilaiProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Nilai Akhir')),
+      appBar: showAppBar ? AppBar(title: const Text('Nilai Akhir')) : null,
       body: SafeArea(
         top: false,
         child: ApiAsyncView(
@@ -283,7 +285,7 @@ class _NilaiDetail extends StatelessWidget {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF2563EB), Color(0xFF1E3A8A)],
+                  colors: [AppTheme.sky, Color(0xFF60A5FA), AppTheme.blue],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -381,7 +383,7 @@ class _NilaiHero extends StatelessWidget {
             alignment: Alignment.center,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFF2563EB), Color(0xFF3B4CCA)],
+                colors: [AppTheme.sky, Color(0xFF60A5FA), AppTheme.blue],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -531,15 +533,16 @@ class _KomponenCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(
-              label,
-              style: GoogleFonts.plusJakartaSans(
-                color: const Color(0xFF475569),
-                fontSize: 11.5,
-                fontWeight: FontWeight.w700,
+            Expanded(
+              child: Text(
+                label,
+                style: GoogleFonts.plusJakartaSans(
+                  color: const Color(0xFF475569),
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-            const Spacer(),
             Text(
               numValue.toStringAsFixed(1),
               style: GoogleFonts.plusJakartaSans(
@@ -588,79 +591,71 @@ class _RekapStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stats = [
-      (
-        'Pertemuan',
-        '${penilaian['total_pertemuan'] ?? 0}',
-        const Color(0xFFF8FAFC),
-        AppTheme.ink,
-      ),
-      (
-        'Hadir',
-        '${penilaian['total_hadir'] ?? 0}',
-        const Color(0xFFECFDF5),
-        const Color(0xFF16803C),
-      ),
-      (
-        'Izin',
-        '${penilaian['total_izin'] ?? 0}',
-        const Color(0xFFF0F9FF),
-        const Color(0xFF0284C7),
-      ),
-      (
-        'Sakit',
-        '${penilaian['total_sakit'] ?? 0}',
-        const Color(0xFFFFFBEB),
-        const Color(0xFFB45309),
-      ),
-      (
-        'Alpha',
-        '${penilaian['total_alpha'] ?? 0}',
-        const Color(0xFFFEF2F2),
-        const Color(0xFFE11D48),
-      ),
-    ];
+    final pertemuan = '${penilaian['total_pertemuan'] ?? 0}';
+    final hadir = '${penilaian['total_hadir'] ?? 0}';
+    final izin = '${penilaian['total_izin'] ?? 0}';
+    final sakit = '${penilaian['total_sakit'] ?? 0}';
+    final alpha = '${penilaian['total_alpha'] ?? 0}';
 
-    return _whiteCard(
-      title: 'Rekap Kehadiran',
-      child: Row(
-        children: [
-          for (var i = 0; i < stats.length; i++) ...[
-            if (i > 0) const SizedBox(width: 6),
+    return Column(
+      children: [
+        Row(
+          children: [
             Expanded(
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                decoration: BoxDecoration(
-                  color: stats[i].$3,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE9EEF5)),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      stats[i].$2,
-                      style: GoogleFonts.plusJakartaSans(
-                        color: stats[i].$4,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      stats[i].$1,
-                      style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.sub,
-                        fontSize: 8.5,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
+              child: StatCard(
+                label: 'Pertemuan',
+                value: pertemuan,
+                icon: Icons.event_available_outlined,
+                color: AppTheme.blue,
               ),
             ),
           ],
-        ],
-      ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: StatCard(
+                label: 'Hadir',
+                value: hadir,
+                icon: Icons.check_circle_outline,
+                color: const Color(0xFF15803D),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: StatCard(
+                label: 'Izin',
+                value: izin,
+                icon: Icons.event_note_outlined,
+                color: const Color(0xFF1E5AA8),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: StatCard(
+                label: 'Sakit',
+                value: sakit,
+                icon: Icons.medical_information_outlined,
+                color: const Color(0xFFC77700),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: StatCard(
+                label: 'Alpha',
+                value: alpha,
+                icon: Icons.person_off_outlined,
+                color: const Color(0xFFE11D48),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

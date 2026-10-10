@@ -10,6 +10,7 @@ import 'package:soul/screens/kegiatan/kegiatan_detail_screen.dart';
 import 'package:soul/screens/kegiatan/kegiatan_screen.dart';
 import 'package:soul/screens/kegiatan/presensi_input_screen.dart';
 import 'package:soul/screens/anggota/anggota_screen.dart';
+import 'package:soul/screens/aktivitas/siswa_aktivitas_screen.dart';
 import 'package:soul/screens/laporan/laporan_create_screen.dart';
 import 'package:soul/screens/laporan/laporan_detail_screen.dart';
 import 'package:soul/screens/laporan/laporan_screen.dart';
@@ -80,10 +81,219 @@ void main() {
     await tester.pump();
 
     expect(find.byType(KatalogScreen), findsNothing);
-    await tester.tap(find.text('Ekskul'));
+    await tester.tap(
+      find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Ekskul'),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byType(KatalogScreen), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('catalog filters activities by category', (tester) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const user = AuthUser(
+      id: 1,
+      username: 'student',
+      email: 'student@example.test',
+      role: 'siswa',
+      needsOnboarding: false,
+      needsProfileCompletion: false,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          katalogProvider.overrideWith(
+            (ref) async => {
+              'joinable': [
+                {
+                  'id': 1,
+                  'nama_ekskul': 'Klub Teater',
+                  'kategori': 'Seni',
+                  'status': true,
+                  'is_open_recruitment': true,
+                  'anggota_count': 12,
+                },
+                {
+                  'id': 2,
+                  'nama_ekskul': 'Klub Bahasa',
+                  'kategori': 'Bahasa',
+                  'status': true,
+                  'is_open_recruitment': true,
+                  'anggota_count': 8,
+                },
+              ],
+            },
+          ),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(body: KatalogScreen(user: user)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Klub Teater'), findsWidgets);
+    expect(find.text('Klub Bahasa'), findsWidgets);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Seni'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Klub Teater'), findsWidgets);
+    expect(find.text('Klub Bahasa'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'student recap uses the server personal recap for selected month',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            siswaRekapMonthProvider(null).overrideWith(
+              (ref) async => {
+                'bulan': '2026-10',
+                'available_months': ['2026-10', '2026-09'],
+                'rekap_siswa': {
+                  'nama': 'Siswa Uji',
+                  'kelas': 'X-1',
+                  'hadir': 4,
+                  'izin': 1,
+                  'sakit': 0,
+                  'alpha': 0,
+                  'total': 5,
+                  'persentase_kehadiran': 80,
+                },
+              },
+            ),
+          ],
+          child: const MaterialApp(
+            home: Scaffold(body: SiswaAktivitasScreen(initialTab: 1)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Rekap'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Oktober 2026'), findsOneWidget);
+      await tester.drag(find.byType(ListView).last, const Offset(0, -900));
+      await tester.pumpAndSettle();
+      expect(find.text('Rekap Kehadiran Saya'), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('student-recap-percentage')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('kegiatan pada periode'), findsNothing);
+      expect(find.text('Hadir'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('student attendance shows colored history without overflow', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          siswaPresensiProvider.overrideWith(
+            (ref) async => {
+              'presensi': [
+                {
+                  'status': 'hadir',
+                  'kegiatan': {
+                    'materi': 'Latihan Futsal',
+                    'tanggal_kegiatan': '2026-10-02',
+                    'tanggal_text': '2 Oktober 2026',
+                  },
+                },
+                {
+                  'status': 'izin',
+                  'kegiatan': {
+                    'materi': 'Pertemuan Rutin',
+                    'tanggal_kegiatan': '2026-10-01',
+                    'tanggal_text': '1 Oktober 2026',
+                  },
+                },
+              ],
+            },
+          ),
+        ],
+        child: const MaterialApp(home: Scaffold(body: SiswaAktivitasScreen())),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Riwayat Kegiatan (2)'), findsOneWidget);
+    expect(find.text('Latihan Futsal'), findsOneWidget);
+    expect(find.text('hadir'), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+    expect(find.byType(ChoiceChip), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('student activity grade tab uses the full grade view', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          siswaNilaiProvider.overrideWith(
+            (ref) async => {
+              'pendaftaran': {'id': 1},
+              'ekskul': {'nama_ekskul': 'Klub Teater'},
+              'periode': {'label': 'Semester 1 2026'},
+              'penilaian': {
+                'periode': 'Semester 1 2026',
+                'total_pertemuan': 5,
+                'total_hadir': 4,
+                'total_izin': 1,
+                'total_sakit': 0,
+                'total_alpha': 0,
+                'persentase_kehadiran': 80,
+                'nilai_sikap': 90,
+                'nilai_keaktifan': 92,
+                'nilai_keterampilan': 94,
+                'nilai_akhir': 92,
+                'predikat': 'A',
+                'catatan': 'Pertahankan semangat belajarmu.',
+                'penilai': {'nama': 'Pembina'},
+              },
+            },
+          ),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(body: SiswaAktivitasScreen(initialTab: 2)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('NILAI AKHIR'), findsOneWidget);
+    expect(find.text('92.00'), findsOneWidget);
+    expect(find.text('Rincian Komponen'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

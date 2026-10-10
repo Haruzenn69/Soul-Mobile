@@ -33,6 +33,7 @@ class Siswa {
   final String jabatan;
   final bool isKetua;
   final bool isProfileComplete;
+  final String? foto;
   final Kelas? kelas;
 
   const Siswa({
@@ -43,6 +44,7 @@ class Siswa {
     required this.jabatan,
     required this.isKetua,
     required this.isProfileComplete,
+    this.foto,
     this.kelas,
   });
 
@@ -54,6 +56,7 @@ class Siswa {
     jabatan: j?['jabatan'] as String? ?? 'siswa',
     isKetua: j?['is_ketua'] as bool? ?? false,
     isProfileComplete: j?['is_profile_complete'] as bool? ?? false,
+    foto: j?['foto'] as String?,
     kelas: j?['kelas'] is Map
         ? Kelas.fromJson(j!['kelas'] as Map<String, dynamic>)
         : null,
@@ -75,6 +78,7 @@ class Pembina {
 class Ekskul {
   final int id;
   final String namaEkskul;
+  final String? kategori;
   final String? tagline;
   final String? deskripsi;
   final String? tujuan;
@@ -90,6 +94,7 @@ class Ekskul {
   const Ekskul({
     required this.id,
     required this.namaEkskul,
+    this.kategori,
     this.tagline,
     this.deskripsi,
     this.tujuan,
@@ -107,6 +112,7 @@ class Ekskul {
     return Ekskul(
       id: (j?['id'] as num?)?.toInt() ?? 0,
       namaEkskul: j?['nama_ekskul'] as String? ?? '',
+      kategori: j?['kategori'] as String?,
       tagline: j?['tagline'] as String?,
       deskripsi: j?['deskripsi'] as String?,
       tujuan: j?['tujuan'] as String?,
@@ -248,6 +254,7 @@ class AuthUser {
   final Siswa? siswa;
   final Ekskul? aktivEkskul;
   final String? jabatan;
+  final String? foto;
 
   const AuthUser({
     required this.id,
@@ -259,6 +266,7 @@ class AuthUser {
     this.siswa,
     this.aktivEkskul,
     this.jabatan,
+    this.foto,
   });
 
   factory AuthUser.fromJson(Map<String, dynamic>? j) {
@@ -281,10 +289,13 @@ class AuthUser {
           (j?['siswa'] is Map
               ? (j!['siswa'] as Map)['jabatan'] as String?
               : null),
+      foto: j?['foto'] as String? ?? (j?['foto_profil'] as String?),
     );
   }
 
   bool get isKetua => siswa?.isKetua ?? false;
 
   String get namaTampilan => siswa?.nama ?? username;
+
+  String? get fotoUrl => foto ?? siswa?.foto;
 }
