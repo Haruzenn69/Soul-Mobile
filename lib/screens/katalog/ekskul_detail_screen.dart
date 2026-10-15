@@ -255,7 +255,7 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
                   itemBuilder: (context, i) {
                     final url = AppConfig.imageUrl(galeri[i].toString());
                     return Material(
-                      color: AppTheme.line,
+                      color: AppTheme.surfaceVariant(context),
                       borderRadius: BorderRadius.circular(14),
                       clipBehavior: Clip.antiAlias,
                       child: InkWell(
@@ -435,9 +435,9 @@ class _DetailHero extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppTheme.line),
+        border: Border.all(color: AppTheme.outline(context)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x0D0F172A),
@@ -522,9 +522,9 @@ class _DetailHero extends StatelessWidget {
                     height: 64,
                     padding: const EdgeInsets.all(3),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppTheme.surface(context),
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: AppTheme.line),
+                      border: Border.all(color: AppTheme.outline(context)),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x1A0F172A),
@@ -571,7 +571,7 @@ class _DetailHero extends StatelessWidget {
                             child: Text(
                               ekskul.namaEkskul,
                               style: GoogleFonts.plusJakartaSans(
-                                color: AppTheme.ink,
+                                color: AppTheme.text(context),
                                 fontSize: 21,
                                 fontWeight: FontWeight.w900,
                                 height: 1.15,
@@ -594,7 +594,7 @@ class _DetailHero extends StatelessWidget {
                             vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: AppTheme.blueBg,
+                            color: AppTheme.accentSurface(context),
                             borderRadius: BorderRadius.circular(999),
                             border: Border.all(color: const Color(0xFFBFDBFE)),
                           ),
@@ -624,7 +624,7 @@ class _DetailHero extends StatelessWidget {
                         Text(
                           '“${ekskul.tagline}”',
                           style: GoogleFonts.plusJakartaSans(
-                            color: AppTheme.sub,
+                            color: AppTheme.mutedText(context),
                             fontSize: 12.5,
                             fontStyle: FontStyle.italic,
                             height: 1.45,
@@ -644,7 +644,7 @@ class _DetailHero extends StatelessWidget {
                             icon: Icons.school_outlined,
                             label: 'Pembina',
                             value: ekskul.pembina?.nama ?? 'Belum ditentukan',
-                            tint: const Color(0xFFEFF6FF),
+                            tint: AppTheme.blue.withValues(alpha: 0.1),
                             iconColor: AppTheme.blue,
                           ),
                           _MetricTile(
@@ -667,7 +667,7 @@ class _DetailHero extends StatelessWidget {
                             value: ekskul.jadwal?.isNotEmpty == true
                                 ? ekskul.jadwal!
                                 : 'Belum diatur',
-                            tint: const Color(0xFFEFF6FF),
+                            tint: AppTheme.blue.withValues(alpha: 0.1),
                             iconColor: AppTheme.blue,
                           ),
                         ],
@@ -720,7 +720,7 @@ class _MetricTile extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.sub,
+                  color: AppTheme.mutedText(context),
                   fontSize: 9,
                   fontWeight: FontWeight.w600,
                 ),
@@ -730,7 +730,7 @@ class _MetricTile extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.ink,
+                  color: AppTheme.text(context),
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
                 ),
@@ -771,7 +771,7 @@ class _DetailSectionHeading extends StatelessWidget {
       Text(
         title,
         style: GoogleFonts.plusJakartaSans(
-          color: AppTheme.ink,
+          color: AppTheme.text(context),
           fontSize: 17,
           fontWeight: FontWeight.w900,
           height: 1.2,
@@ -782,7 +782,7 @@ class _DetailSectionHeading extends StatelessWidget {
         Text(
           subtitle!,
           style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.sub,
+            color: AppTheme.mutedText(context),
             fontSize: 11.5,
             height: 1.4,
           ),
@@ -804,9 +804,9 @@ class _AboutCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppTheme.surface(context),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.line),
+          border: Border.all(color: AppTheme.outline(context)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -818,7 +818,7 @@ class _AboutCard extends StatelessWidget {
                 Text(
                   'Profil & eksplorasi',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.ink,
+                    color: AppTheme.text(context),
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                   ),
@@ -857,7 +857,7 @@ class _AboutCard extends StatelessWidget {
                 Text(
                   'Fokus & tujuan',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.ink,
+                    color: AppTheme.text(context),
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                   ),
@@ -894,9 +894,9 @@ class _DetailEmptyCard extends StatelessWidget {
     width: double.infinity,
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: const Color(0xFFF8FAFC),
+      color: AppTheme.surfaceVariant(context),
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: AppTheme.line),
+      border: Border.all(color: AppTheme.outline(context)),
     ),
     child: Column(
       children: [
@@ -906,7 +906,7 @@ class _DetailEmptyCard extends StatelessWidget {
           title,
           textAlign: TextAlign.center,
           style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.ink,
+            color: AppTheme.text(context),
             fontSize: 12,
             fontWeight: FontWeight.w800,
           ),
@@ -916,7 +916,7 @@ class _DetailEmptyCard extends StatelessWidget {
           message,
           textAlign: TextAlign.center,
           style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.sub,
+            color: AppTheme.mutedText(context),
             fontSize: 11,
             height: 1.4,
           ),
@@ -980,10 +980,10 @@ class _FeedbackActionCard extends StatelessWidget {
     margin: const EdgeInsets.only(top: 8),
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: isComplete ? const Color(0xFFFFFBEB) : Colors.white,
+      color: isComplete ? const Color(0xFFFFFBEB) : AppTheme.surface(context),
       borderRadius: BorderRadius.circular(16),
       border: Border.all(
-        color: isComplete ? const Color(0xFFFDE68A) : AppTheme.line,
+        color: isComplete ? const Color(0xFFFDE68A) : AppTheme.outline(context),
       ),
     ),
     child: Row(
@@ -997,7 +997,7 @@ class _FeedbackActionCard extends StatelessWidget {
               Text(
                 title,
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.ink,
+                  color: AppTheme.text(context),
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                 ),
@@ -1006,7 +1006,7 @@ class _FeedbackActionCard extends StatelessWidget {
               Text(
                 description,
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.sub,
+                  color: AppTheme.mutedText(context),
                   fontSize: 10.5,
                   height: 1.35,
                 ),
@@ -1040,7 +1040,7 @@ class _BodyText extends StatelessWidget {
       child: Text(
         text,
         style: GoogleFonts.plusJakartaSans(
-          color: AppTheme.ink,
+          color: AppTheme.text(context),
           fontSize: 13,
           height: 1.5,
         ),
@@ -1060,9 +1060,9 @@ class _PrestasiCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.line),
+        border: Border.all(color: AppTheme.outline(context)),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -1118,7 +1118,7 @@ class _PrestasiCard extends StatelessWidget {
                 Text(
                   '${data['judul'] ?? ''}',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.ink,
+                    color: AppTheme.text(context),
                     fontSize: 13.5,
                     fontWeight: FontWeight.w800,
                   ),
@@ -1128,7 +1128,7 @@ class _PrestasiCard extends StatelessWidget {
                   Text(
                     '${data['tahun']} · Terverifikasi',
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.sub,
+                      color: AppTheme.mutedText(context),
                       fontSize: 10.5,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1154,9 +1154,9 @@ class _KegiatanMini extends StatelessWidget {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.line),
+        border: Border.all(color: AppTheme.outline(context)),
       ),
       child: Row(
         children: [
@@ -1185,7 +1185,7 @@ class _KegiatanMini extends StatelessWidget {
                 Text(
                   kegiatan.materi,
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.ink,
+                    color: AppTheme.text(context),
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
                   ),
@@ -1194,7 +1194,7 @@ class _KegiatanMini extends StatelessWidget {
                 Text(
                   kegiatan.tanggalText,
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.sub,
+                    color: AppTheme.mutedText(context),
                     fontSize: 11.5,
                   ),
                 ),
@@ -1205,7 +1205,7 @@ class _KegiatanMini extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.sub,
+                      color: AppTheme.mutedText(context),
                       fontSize: 10.5,
                       height: 1.35,
                     ),
@@ -1255,7 +1255,7 @@ class _TestimoniCard extends StatelessWidget {
           Text(
             '“${data['quote'] ?? ''}”',
             style: GoogleFonts.plusJakartaSans(
-              color: AppTheme.ink,
+              color: AppTheme.text(context),
               fontSize: 13,
               fontStyle: FontStyle.italic,
               height: 1.45,
@@ -1265,7 +1265,7 @@ class _TestimoniCard extends StatelessWidget {
           Text(
             '— ${data['nama'] ?? ''}${_kelasLabel(data['kelas']).isNotEmpty ? ' · ${_kelasLabel(data['kelas'])}' : ''}',
             style: GoogleFonts.plusJakartaSans(
-              color: AppTheme.sub,
+              color: AppTheme.mutedText(context),
               fontSize: 11.5,
               fontWeight: FontWeight.w600,
             ),
@@ -1290,9 +1290,9 @@ class _FaqCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     margin: const EdgeInsets.only(bottom: 8),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppTheme.surface(context),
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: AppTheme.line),
+      border: Border.all(color: AppTheme.outline(context)),
     ),
     child: Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -1320,7 +1320,7 @@ class _FaqCard extends StatelessWidget {
         title: Text(
           data['pertanyaan']?.toString() ?? '',
           style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.ink,
+            color: AppTheme.text(context),
             fontSize: 12,
             fontWeight: FontWeight.w800,
           ),
@@ -1354,7 +1354,7 @@ class _FaqCard extends StatelessWidget {
                 child: Text(
                   data['jawaban']?.toString() ?? '',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.sub,
+                    color: AppTheme.mutedText(context),
                     fontSize: 11.5,
                     height: 1.5,
                   ),

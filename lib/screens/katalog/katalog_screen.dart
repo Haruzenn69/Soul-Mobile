@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../core/app_config.dart';
 import '../../data/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
@@ -57,7 +58,10 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
               onChanged: (v) => setState(() => _cari = v.trim().toLowerCase()),
               decoration: InputDecoration(
                 hintText: 'Cari ekskul atau pembina...',
-                prefixIcon: const Icon(Icons.search, color: AppTheme.sub),
+                prefixIcon: Icon(
+                  Icons.search,
+                  color: AppTheme.mutedText(context),
+                ),
                 suffixIcon: _cari.isEmpty
                     ? null
                     : IconButton(
@@ -86,14 +90,16 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
                   showCheckmark: false,
                   onSelected: (_) => setState(() => _kategori = kategori),
                   labelStyle: GoogleFonts.plusJakartaSans(
-                    color: selected ? Colors.white : AppTheme.sub,
+                    color: selected
+                        ? Colors.white
+                        : AppTheme.mutedText(context),
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
                   selectedColor: AppTheme.blue,
-                  backgroundColor: Colors.white,
+                  backgroundColor: AppTheme.surface(context),
                   side: BorderSide(
-                    color: selected ? AppTheme.blue : AppTheme.line,
+                    color: selected ? AppTheme.blue : AppTheme.outline(context),
                   ),
                   shape: const StadiumBorder(),
                 );
@@ -300,7 +306,7 @@ class _EkskulCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: AppTheme.surface(context),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -309,7 +315,7 @@ class _EkskulCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.line),
+            border: Border.all(color: AppTheme.outline(context)),
             boxShadow: const [
               BoxShadow(
                 color: Color(0x0D0F172A),
@@ -327,11 +333,22 @@ class _EkskulCard extends StatelessWidget {
                   color: AppTheme.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(
-                  Icons.emoji_events_outlined,
-                  color: AppTheme.blue,
-                  size: 26,
-                ),
+                clipBehavior: Clip.antiAlias,
+                child: (ekskul.logo?.isNotEmpty == true)
+                    ? Image.network(
+                        AppConfig.imageUrl(ekskul.logo),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => const Icon(
+                          Icons.emoji_events_outlined,
+                          color: AppTheme.blue,
+                          size: 26,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.emoji_events_outlined,
+                        color: AppTheme.blue,
+                        size: 26,
+                      ),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -343,7 +360,7 @@ class _EkskulCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.ink,
+                        color: AppTheme.text(context),
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),
@@ -356,7 +373,7 @@ class _EkskulCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.sub,
+                        color: AppTheme.mutedText(context),
                         fontSize: 12,
                       ),
                     ),
@@ -373,7 +390,7 @@ class _EkskulCard extends StatelessWidget {
                         Text(
                           '${ekskul.anggotaCount} anggota',
                           style: GoogleFonts.plusJakartaSans(
-                            color: AppTheme.sub,
+                            color: AppTheme.mutedText(context),
                             fontSize: 11,
                           ),
                         ),
@@ -400,7 +417,7 @@ class _KategoriBadge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
     decoration: BoxDecoration(
-      color: const Color(0xFFEFF6FF),
+      color: AppTheme.blue.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(999),
     ),
     child: Text(

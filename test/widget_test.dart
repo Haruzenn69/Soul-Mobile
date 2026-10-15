@@ -11,12 +11,17 @@ import 'package:soul/screens/kegiatan/kegiatan_screen.dart';
 import 'package:soul/screens/kegiatan/presensi_input_screen.dart';
 import 'package:soul/screens/anggota/anggota_screen.dart';
 import 'package:soul/screens/aktivitas/siswa_aktivitas_screen.dart';
+import 'package:soul/screens/auth_gate.dart';
 import 'package:soul/screens/laporan/laporan_create_screen.dart';
 import 'package:soul/screens/laporan/laporan_detail_screen.dart';
 import 'package:soul/screens/laporan/laporan_screen.dart';
 import 'package:soul/screens/login_screen.dart';
 import 'package:soul/screens/main_shell.dart';
+import 'package:soul/screens/menu/ketua_menu_screen.dart';
+import 'package:soul/screens/notifikasi/notifikasi_screen.dart';
+import 'package:soul/screens/profil/profil_screen.dart';
 import 'package:soul/theme/app_theme.dart';
+import 'package:soul/theme/theme_controller.dart';
 import 'package:soul/widgets/common.dart';
 
 class _TestAuthController extends AuthController {
@@ -24,11 +29,155 @@ class _TestAuthController extends AuthController {
   AuthState build() => const AuthState(status: AuthStatus.unauthenticated);
 }
 
+class _IncompleteProfileAuthController extends AuthController {
+  @override
+  AuthState build() => const AuthState(
+    status: AuthStatus.authenticated,
+    user: AuthUser(
+      id: 9,
+      username: 'incomplete',
+      email: 'incomplete@example.test',
+      role: 'siswa',
+      needsOnboarding: false,
+      needsProfileCompletion: true,
+    ),
+  );
+}
+
+class _FirstLoginAuthController extends AuthController {
+  @override
+  AuthState build() => const AuthState(
+    status: AuthStatus.authenticated,
+    user: AuthUser(
+      id: 10,
+      username: 'student',
+      email: 'student@example.test',
+      role: 'siswa',
+      needsOnboarding: true,
+      needsProfileCompletion: false,
+    ),
+  );
+}
+
+class _MemoryThemeController extends ThemeModeController {
+  @override
+  ThemeMode build() => ThemeMode.light;
+
+  @override
+  Future<void> setDarkMode(bool enabled) async {
+    state = enabled ? ThemeMode.dark : ThemeMode.light;
+  }
+}
+
+void _ignoreFilter(String _) {}
+
 void main() {
+  test('app themes use the shared Laravel palette', () {
+    expect(AppTheme.blue, const Color(0xFF2563EB));
+    expect(AppTheme.blueDark, const Color(0xFF1D4ED8));
+    expect(AppTheme.yellow, const Color(0xFFFACC15));
+    expect(AppTheme.ink, const Color(0xFF0F172A));
+    expect(AppTheme.canvas, const Color(0xFFF8FAFC));
+    expect(AppTheme.darkCanvas, const Color(0xFF171717));
+    expect(AppTheme.darkSurface, const Color(0xFF262626));
+    expect(AppTheme.darkLine, const Color(0xFF404040));
+  });
+
+  testWidgets('shared widgets use dark theme surfaces and text colors', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.dark(),
+        home: Scaffold(
+          body: Column(
+            children: [
+              const PageHeader(title: 'Dark dashboard'),
+              const StatCard(label: 'Hadir', value: '8'),
+              const StatusFilterChips(
+                items: [StatusFilter('all', 'Semua', 8)],
+                selected: 'none',
+                onSelected: _ignoreFilter,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    final cardContainer = tester.widget<Container>(
+      find
+          .descendant(
+            of: find.byType(StatCard),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
+    expect(
+      (cardContainer.decoration! as BoxDecoration).color,
+      AppTheme.darkSurface,
+    );
+    expect(
+      tester.widget<Text>(find.text('Dark dashboard')).style!.color,
+      AppTheme.dark().colorScheme.onSurface,
+    );
+
+    final filterContainer = tester.widget<Container>(
+      find
+          .descendant(
+            of: find.byKey(const ValueKey('status-chip-all')),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
+    expect(
+      (filterContainer.decoration! as BoxDecoration).color,
+      AppTheme.darkSurface,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('app boots and shows splash', (tester) async {
     await tester.pumpWidget(const ProviderScope(child: SoulApp()));
     await tester.pump();
     expect(find.text('SOUL'), findsOneWidget);
+  });
+
+  testWidgets('profile settings can switch to dark mode', (tester) async {
+    final container = ProviderContainer(
+      overrides: [themeModeProvider.overrideWith(_MemoryThemeController.new)],
+    );
+    addTearDown(container.dispose);
+    const user = AuthUser(
+      id: 1,
+      username: 'student',
+      email: 'student@example.test',
+      role: 'siswa',
+      needsOnboarding: false,
+      needsProfileCompletion: false,
+    );
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(body: ProfilScreen(user: user)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -700));
+    await tester.pumpAndSettle();
+
+    final modeSwitch = tester.widget<SwitchListTile>(
+      find.widgetWithText(SwitchListTile, 'Mode gelap'),
+    );
+    expect(modeSwitch.value, isFalse);
+    await tester.tap(find.byType(SwitchListTile));
+    await tester.pumpAndSettle();
+
+    expect(container.read(themeModeProvider), ThemeMode.dark);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('login screen scrolls without overflow with keyboard open', (
@@ -46,12 +195,79 @@ void main() {
         overrides: [
           authControllerProvider.overrideWith(_TestAuthController.new),
         ],
-        child: const MaterialApp(home: LoginScreen()),
+        child: MaterialApp(theme: AppTheme.dark(), home: const LoginScreen()),
       ),
     );
     await tester.pumpAndSettle();
 
     expect(find.text('Log In Akun'), findsOneWidget);
+    expect(
+      tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
+      AppTheme.darkCanvas,
+    );
+    final formSurface = tester.widget<Container>(
+      find
+          .ancestor(
+            of: find.text('Log In Akun'),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
+    expect(formSurface.color, AppTheme.darkSurface);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('incomplete profile prompt can be skipped after login', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authControllerProvider.overrideWith(
+            _IncompleteProfileAuthController.new,
+          ),
+        ],
+        child: const MaterialApp(home: AuthGate()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Lengkapi data diri'), findsOneWidget);
+    expect(find.text('Nanti saja'), findsOneWidget);
+
+    await tester.tap(find.text('Nanti saja'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Lengkapi data diri'), findsNothing);
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('first-login onboarding requires new credentials or logout', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authControllerProvider.overrideWith(_FirstLoginAuthController.new),
+        ],
+        child: const MaterialApp(home: AuthGate()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text('Amankan akunmu'), findsOneWidget);
+    expect(find.byType(TextFormField), findsNWidgets(3));
+    expect(find.text('Simpan dan lanjutkan'), findsOneWidget);
+    expect(find.text('Kembali ke login'), findsOneWidget);
+    expect(find.text('Nanti saja'), findsNothing);
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(find.text('Amankan akunmu'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -93,6 +309,127 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('cached profile tab refreshes when session user changes', (
+    tester,
+  ) async {
+    const user = AuthUser(
+      id: 1,
+      username: 'student-old',
+      email: 'student@example.test',
+      role: 'siswa',
+      needsOnboarding: false,
+      needsProfileCompletion: false,
+    );
+    const updatedUser = AuthUser(
+      id: 1,
+      username: 'student-new',
+      email: 'student@example.test',
+      role: 'siswa',
+      needsOnboarding: false,
+      needsProfileCompletion: false,
+      foto: 'storage/profile/new-photo.jpg',
+    );
+    final container = ProviderContainer(
+      overrides: [authControllerProvider.overrideWith(_TestAuthController.new)],
+    );
+    addTearDown(container.dispose);
+    container.read(shellTabProvider.notifier).set(4);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: MainShell(user: user)),
+      ),
+    );
+    expect(find.text('student-old'), findsWidgets);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: MainShell(user: updatedUser)),
+      ),
+    );
+    expect(find.text('student-new'), findsWidgets);
+    expect(find.text('student-old'), findsNothing);
+  });
+
+  testWidgets('ketua menu hero lightly blurs ekskul cover', (tester) async {
+    const userWithoutCover = AuthUser(
+      id: 1,
+      username: 'ketua',
+      email: 'ketua@example.test',
+      role: 'siswa',
+      needsOnboarding: false,
+      needsProfileCompletion: false,
+      aktivEkskul: Ekskul(
+        id: 1,
+        namaEkskul: 'Klub Teater',
+        isOpenRecruitment: true,
+        status: true,
+        anggotaCount: 8,
+      ),
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ketuaProfilEkskulProvider.overrideWith(
+            (ref) async => {
+              'ekskul': {
+                'id': 1,
+                'nama_ekskul': 'Klub Teater',
+                'cover': 'http://localhost:8000/storage/ekskul/cover.jpg',
+                'is_open_recruitment': true,
+                'status': true,
+                'anggota_count': 8,
+              },
+            },
+          ),
+        ],
+        child: const MaterialApp(home: KetuaMenuScreen(user: userWithoutCover)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byWidgetPredicate((widget) => widget is ImageFiltered),
+      findsOneWidget,
+    );
+    expect(find.byType(Image), findsOneWidget);
+    expect(
+      tester.getSize(
+        find.byKey(const ValueKey('ketua-menu-identity-background')),
+      ),
+      tester.getSize(find.byKey(const ValueKey('ketua-menu-identity-card'))),
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ketuaProfilEkskulProvider.overrideWith(
+            (ref) async => {
+              'ekskul': {
+                'id': 1,
+                'nama_ekskul': 'Klub Teater',
+                'is_open_recruitment': true,
+                'status': true,
+                'anggota_count': 8,
+              },
+            },
+          ),
+        ],
+        child: const MaterialApp(home: KetuaMenuScreen(user: userWithoutCover)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byWidgetPredicate((widget) => widget is ImageFiltered),
+      findsNothing,
+    );
+    expect(find.text('Klub Teater'), findsOneWidget);
+  });
+
   testWidgets('catalog filters activities by category', (tester) async {
     tester.view.physicalSize = const Size(360, 800);
     tester.view.devicePixelRatio = 1;
@@ -118,6 +455,7 @@ void main() {
                   'id': 1,
                   'nama_ekskul': 'Klub Teater',
                   'kategori': 'Seni',
+                  'logo': 'storage/ekskul/teater.png',
                   'status': true,
                   'is_open_recruitment': true,
                   'anggota_count': 12,
@@ -143,12 +481,31 @@ void main() {
 
     expect(find.text('Klub Teater'), findsWidgets);
     expect(find.text('Klub Bahasa'), findsWidgets);
+    expect(find.byType(Image), findsOneWidget);
     await tester.tap(find.widgetWithText(ChoiceChip, 'Seni'));
     await tester.pumpAndSettle();
 
     expect(find.text('Klub Teater'), findsWidgets);
     expect(find.text('Klub Bahasa'), findsNothing);
     expect(tester.takeException(), isNull);
+  });
+
+  test('auth user reads profile photo from nested student resource', () {
+    final user = AuthUser.fromJson({
+      'id': 1,
+      'username': 'student',
+      'role': 'siswa',
+      'siswa': {
+        'id': 10,
+        'nama': 'Siswa Uji',
+        'foto': 'http://localhost:8000/storage/profile-photos/photo.jpg',
+      },
+    });
+
+    expect(
+      user.fotoUrl,
+      'http://localhost:8000/storage/profile-photos/photo.jpg',
+    );
   });
 
   testWidgets(
@@ -377,14 +734,22 @@ void main() {
                   'status': 'diterima',
                   'status_label': 'Aktif',
                   'is_active': true,
-                  'siswa': {'id': 10, 'nama': 'Alya Anggota'},
+                  'siswa': {
+                    'id': 10,
+                    'nama': 'Alya Anggota',
+                    'foto': 'storage/profile-photos/alya.jpg',
+                  },
                 },
                 {
                   'id': 2,
                   'status': 'diterima',
                   'status_label': 'Aktif',
                   'is_active': true,
-                  'siswa': {'id': 11, 'nama': 'Bima Anggota'},
+                  'siswa': {
+                    'id': 11,
+                    'nama': 'Bima Anggota',
+                    'foto': 'storage/profile-photos/bima.jpg',
+                  },
                 },
               ],
             },
@@ -396,7 +761,10 @@ void main() {
                   'id': 3,
                   'status': 'pending',
                   'status_label': 'Pending',
-                  'siswa': {'nama': 'Citra Pendaftar'},
+                  'siswa': {
+                    'nama': 'Citra Pendaftar',
+                    'foto': 'storage/profile-photos/citra.jpg',
+                  },
                 },
               ],
             },
@@ -408,6 +776,7 @@ void main() {
                   'id': 4,
                   'status': 'pending',
                   'nama': 'Danu Pengaju',
+                  'foto': 'storage/profile-photos/danu.jpg',
                   'alasan': 'Alasan',
                 },
               ],
@@ -440,6 +809,14 @@ void main() {
     );
 
     expect(find.text('Alya Anggota'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is PersonAvatar &&
+            widget.photoUrl == 'storage/profile-photos/alya.jpg',
+      ),
+      findsWidgets,
+    );
     await tester.enterText(
       find.byKey(const ValueKey('Cari nama anggota...')),
       'Bima',
@@ -460,12 +837,28 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'Citra');
     await tester.pumpAndSettle();
     expect(find.text('Citra Pendaftar'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is PersonAvatar &&
+            widget.photoUrl == 'storage/profile-photos/citra.jpg',
+      ),
+      findsWidgets,
+    );
 
     await tester.tap(find.text('Pengajuan'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'Danu');
     await tester.pumpAndSettle();
     expect(find.text('Danu Pengaju'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is PersonAvatar &&
+            widget.photoUrl == 'storage/profile-photos/danu.jpg',
+      ),
+      findsWidgets,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -491,6 +884,7 @@ void main() {
                   'materi': 'Latihan Rutin',
                   'tanggal_text': '2 Oktober 2026',
                   'presensis_count': 8,
+                  'dokumentasi': 'storage/kegiatan/latihan-rutin.jpg',
                 },
                 {
                   'id': 2,
@@ -519,6 +913,14 @@ void main() {
     expect(find.text('Buat Kegiatan'), findsNothing);
     expect(find.text('2 kegiatan'), findsOneWidget);
     expect(find.text('Latihan Rutin'), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('activity-documentation-1')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('activity-documentation-fallback')),
+      findsOneWidget,
+    );
     await tester.enterText(find.byType(TextField), 'tidak ada');
     await tester.pumpAndSettle();
     expect(find.text('0 hasil pencarian'), findsOneWidget);
@@ -526,6 +928,47 @@ void main() {
     await tester.tap(find.byTooltip('Hapus pencarian'));
     await tester.pumpAndSettle();
     expect(find.text('2 kegiatan'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('notification card offers a confirmed delete action', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          notifikasiProvider.overrideWith(
+            (ref) async => {
+              'notifikasis': [
+                {
+                  'id': 7,
+                  'judul': 'Pengumuman',
+                  'pesan': 'Ada pembaruan untuk ekskul.',
+                  'is_read': true,
+                  'created_label': '11 Oktober 2026',
+                },
+              ],
+            },
+          ),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(body: NotifikasiScreen(isKetua: true)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Hapus notifikasi'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hapus notifikasi?'), findsOneWidget);
+    expect(
+      find.text('Notifikasi ini akan dihapus secara permanen.'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Batal'));
+    await tester.pumpAndSettle();
+    expect(find.text('Pengumuman'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

@@ -297,5 +297,10 @@ class AuthUser {
 
   String get namaTampilan => siswa?.nama ?? username;
 
-  String? get fotoUrl => foto ?? siswa?.foto;
+  String? get fotoUrl {
+    final profilePhoto = foto?.trim();
+    if (profilePhoto?.isNotEmpty == true) return profilePhoto;
+    final studentPhoto = siswa?.foto?.trim();
+    return studentPhoto?.isNotEmpty == true ? studentPhoto : null;
+  }
 }

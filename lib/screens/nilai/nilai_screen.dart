@@ -124,9 +124,9 @@ class _NilaiBelumAda extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(28),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.surface(context),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppTheme.line),
+            border: Border.all(color: AppTheme.outline(context)),
           ),
           child: Column(
             children: [
@@ -148,7 +148,7 @@ class _NilaiBelumAda extends StatelessWidget {
               Text(
                 'Nilai Belum Diumumkan',
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.ink,
+                  color: AppTheme.text(context),
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                 ),
@@ -160,7 +160,7 @@ class _NilaiBelumAda extends StatelessWidget {
                 'begitu pembina merilisnya.',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.sub,
+                  color: AppTheme.mutedText(context),
                   fontSize: 12.5,
                   height: 1.5,
                 ),
@@ -194,9 +194,9 @@ class _RekapSementaraCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.line),
+        border: Border.all(color: AppTheme.outline(context)),
       ),
       child: Row(
         children: [
@@ -204,9 +204,9 @@ class _RekapSementaraCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: AppTheme.blueBg,
+              color: AppTheme.accentSurface(context),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFDBEAFE)),
+              border: Border.all(color: AppTheme.blue.withValues(alpha: 0.22)),
             ),
             child: Icon(Icons.check_circle_outline, color: AppTheme.blue),
           ),
@@ -218,7 +218,7 @@ class _RekapSementaraCard extends StatelessWidget {
                 Text(
                   'Rekap kehadiran sementara',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.ink,
+                    color: AppTheme.text(context),
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                   ),
@@ -227,7 +227,7 @@ class _RekapSementaraCard extends StatelessWidget {
                 Text(
                   '$pertemuan pertemuan · $persen% hadir',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.sub,
+                    color: AppTheme.mutedText(context),
                     fontSize: 11,
                   ),
                 ),
@@ -237,14 +237,14 @@ class _RekapSementaraCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: AppTheme.surfaceVariant(context),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE9EEF5)),
+              border: Border.all(color: AppTheme.outline(context)),
             ),
             child: Text(
               'Kehadiran: H$hadir I$izin S$sakit A$alpha',
               style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.sub,
+                color: AppTheme.mutedText(context),
                 fontSize: 10.5,
                 fontWeight: FontWeight.w700,
               ),
@@ -312,7 +312,7 @@ class _NilaiDetail extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.ink,
+                      color: AppTheme.text(context),
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
                     ),
@@ -321,7 +321,7 @@ class _NilaiDetail extends StatelessWidget {
                   Text(
                     'Periode ${periodeLabel ?? '-'}',
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.sub,
+                      color: AppTheme.mutedText(context),
                       fontSize: 11,
                     ),
                   ),
@@ -427,9 +427,9 @@ class _NilaiHero extends StatelessWidget {
           height: 130,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.surface(context),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppTheme.line),
+            border: Border.all(color: AppTheme.outline(context)),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -458,7 +458,7 @@ class _NilaiHero extends StatelessWidget {
               Text(
                 'Predikat',
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.sub,
+                  color: AppTheme.mutedText(context),
                   fontSize: 10.5,
                   fontWeight: FontWeight.w700,
                 ),
@@ -501,12 +501,14 @@ class _KomponenCard extends StatelessWidget {
     ];
 
     return _whiteCard(
+      context: context,
       title: 'Rincian Komponen',
       child: Column(
         children: [
           for (var i = 0; i < komponen.length; i++) ...[
             if (i > 0) const SizedBox(height: 14),
             _komponenRow(
+              context: context,
               label: komponen[i].$1,
               bobot: komponen[i].$2,
               value: komponen[i].$3,
@@ -519,6 +521,7 @@ class _KomponenCard extends StatelessWidget {
   }
 
   Widget _komponenRow({
+    required BuildContext context,
     required String label,
     required String bobot,
     required Object value,
@@ -537,7 +540,7 @@ class _KomponenCard extends StatelessWidget {
               child: Text(
                 label,
                 style: GoogleFonts.plusJakartaSans(
-                  color: const Color(0xFF475569),
+                  color: AppTheme.mutedText(context),
                   fontSize: 11.5,
                   fontWeight: FontWeight.w700,
                 ),
@@ -669,6 +672,7 @@ class _CatatanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final catatan = penilaian['catatan']?.toString().trim();
     return _whiteCard(
+      context: context,
       title: 'Catatan Pembina',
       child: Text(
         (catatan != null && catatan.isNotEmpty)
@@ -694,9 +698,9 @@ class _DinilaiCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.line),
+        border: Border.all(color: AppTheme.outline(context)),
       ),
       child: Row(
         children: [
@@ -704,9 +708,9 @@ class _DinilaiCard extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: AppTheme.blueBg,
+              color: AppTheme.accentSurface(context),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFDBEAFE)),
+              border: Border.all(color: AppTheme.blue.withValues(alpha: 0.22)),
             ),
             child: Icon(Icons.person_outline, color: AppTheme.blue, size: 20),
           ),
@@ -718,7 +722,7 @@ class _DinilaiCard extends StatelessWidget {
                 Text(
                   'Dinilai oleh ${penilaiNama ?? 'Pembina Ekskul'}',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.ink,
+                    color: AppTheme.text(context),
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                   ),
@@ -727,7 +731,7 @@ class _DinilaiCard extends StatelessWidget {
                 Text(
                   'Nilai akhir dihitung otomatis dari kehadiran dan komponen penilaian.',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.sub,
+                    color: AppTheme.mutedText(context),
                     fontSize: 11,
                     height: 1.4,
                   ),
@@ -741,13 +745,17 @@ class _DinilaiCard extends StatelessWidget {
   }
 }
 
-Widget _whiteCard({required String title, required Widget child}) {
+Widget _whiteCard({
+  required BuildContext context,
+  required String title,
+  required Widget child,
+}) {
   return Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppTheme.surface(context),
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: AppTheme.line),
+      border: Border.all(color: AppTheme.outline(context)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -755,7 +763,7 @@ Widget _whiteCard({required String title, required Widget child}) {
         Text(
           title,
           style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.ink,
+            color: AppTheme.text(context),
             fontSize: 13,
             fontWeight: FontWeight.w800,
           ),

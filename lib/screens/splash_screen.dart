@@ -10,7 +10,7 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.blueBg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -39,7 +39,7 @@ class SplashScreen extends StatelessWidget {
             Text(
               AppConfig.appName,
               style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.ink,
+                color: AppTheme.text(context),
                 fontSize: 30,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 4,
@@ -49,7 +49,7 @@ class SplashScreen extends StatelessWidget {
             Text(
               'Satu Akun, Semua Ekskul',
               style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.sub,
+                color: AppTheme.mutedText(context),
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),

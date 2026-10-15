@@ -9,7 +9,6 @@ import '../../data/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
-import '../../core/app_config.dart';
 import '../aktivitas/siswa_aktivitas_screen.dart';
 import '../katalog/ekskul_detail_screen.dart';
 import '../profil/pengajuan_keluar_screen.dart';
@@ -35,13 +34,14 @@ String _formatIndonesianDate(DateTime date) =>
 String _monthAbbreviation(int month) =>
     _bulanIndonesia[month - 1].substring(0, 3).toUpperCase();
 
-Color _attendanceColor(String status) => switch (status.toLowerCase()) {
-  'hadir' => const Color(0xFF15803D),
-  'izin' => const Color(0xFF1E5AA8),
-  'sakit' => const Color(0xFFC77700),
-  'alpha' => const Color(0xFFE11D48),
-  _ => AppTheme.sub,
-};
+Color _attendanceColor(String status, BuildContext context) =>
+    switch (status.toLowerCase()) {
+      'hadir' => const Color(0xFF15803D),
+      'izin' => const Color(0xFF1E5AA8),
+      'sakit' => const Color(0xFFC77700),
+      'alpha' => const Color(0xFFE11D48),
+      _ => AppTheme.mutedText(context),
+    };
 
 class BerandaSiswa extends ConsumerWidget {
   const BerandaSiswa({super.key, required this.user});
@@ -372,25 +372,12 @@ class _Hero extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  CircleAvatar(
+                  PersonAvatar(
+                    name: user.namaTampilan,
+                    photoUrl: user.fotoUrl,
                     radius: 22,
                     backgroundColor: Colors.white.withValues(alpha: 0.2),
-                    backgroundImage:
-                        (user.fotoUrl != null && user.fotoUrl!.isNotEmpty)
-                        ? NetworkImage(AppConfig.imageUrl(user.fotoUrl))
-                        : null,
-                    child: (user.fotoUrl == null || user.fotoUrl!.isEmpty)
-                        ? Text(
-                            user.namaTampilan.isEmpty
-                                ? '?'
-                                : user.namaTampilan[0],
-                            style: GoogleFonts.plusJakartaSans(
-                              color: Colors.white,
-                              fontSize: 19,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          )
-                        : null,
+                    foregroundColor: Colors.white,
                   ),
                   const SizedBox(width: 11),
                   Expanded(
@@ -718,9 +705,9 @@ class _NotJoinedCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.line),
+        border: Border.all(color: AppTheme.outline(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -728,7 +715,7 @@ class _NotJoinedCard extends StatelessWidget {
           Text(
             'Kamu belum bergabung dengan ekskul apapun',
             style: GoogleFonts.plusJakartaSans(
-              color: AppTheme.ink,
+              color: AppTheme.text(context),
               fontSize: 15,
               fontWeight: FontWeight.w800,
             ),
@@ -737,7 +724,7 @@ class _NotJoinedCard extends StatelessWidget {
           Text(
             'Jelajahi katalog ekskul dan temukan kegiatan yang cocok untukmu.',
             style: GoogleFonts.plusJakartaSans(
-              color: AppTheme.sub,
+              color: AppTheme.mutedText(context),
               fontSize: 12.5,
               height: 1.4,
             ),
@@ -768,9 +755,9 @@ class _JoinedEkskulCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.line),
+        border: Border.all(color: AppTheme.outline(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -781,7 +768,7 @@ class _JoinedEkskulCard extends StatelessWidget {
                 child: Text(
                   nama,
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.ink,
+                    color: AppTheme.text(context),
                     fontSize: 17,
                     fontWeight: FontWeight.w900,
                   ),
@@ -797,7 +784,7 @@ class _JoinedEkskulCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.sub,
+                color: AppTheme.mutedText(context),
                 fontSize: 12,
                 height: 1.4,
               ),
@@ -807,13 +794,17 @@ class _JoinedEkskulCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.schedule, color: AppTheme.sub, size: 15),
+                Icon(
+                  Icons.schedule,
+                  color: AppTheme.mutedText(context),
+                  size: 15,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     jadwal,
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.sub,
+                      color: AppTheme.mutedText(context),
                       fontSize: 12.5,
                     ),
                   ),
@@ -827,7 +818,7 @@ class _JoinedEkskulCard extends StatelessWidget {
               Text(
                 'Ekskul aktif kamu',
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.sub,
+                  color: AppTheme.mutedText(context),
                   fontSize: 12,
                 ),
               ),
@@ -876,9 +867,9 @@ class _KegiatanCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.line),
+        border: Border.all(color: AppTheme.outline(context)),
       ),
       child: Row(
         children: [
@@ -926,7 +917,7 @@ class _KegiatanCard extends StatelessWidget {
                 Text(
                   kegiatan.materi,
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.ink,
+                    color: AppTheme.text(context),
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
@@ -935,7 +926,7 @@ class _KegiatanCard extends StatelessWidget {
                 Text(
                   kegiatan.tanggalText,
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.sub,
+                    color: AppTheme.mutedText(context),
                     fontSize: 12,
                   ),
                 ),
@@ -990,7 +981,7 @@ class _AttendanceTrend extends ConsumerWidget {
             Text(
               'Statistik kehadiranmu pada 8 pertemuan terakhir.',
               style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.sub,
+                color: AppTheme.mutedText(context),
                 fontSize: 11,
               ),
             ),
@@ -1001,7 +992,7 @@ class _AttendanceTrend extends ConsumerWidget {
                 Text(
                   '$totalHadir',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.ink,
+                    color: AppTheme.text(context),
                     fontSize: 28,
                     fontWeight: FontWeight.w900,
                     height: 1,
@@ -1013,7 +1004,7 @@ class _AttendanceTrend extends ConsumerWidget {
                   child: Text(
                     'total pertemuan hadir',
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.sub,
+                      color: AppTheme.mutedText(context),
                       fontSize: 11,
                     ),
                   ),
@@ -1027,7 +1018,10 @@ class _AttendanceTrend extends ConsumerWidget {
                 error is ApiException
                     ? error.message
                     : 'Tren kehadiran tidak dapat dimuat.',
-                style: const TextStyle(color: AppTheme.sub, fontSize: 12),
+                style: TextStyle(
+                  color: AppTheme.mutedText(context),
+                  fontSize: 12,
+                ),
               ),
               data: (data) {
                 final rows = listOf(data, 'presensi').toList()
@@ -1052,10 +1046,10 @@ class _AttendanceTrend extends ConsumerWidget {
                     ? rows.sublist(rows.length - 8)
                     : rows;
                 if (recentRows.isEmpty) {
-                  return const Text(
+                  return Text(
                     'Riwayat kehadiran akan muncul setelah presensi kegiatan dicatat.',
                     style: TextStyle(
-                      color: AppTheme.sub,
+                      color: AppTheme.mutedText(context),
                       fontSize: 12,
                       height: 1.4,
                     ),
@@ -1087,6 +1081,7 @@ class _AttendanceTrend extends ConsumerWidget {
                                     decoration: BoxDecoration(
                                       color: _attendanceColor(
                                         row['status']?.toString() ?? '',
+                                        context,
                                       ),
                                       borderRadius: const BorderRadius.vertical(
                                         top: Radius.circular(6),
@@ -1098,8 +1093,8 @@ class _AttendanceTrend extends ConsumerWidget {
                                     _trendDate(row),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: AppTheme.sub,
+                                    style: TextStyle(
+                                      color: AppTheme.mutedText(context),
                                       fontSize: 8,
                                     ),
                                   ),
@@ -1116,7 +1111,7 @@ class _AttendanceTrend extends ConsumerWidget {
                       children: [
                         for (final status in statuses)
                           _AttendanceLegend(
-                            color: _attendanceColor(status),
+                            color: _attendanceColor(status, context),
                             label: '${_capitalize(status)} ${counts[status]}',
                           ),
                       ],
@@ -1251,16 +1246,21 @@ class _StudentFeedbackState extends ConsumerState<_StudentFeedback> {
             const SizedBox(height: 2),
             Text(
               'Sampaikan pendapatmu untuk ekskul ${widget.ekskulName}.',
-              style: const TextStyle(color: AppTheme.sub, fontSize: 12),
+              style: TextStyle(
+                color: AppTheme.mutedText(context),
+                fontSize: 12,
+              ),
             ),
             if (widget.hasSubmittedTestimoni) ...[
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(11),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: AppTheme.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFDBEAFE)),
+                  border: Border.all(
+                    color: AppTheme.blue.withValues(alpha: 0.22),
+                  ),
                 ),
                 child: const Row(
                   children: [
@@ -1378,7 +1378,7 @@ class _QuickAccessTile extends StatelessWidget {
       style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
     ),
     subtitle: Text(subtitle),
-    trailing: const Icon(Icons.chevron_right, color: AppTheme.sub),
+    trailing: Icon(Icons.chevron_right, color: AppTheme.mutedText(context)),
     onTap: onTap,
   );
 }
@@ -1413,7 +1413,7 @@ class _AttendanceLegend extends StatelessWidget {
       Text(
         label,
         style: GoogleFonts.plusJakartaSans(
-          color: AppTheme.sub,
+          color: AppTheme.mutedText(context),
           fontSize: 10,
           fontWeight: FontWeight.w600,
         ),

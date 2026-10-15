@@ -267,10 +267,10 @@ class _KetuaFaqScreenState extends ConsumerState<KetuaFaqScreen> {
                             return Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: AppTheme.surface(context),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: const Color(0xFFE8EDF5),
+                                  color: AppTheme.outline(context),
                                 ),
                                 boxShadow: [
                                   BoxShadow(
@@ -292,7 +292,9 @@ class _KetuaFaqScreenState extends ConsumerState<KetuaFaqScreen> {
                                         width: 38,
                                         height: 38,
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFEFF6FF),
+                                          color: AppTheme.blue.withValues(
+                                            alpha: 0.1,
+                                          ),
                                           borderRadius: BorderRadius.circular(
                                             12,
                                           ),
@@ -314,7 +316,9 @@ class _KetuaFaqScreenState extends ConsumerState<KetuaFaqScreen> {
                                                   '',
                                               style:
                                                   GoogleFonts.plusJakartaSans(
-                                                    color: AppTheme.ink,
+                                                    color: AppTheme.text(
+                                                      context,
+                                                    ),
                                                     fontSize: 14,
                                                     fontWeight: FontWeight.w800,
                                                     height: 1.3,
@@ -327,7 +331,9 @@ class _KetuaFaqScreenState extends ConsumerState<KetuaFaqScreen> {
                                                 faq['jawaban'].toString(),
                                                 style:
                                                     GoogleFonts.plusJakartaSans(
-                                                      color: AppTheme.sub,
+                                                      color: AppTheme.mutedText(
+                                                        context,
+                                                      ),
                                                       fontSize: 12,
                                                       height: 1.5,
                                                     ),

@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/providers.dart';
-import '../../core/app_config.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/theme_controller.dart';
 import '../../widgets/common.dart';
 import 'profil_edit_screen.dart';
 import 'pengajuan_keluar_screen.dart';
@@ -19,6 +19,7 @@ class ProfilScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final siswa = user.siswa;
+    final darkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
 
     return SafeArea(
       child: ListView(
@@ -53,25 +54,12 @@ class ProfilScreen extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    CircleAvatar(
+                    PersonAvatar(
+                      name: user.namaTampilan,
+                      photoUrl: user.fotoUrl,
                       radius: 28,
                       backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      backgroundImage:
-                          (user.fotoUrl != null && user.fotoUrl!.isNotEmpty)
-                          ? NetworkImage(AppConfig.imageUrl(user.fotoUrl))
-                          : null,
-                      child: (user.fotoUrl == null || user.fotoUrl!.isEmpty)
-                          ? Text(
-                              user.namaTampilan.isEmpty
-                                  ? '?'
-                                  : user.namaTampilan[0].toUpperCase(),
-                              style: GoogleFonts.plusJakartaSans(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            )
-                          : null,
+                      foregroundColor: Colors.white,
                     ),
                     const Spacer(),
                     Container(
@@ -125,33 +113,42 @@ class ProfilScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 18),
           _contentCard(
+            context: context,
             icon: Icons.badge_outlined,
             title: 'Data Diri',
             subtitle: 'Informasi akun dan identitas sekolahmu.',
             child: Column(
               children: [
-                _row(Icons.alternate_email, 'Username', user.username),
-                _divider(),
-                _row(Icons.mail_outline, 'Email', user.email),
-                _divider(),
-                _row(Icons.badge_outlined, 'NIS', siswa?.nis ?? '-'),
-                _divider(),
+                _row(context, Icons.alternate_email, 'Username', user.username),
+                _divider(context),
+                _row(context, Icons.mail_outline, 'Email', user.email),
+                _divider(context),
+                _row(context, Icons.badge_outlined, 'NIS', siswa?.nis ?? '-'),
+                _divider(context),
                 _row(
+                  context,
                   Icons.person_outline,
                   'Jenis Kelamin',
                   siswa?.jenisKelamin ?? '-',
                 ),
-                _divider(),
-                _row(Icons.school_outlined, 'Kelas', siswa?.kelas?.nama ?? '-'),
-                _divider(),
+                _divider(context),
                 _row(
+                  context,
+                  Icons.school_outlined,
+                  'Kelas',
+                  siswa?.kelas?.nama ?? '-',
+                ),
+                _divider(context),
+                _row(
+                  context,
                   Icons.verified_outlined,
                   'Jabatan',
                   user.isKetua ? 'Ketua Ekskul' : (siswa?.jabatan ?? '-'),
                 ),
                 if (user.aktivEkskul != null) ...[
-                  _divider(),
+                  _divider(context),
                   _row(
+                    context,
                     Icons.explore_outlined,
                     'Ekskul Aktif',
                     user.aktivEkskul!.namaEkskul,
@@ -162,12 +159,14 @@ class ProfilScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 14),
           _contentCard(
+            context: context,
             icon: Icons.exit_to_app_outlined,
             title: 'Ekskul',
             subtitle: 'Keanggotaan ekskul aktifmu.',
             child: Column(
               children: [
                 _actionRow(
+                  context: context,
                   icon: Icons.logout_rounded,
                   label: 'Pengajuan Keluar',
                   subtitle: 'Ajukan pengunduran diri dari ekskul aktif.',
@@ -185,12 +184,14 @@ class ProfilScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 14),
           _contentCard(
+            context: context,
             icon: Icons.lock_outline_rounded,
             title: 'Akun & Keamanan',
             subtitle: 'Kelola akses ke akunmu.',
             child: Column(
               children: [
                 _actionRow(
+                  context: context,
                   icon: Icons.edit_outlined,
                   label: 'Edit Profil',
                   subtitle: 'Perbarui data pribadimu.',
@@ -201,15 +202,47 @@ class ProfilScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                _divider(),
+                _divider(context),
                 _actionRow(
+                  context: context,
                   icon: Icons.key_outlined,
                   label: 'Ubah Kata Sandi',
                   subtitle: 'Buat kata sandi baru untuk keamanan akun.',
                   onTap: () => _changePassword(context, ref),
                 ),
-                _divider(),
+                _divider(context),
+                Material(
+                  color: Colors.transparent,
+                  child: SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    secondary: Icon(
+                      darkMode
+                          ? Icons.dark_mode_rounded
+                          : Icons.light_mode_rounded,
+                      color: AppTheme.blue,
+                    ),
+                    title: const Text('Mode gelap'),
+                    subtitle: const Text('Gunakan tampilan gelap aplikasi.'),
+                    value: darkMode,
+                    onChanged: (enabled) async {
+                      try {
+                        await ref
+                            .read(themeModeProvider.notifier)
+                            .setDarkMode(enabled);
+                      } catch (_) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Preferensi tema gagal disimpan.'),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
+                _divider(context),
                 _actionRow(
+                  context: context,
                   icon: Icons.logout,
                   label: 'Logout',
                   subtitle: 'Keluar dari aplikasi.',
@@ -227,17 +260,19 @@ class ProfilScreen extends ConsumerWidget {
   }
 
   Widget _contentCard({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required String subtitle,
     required Widget child,
   }) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EDF5)),
+        border: Border.all(color: colors.outlineVariant),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0F172A).withValues(alpha: 0.035),
@@ -256,7 +291,7 @@ class ProfilScreen extends ConsumerWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: colors.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: AppTheme.blue, size: 20),
@@ -269,7 +304,7 @@ class ProfilScreen extends ConsumerWidget {
                     Text(
                       title,
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.ink,
+                        color: colors.onSurface,
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
                       ),
@@ -278,7 +313,7 @@ class ProfilScreen extends ConsumerWidget {
                     Text(
                       subtitle,
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.sub,
+                        color: colors.onSurfaceVariant,
                         fontSize: 11,
                         height: 1.35,
                       ),
@@ -295,7 +330,8 @@ class ProfilScreen extends ConsumerWidget {
     );
   }
 
-  Widget _row(IconData icon, String label, String value) {
+  Widget _row(BuildContext context, IconData icon, String label, String value) {
+    final colors = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 11),
       child: Row(
@@ -307,7 +343,7 @@ class ProfilScreen extends ConsumerWidget {
             child: Text(
               label,
               style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.sub,
+                color: colors.onSurfaceVariant,
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
               ),
@@ -319,7 +355,7 @@ class ProfilScreen extends ConsumerWidget {
               value,
               textAlign: TextAlign.right,
               style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.ink,
+                color: colors.onSurface,
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
               ),
@@ -331,13 +367,15 @@ class ProfilScreen extends ConsumerWidget {
   }
 
   Widget _actionRow({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required String subtitle,
     required VoidCallback onTap,
     Color color = AppTheme.blue,
-    Color iconBackground = const Color(0xFFEFF6FF),
+    Color? iconBackground,
   }) {
+    final colors = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -349,7 +387,7 @@ class ProfilScreen extends ConsumerWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: iconBackground,
+                color: iconBackground ?? AppTheme.accentSurface(context),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 20),
@@ -362,7 +400,7 @@ class ProfilScreen extends ConsumerWidget {
                   Text(
                     label,
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.ink,
+                      color: colors.onSurface,
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
                     ),
@@ -371,7 +409,7 @@ class ProfilScreen extends ConsumerWidget {
                   Text(
                     subtitle,
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.sub,
+                      color: colors.onSurfaceVariant,
                       fontSize: 11,
                       height: 1.3,
                     ),
@@ -380,15 +418,19 @@ class ProfilScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 6),
-            Icon(Icons.chevron_right_rounded, color: AppTheme.sub, size: 22),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppTheme.mutedText(context),
+              size: 22,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _divider() {
-    return const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9));
+  Widget _divider(BuildContext context) {
+    return Divider(height: 1, thickness: 1, color: AppTheme.outline(context));
   }
 
   Future<void> _changePassword(BuildContext context, WidgetRef ref) async {
@@ -410,7 +452,7 @@ class ProfilScreen extends ConsumerWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppTheme.blueBg,
+                    color: AppTheme.accentSurface(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -432,7 +474,7 @@ class ProfilScreen extends ConsumerWidget {
                     Text(
                       'Buat kata sandi baru untuk menjaga keamanan akun.',
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.sub,
+                        color: AppTheme.mutedText(context),
                         fontSize: 12,
                         height: 1.45,
                       ),

@@ -151,7 +151,7 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
                             child: Text(
                               pelatih['nama']?.toString() ?? '-',
                               style: GoogleFonts.plusJakartaSans(
-                                color: AppTheme.ink,
+                                color: AppTheme.text(context),
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -344,8 +344,8 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppTheme.surface(ctx),
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -359,7 +359,7 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE2E8F0),
+                    color: AppTheme.outline(ctx),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -368,7 +368,7 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
               Text(
                 'Pilih Bulan',
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.ink,
+                  color: AppTheme.text(ctx),
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
                 ),
@@ -377,7 +377,7 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
               Text(
                 'Pilih periode untuk melihat rekap kehadiran.',
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.sub,
+                  color: AppTheme.mutedText(ctx),
                   fontSize: 12,
                 ),
               ),
@@ -402,13 +402,13 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
                         ),
                         decoration: BoxDecoration(
                           color: isActive
-                              ? AppTheme.blueBg
-                              : const Color(0xFFF8FAFC),
+                              ? AppTheme.accentSurface(ctx)
+                              : AppTheme.surface(ctx),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: isActive
                                 ? AppTheme.blue
-                                : const Color(0xFFE8EDF5),
+                                : AppTheme.outline(ctx),
                           ),
                         ),
                         child: Row(
@@ -419,7 +419,7 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
                                 style: GoogleFonts.plusJakartaSans(
                                   color: isActive
                                       ? const Color(0xFF1D4ED8)
-                                      : AppTheme.ink,
+                                      : AppTheme.text(ctx),
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -454,9 +454,9 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EDF5)),
+        border: Border.all(color: AppTheme.outline(context)),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0F172A).withValues(alpha: 0.035),
@@ -475,7 +475,7 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: AppTheme.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: AppTheme.blue, size: 20),
@@ -488,7 +488,7 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
                     Text(
                       title,
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.ink,
+                        color: AppTheme.text(context),
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
                       ),
@@ -497,7 +497,7 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
                     Text(
                       subtitle,
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.sub,
+                        color: AppTheme.mutedText(context),
                         fontSize: 11,
                         height: 1.35,
                       ),
@@ -518,9 +518,9 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EDF5)),
+        border: Border.all(color: AppTheme.outline(context)),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0F172A).withValues(alpha: 0.035),
@@ -532,18 +532,10 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.person_outline,
-              color: AppTheme.blue,
-              size: 20,
-            ),
+          PersonAvatar(
+            name: r['nama']?.toString() ?? 'Siswa',
+            photoUrl: r['foto']?.toString(),
+            radius: 19,
           ),
           const SizedBox(width: 11),
           Expanded(
@@ -558,7 +550,7 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.plusJakartaSans(
-                          color: AppTheme.ink,
+                          color: AppTheme.text(context),
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
                         ),
@@ -588,7 +580,7 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
                 Text(
                   'Kelas: ${r['kelas'] ?? '-'}',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.sub,
+                    color: AppTheme.mutedText(context),
                     fontSize: 11,
                   ),
                 ),

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../core/app_config.dart';
 import '../../core/providers.dart';
 import '../../data/providers.dart';
 import '../../models/models.dart';
@@ -28,7 +27,7 @@ class NotifikasiScreen extends ConsumerWidget {
             action: IconButton(
               tooltip: 'Tandai semua dibaca',
               style: IconButton.styleFrom(
-                backgroundColor: AppTheme.blueBg,
+                backgroundColor: AppTheme.accentSurface(context),
                 foregroundColor: AppTheme.blue,
               ),
               onPressed: () async {
@@ -68,6 +67,7 @@ class NotifikasiScreen extends ConsumerWidget {
                     final n = Notifikasi.fromJson(items[i]);
                     return _NotifCard(
                       notifikasi: n,
+                      onDelete: () => _deleteNotification(context, ref, n),
                       onTap: () async {
                         if (n.isRead) return;
                         try {
@@ -93,21 +93,62 @@ class NotifikasiScreen extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _deleteNotification(
+    BuildContext context,
+    WidgetRef ref,
+    Notifikasi notification,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Hapus notifikasi?'),
+        content: const Text('Notifikasi ini akan dihapus secara permanen.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      await ref
+          .read(apiClientProvider)
+          .delete('/siswa/notifikasi/${notification.id}');
+      ref.invalidate(notifikasiProvider);
+      ref.invalidate(siswaDashboardProvider);
+      if (isKetua) ref.invalidate(ketuaDashboardProvider);
+    } catch (error) {
+      if (context.mounted) await showErrorDialog(context, ref, error);
+    }
+  }
 }
 
 class _NotifCard extends StatelessWidget {
-  const _NotifCard({required this.notifikasi, required this.onTap});
+  const _NotifCard({
+    required this.notifikasi,
+    required this.onTap,
+    required this.onDelete,
+  });
 
   final Notifikasi notifikasi;
   final VoidCallback onTap;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
     final color = notifikasi.isRead ? Colors.grey : AppTheme.blue;
     return Material(
       color: notifikasi.isRead
-          ? Colors.white
-          : const Color(AppConfig.brandBg).withValues(alpha: 0.45),
+          ? AppTheme.surface(context)
+          : AppTheme.blue.withValues(alpha: 0.1),
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
@@ -118,8 +159,8 @@ class _NotifCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: notifikasi.isRead
-                  ? const Color(0xFFE8EDF5)
-                  : const Color(0xFFBFDBFE),
+                  ? AppTheme.outline(context)
+                  : AppTheme.blue.withValues(alpha: 0.25),
             ),
             boxShadow: [
               BoxShadow(
@@ -152,7 +193,7 @@ class _NotifCard extends StatelessWidget {
                           child: Text(
                             notifikasi.judul,
                             style: GoogleFonts.plusJakartaSans(
-                              color: AppTheme.ink,
+                              color: AppTheme.text(context),
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
                             ),
@@ -167,13 +208,23 @@ class _NotifCard extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                           ),
+                        IconButton(
+                          tooltip: 'Hapus notifikasi',
+                          visualDensity: VisualDensity.compact,
+                          onPressed: onDelete,
+                          icon: Icon(
+                            Icons.delete_outline_rounded,
+                            color: AppTheme.mutedText(context),
+                            size: 19,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       notifikasi.pesan,
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.sub,
+                        color: AppTheme.mutedText(context),
                         fontSize: 12,
                         height: 1.4,
                       ),
@@ -184,7 +235,8 @@ class _NotifCard extends StatelessWidget {
                           ? notifikasi.createdLabel
                           : '-',
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.sub.withValues(alpha: 0.7),
+                        color: AppTheme.mutedText(context)
+                            .withValues(alpha: 0.7),
                         fontSize: 11,
                       ),
                     ),

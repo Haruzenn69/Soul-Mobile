@@ -265,7 +265,7 @@ class _LaporanCreateScreenState extends ConsumerState<LaporanCreateScreen> {
   }) => Container(
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: AppTheme.blueBg.withValues(alpha: 0.65),
+      color: AppTheme.accentSurface(context),
       borderRadius: BorderRadius.circular(16),
       border: Border.all(color: AppTheme.blue.withValues(alpha: 0.12)),
     ),
@@ -281,7 +281,7 @@ class _LaporanCreateScreenState extends ConsumerState<LaporanCreateScreen> {
               Text(
                 title,
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.blueDark,
+                  color: Theme.of(context).colorScheme.primary,
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                 ),
@@ -290,7 +290,7 @@ class _LaporanCreateScreenState extends ConsumerState<LaporanCreateScreen> {
               Text(
                 description,
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.sub,
+                  color: AppTheme.mutedText(context),
                   fontSize: 11.5,
                   height: 1.45,
                 ),
@@ -309,9 +309,9 @@ class _LaporanCreateScreenState extends ConsumerState<LaporanCreateScreen> {
   }) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppTheme.surface(context),
       borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: AppTheme.line),
+      border: Border.all(color: AppTheme.outline(context)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,7 +319,7 @@ class _LaporanCreateScreenState extends ConsumerState<LaporanCreateScreen> {
         Text(
           title,
           style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.ink,
+            color: AppTheme.text(context),
             fontSize: 14,
             fontWeight: FontWeight.w800,
           ),
@@ -328,7 +328,7 @@ class _LaporanCreateScreenState extends ConsumerState<LaporanCreateScreen> {
         Text(
           subtitle,
           style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.sub,
+            color: AppTheme.mutedText(context),
             fontSize: 11.5,
             height: 1.4,
           ),

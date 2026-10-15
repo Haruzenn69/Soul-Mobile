@@ -77,9 +77,9 @@ class _SiswaAktivitasScreenState extends ConsumerState<SiswaAktivitasScreen>
               key: const ValueKey('aktivitas-pill-tabs'),
               padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.surface(context),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: AppTheme.line),
+                border: Border.all(color: AppTheme.outline(context)),
               ),
               child: TabBar(
                 key: const ValueKey('aktivitas-tab-bar'),
@@ -87,12 +87,12 @@ class _SiswaAktivitasScreenState extends ConsumerState<SiswaAktivitasScreen>
                 dividerHeight: 0,
                 overlayColor: WidgetStatePropertyAll(Colors.transparent),
                 labelColor: AppTheme.blue,
-                unselectedLabelColor: AppTheme.sub,
+                unselectedLabelColor: AppTheme.mutedText(context),
                 indicatorColor: Colors.transparent,
                 dividerColor: Colors.transparent,
                 indicatorSize: TabBarIndicatorSize.tab,
                 indicator: BoxDecoration(
-                  color: AppTheme.blueBg,
+                  color: AppTheme.accentSurface(context),
                   borderRadius: BorderRadius.all(Radius.circular(24)),
                 ),
                 labelPadding: EdgeInsets.zero,
@@ -283,8 +283,8 @@ class _RekapTabState extends ConsumerState<_RekapTab> {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (sheetContext) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppTheme.surface(sheetContext),
           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
         ),
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
@@ -298,7 +298,7 @@ class _RekapTabState extends ConsumerState<_RekapTab> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE2E8F0),
+                    color: AppTheme.outline(sheetContext),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -307,7 +307,7 @@ class _RekapTabState extends ConsumerState<_RekapTab> {
               Text(
                 'Pilih Bulan',
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.ink,
+                  color: AppTheme.text(sheetContext),
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
                 ),
@@ -316,7 +316,7 @@ class _RekapTabState extends ConsumerState<_RekapTab> {
               Text(
                 'Pilih periode untuk melihat rekap kehadiran.',
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.sub,
+                  color: AppTheme.mutedText(sheetContext),
                   fontSize: 12,
                 ),
               ),
@@ -333,10 +333,14 @@ class _RekapTabState extends ConsumerState<_RekapTab> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                         side: BorderSide(
-                          color: isActive ? AppTheme.blue : AppTheme.line,
+                          color: isActive
+                              ? AppTheme.blue
+                              : AppTheme.outline(context),
                         ),
                       ),
-                      tileColor: isActive ? AppTheme.blueBg : Colors.white,
+                      tileColor: isActive
+                          ? AppTheme.accentSurface(context)
+                          : AppTheme.surface(context),
                       title: Text(_labelBulan(month)),
                       trailing: isActive
                           ? const Icon(
@@ -367,15 +371,17 @@ class _NilaiTab extends StatelessWidget {
   Widget build(BuildContext context) => const NilaiScreen(showAppBar: false);
 }
 
-Color _statusColor(String status) => switch (status.toLowerCase()) {
-  'hadir' => const Color(0xFF15803D),
-  'izin' => const Color(0xFF1E5AA8),
-  'sakit' => const Color(0xFFC77700),
-  'alpha' => const Color(0xFFE11D48),
-  _ => AppTheme.sub,
-};
+Color _statusColor(String status, BuildContext context) =>
+    switch (status.toLowerCase()) {
+      'hadir' => const Color(0xFF15803D),
+      'izin' => const Color(0xFF1E5AA8),
+      'sakit' => const Color(0xFFC77700),
+      'alpha' => const Color(0xFFE11D48),
+      _ => AppTheme.mutedText(context),
+    };
 
-Color _statusTint(String status) => _statusColor(status).withValues(alpha: 0.1);
+Color _statusTint(String status, BuildContext context) =>
+    _statusColor(status, context).withValues(alpha: 0.1);
 
 IconData _statusIcon(String status) => switch (status.toLowerCase()) {
   'hadir' => Icons.check_circle_outline,
@@ -400,9 +406,9 @@ class _AttendanceCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppTheme.surface(context),
       borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: AppTheme.line),
+      border: Border.all(color: AppTheme.outline(context)),
       boxShadow: const [
         BoxShadow(
           color: Color(0x080F172A),
@@ -417,10 +423,13 @@ class _AttendanceCard extends StatelessWidget {
           width: 42,
           height: 42,
           decoration: BoxDecoration(
-            color: _statusTint(status),
+            color: _statusTint(status, context),
             borderRadius: BorderRadius.circular(13),
           ),
-          child: Icon(_statusIcon(status), color: _statusColor(status)),
+          child: Icon(
+            _statusIcon(status),
+            color: _statusColor(status, context),
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -432,7 +441,7 @@ class _AttendanceCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.ink,
+                  color: AppTheme.text(context),
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                 ),
@@ -443,7 +452,7 @@ class _AttendanceCard extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.sub,
+                  color: AppTheme.mutedText(context),
                   fontSize: 11,
                 ),
               ),
@@ -606,9 +615,9 @@ class _StudentRecapCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppTheme.line),
+        border: Border.all(color: AppTheme.outline(context)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x080F172A),
@@ -623,7 +632,7 @@ class _StudentRecapCard extends StatelessWidget {
           Text(
             'Rekap Kehadiran Saya',
             style: GoogleFonts.plusJakartaSans(
-              color: AppTheme.ink,
+              color: AppTheme.text(context),
               fontSize: 14,
               fontWeight: FontWeight.w800,
             ),

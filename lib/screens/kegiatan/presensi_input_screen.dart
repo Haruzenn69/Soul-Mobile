@@ -148,9 +148,9 @@ class _PresensiInputScreenState extends ConsumerState<PresensiInputScreen> {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: AppTheme.surface(context),
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppTheme.line),
+                          border: Border.all(color: AppTheme.outline(context)),
                         ),
                         child: pelatih == null
                             ? Row(
@@ -159,7 +159,7 @@ class _PresensiInputScreenState extends ConsumerState<PresensiInputScreen> {
                                     width: 38,
                                     height: 38,
                                     decoration: BoxDecoration(
-                                      color: AppTheme.blueBg,
+                                      color: AppTheme.accentSurface(context),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: const Icon(
@@ -172,7 +172,7 @@ class _PresensiInputScreenState extends ConsumerState<PresensiInputScreen> {
                                     child: Text(
                                       'Pelatih belum ada di ekskul ini.',
                                       style: GoogleFonts.plusJakartaSans(
-                                        color: AppTheme.sub,
+                                        color: AppTheme.mutedText(context),
                                         fontSize: 12.5,
                                         height: 1.4,
                                         fontWeight: FontWeight.w600,
@@ -195,7 +195,7 @@ class _PresensiInputScreenState extends ConsumerState<PresensiInputScreen> {
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: GoogleFonts.plusJakartaSans(
-                                        color: AppTheme.ink,
+                                        color: AppTheme.text(context),
                                         fontSize: 13.5,
                                         height: 1.25,
                                         fontWeight: FontWeight.w700,
@@ -365,9 +365,9 @@ class _AnggotaPresensiTileState extends State<_AnggotaPresensiTile> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.line),
+        border: Border.all(color: AppTheme.outline(context)),
       ),
       child: Row(
         children: [
@@ -377,7 +377,7 @@ class _AnggotaPresensiTileState extends State<_AnggotaPresensiTile> {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.ink,
+                color: AppTheme.text(context),
                 fontSize: 13,
                 height: 1.3,
                 letterSpacing: 0.05,
@@ -419,8 +419,10 @@ class _StatusSelector extends StatelessWidget {
     final badgeColorPart = selectedOption == null || selectedOption.isEmpty
         ? null
         : selectedOption.first.$3;
-    final badgeColor = badgeColorPart ?? AppTheme.sub;
-    final badgeLabel = badgeColorPart == null ? 'Pilih' : selectedOption!.first.$2;
+    final badgeColor = badgeColorPart ?? AppTheme.mutedText(context);
+    final badgeLabel = badgeColorPart == null
+        ? 'Pilih'
+        : selectedOption!.first.$2;
 
     return PopupMenuButton<String>(
       tooltip: 'Ubah status kehadiran',

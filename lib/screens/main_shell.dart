@@ -34,9 +34,10 @@ class _TabItem {
 }
 
 class _ShellScaffold extends ConsumerStatefulWidget {
-  const _ShellScaffold({required this.tabs});
+  const _ShellScaffold({required this.tabs, required this.user});
 
   final List<_TabItem> tabs;
+  final AuthUser user;
 
   @override
   ConsumerState<_ShellScaffold> createState() => _ShellScaffoldState();
@@ -44,6 +45,12 @@ class _ShellScaffold extends ConsumerStatefulWidget {
 
 class _ShellScaffoldState extends ConsumerState<_ShellScaffold> {
   final Map<int, Widget> _tabCache = {};
+
+  @override
+  void didUpdateWidget(covariant _ShellScaffold oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.user != widget.user) _tabCache.clear();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,33 +70,49 @@ class _ShellScaffoldState extends ConsumerState<_ShellScaffold> {
     });
     return Scaffold(
       body: DecoratedBox(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Color(0xFFF0F9FF), Colors.white, Color(0xFFFFFBEB)],
-            stops: [0, 0.52, 1],
+            colors: Theme.of(context).brightness == Brightness.dark
+                ? const [
+                    AppTheme.darkCanvas,
+                    AppTheme.darkSurface,
+                    AppTheme.darkCanvas,
+                  ]
+                : const [AppTheme.canvas, Colors.white, AppTheme.canvas],
+            stops: const [0, 0.52, 1],
           ),
         ),
         child: IndexedStack(index: safeIndex, children: tabChildren),
       ),
       bottomNavigationBar: DecoratedBox(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: AppTheme.line)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          border: Border(
+            top: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
         ),
         child: NavigationBar(
           selectedIndex: safeIndex,
           onDestinationSelected: (i) =>
               ref.read(shellTabProvider.notifier).set(i),
-          backgroundColor: Colors.white,
-          indicatorColor: AppTheme.blueBg,
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          indicatorColor: Theme.of(context).colorScheme.surfaceContainerHighest,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           destinations: [
             for (final tab in widget.tabs)
               NavigationDestination(
-                icon: Icon(tab.icon, color: AppTheme.sub),
-                selectedIcon: Icon(tab.icon, color: AppTheme.blue),
+                icon: Icon(
+                  tab.icon,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                selectedIcon: Icon(
+                  tab.icon,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
                 label: tab.label,
               ),
           ],
@@ -107,6 +130,7 @@ class SiswaShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _ShellScaffold(
+      user: user,
       tabs: [
         _TabItem(
           'Beranda',
@@ -146,6 +170,7 @@ class KetuaShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _ShellScaffold(
+      user: user,
       tabs: [
         _TabItem(
           'Beranda',

@@ -52,9 +52,9 @@ class _ProfilEkskulScreenState extends ConsumerState<ProfilEkskulScreen>
               key: const ValueKey('profil-ekskul-pill-tabs'),
               padding: const EdgeInsets.all(5),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.surface(context),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: AppTheme.line),
+                border: Border.all(color: AppTheme.outline(context)),
               ),
               child: TabBar(
                 key: const ValueKey('profil-ekskul-tab-bar'),
@@ -62,12 +62,12 @@ class _ProfilEkskulScreenState extends ConsumerState<ProfilEkskulScreen>
                 dividerHeight: 0,
                 overlayColor: WidgetStatePropertyAll(Colors.transparent),
                 labelColor: AppTheme.blue,
-                unselectedLabelColor: AppTheme.sub,
+                unselectedLabelColor: AppTheme.mutedText(context),
                 indicatorColor: Colors.transparent,
                 dividerColor: Colors.transparent,
                 indicatorSize: TabBarIndicatorSize.tab,
                 indicator: BoxDecoration(
-                  color: AppTheme.blueBg,
+                  color: AppTheme.accentSurface(context),
                   borderRadius: BorderRadius.all(Radius.circular(24)),
                 ),
                 labelPadding: EdgeInsets.zero,
@@ -268,9 +268,9 @@ class _ProfilTabState extends ConsumerState<_ProfilTab> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.surface(context),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.line),
+                border: Border.all(color: AppTheme.outline(context)),
               ),
               child: Row(
                 children: [
@@ -281,7 +281,7 @@ class _ProfilTabState extends ConsumerState<_ProfilTab> {
                         Text(
                           'Pendaftaran Anggota Baru',
                           style: GoogleFonts.plusJakartaSans(
-                            color: AppTheme.ink,
+                            color: AppTheme.text(context),
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
                           ),
@@ -294,7 +294,7 @@ class _ProfilTabState extends ConsumerState<_ProfilTab> {
                           style: GoogleFonts.plusJakartaSans(
                             color: _isOpenRecruitment
                                 ? const Color(0xFF16803C)
-                                : AppTheme.sub,
+                                : AppTheme.mutedText(context),
                             fontSize: 12,
                           ),
                         ),
@@ -313,9 +313,9 @@ class _ProfilTabState extends ConsumerState<_ProfilTab> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.surface(context),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.line),
+                border: Border.all(color: AppTheme.outline(context)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -323,7 +323,7 @@ class _ProfilTabState extends ConsumerState<_ProfilTab> {
                   Text(
                     'Informasi Utama Ekskul',
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.ink,
+                      color: AppTheme.text(context),
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
                     ),
@@ -683,11 +683,9 @@ class _PrestasiTabState extends ConsumerState<_PrestasiTab> {
               return Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.surface(context),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: Colors.black.withValues(alpha: 0.05),
-                  ),
+                  border: Border.all(color: AppTheme.outline(context)),
                 ),
                 child: Row(
                   children: [
@@ -711,7 +709,7 @@ class _PrestasiTabState extends ConsumerState<_PrestasiTab> {
                           Text(
                             item['judul'] as String? ?? 'Prestasi',
                             style: GoogleFonts.plusJakartaSans(
-                              color: AppTheme.ink,
+                              color: AppTheme.text(context),
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                             ),
@@ -720,7 +718,7 @@ class _PrestasiTabState extends ConsumerState<_PrestasiTab> {
                           Text(
                             '${item['kategori'] ?? '-'} · Tahun ${item['tahun'] ?? '-'}',
                             style: GoogleFonts.plusJakartaSans(
-                              color: AppTheme.sub,
+                              color: AppTheme.mutedText(context),
                               fontSize: 12,
                             ),
                           ),

@@ -142,9 +142,13 @@ class _ProfilEditScreenState extends ConsumerState<ProfilEditScreen> {
                   ],
             fileKeys: const ['foto'],
           );
+      final previousPhotoUrl = widget.user.fotoUrl;
+      if (previousPhotoUrl != null && previousPhotoUrl.isNotEmpty) {
+        await NetworkImage(AppConfig.imageUrl(previousPhotoUrl)).evict();
+      }
       ref.invalidate(siswaProfilProvider);
       ref.invalidate(siswaDashboardProvider);
-      ref.read(authControllerProvider.notifier).refreshSession();
+      await ref.read(authControllerProvider.notifier).refreshSession();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Profil berhasil diperbarui.')),
@@ -265,7 +269,7 @@ class _ProfilEditScreenState extends ConsumerState<ProfilEditScreen> {
       children: [
         CircleAvatar(
           radius: 34,
-          backgroundColor: AppTheme.blueBg,
+          backgroundColor: AppTheme.accentSurface(context),
           backgroundImage: _photoBytes != null
               ? MemoryImage(_photoBytes!)
               : ((widget.user.fotoUrl != null &&
@@ -353,9 +357,9 @@ class _ProfilEditScreenState extends ConsumerState<ProfilEditScreen> {
   }) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppTheme.surface(context),
       borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: AppTheme.line),
+      border: Border.all(color: AppTheme.outline(context)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -363,7 +367,7 @@ class _ProfilEditScreenState extends ConsumerState<ProfilEditScreen> {
         Text(
           title,
           style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.ink,
+            color: AppTheme.text(context),
             fontSize: 15,
             fontWeight: FontWeight.w800,
           ),
@@ -372,7 +376,7 @@ class _ProfilEditScreenState extends ConsumerState<ProfilEditScreen> {
         Text(
           subtitle,
           style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.sub,
+            color: AppTheme.mutedText(context),
             fontSize: 11.5,
             height: 1.4,
           ),

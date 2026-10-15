@@ -41,21 +41,21 @@ class AnggotaScreen extends ConsumerWidget {
                 key: const ValueKey('anggota-pill-tabs'),
                 padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.surface(context),
                   borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: AppTheme.line),
+                  border: Border.all(color: AppTheme.outline(context)),
                 ),
                 child: TabBar(
                   key: ValueKey('anggota-tab-bar'),
                   dividerHeight: 0,
                   overlayColor: WidgetStatePropertyAll(Colors.transparent),
                   labelColor: AppTheme.blue,
-                  unselectedLabelColor: AppTheme.sub,
+                  unselectedLabelColor: AppTheme.mutedText(context),
                   indicatorColor: Colors.transparent,
                   dividerColor: Colors.transparent,
                   indicatorSize: TabBarIndicatorSize.tab,
                   indicator: BoxDecoration(
-                    color: AppTheme.blueBg,
+                    color: AppTheme.accentSurface(context),
                     borderRadius: BorderRadius.all(Radius.circular(24)),
                   ),
                   labelPadding: EdgeInsets.zero,
@@ -256,18 +256,9 @@ class _AnggotaTile extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            CircleAvatar(
-              radius: 21,
-              backgroundColor: AppTheme.blueBg,
-              child: Text(
-                (pendaftaran.siswaNama?.isNotEmpty ?? false)
-                    ? pendaftaran.siswaNama![0].toUpperCase()
-                    : 'S',
-                style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.blue,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+            PersonAvatar(
+              name: pendaftaran.siswaNama ?? 'Siswa',
+              photoUrl: pendaftaran.siswaRaw?['foto']?.toString(),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -279,7 +270,7 @@ class _AnggotaTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.ink,
+                      color: AppTheme.text(context),
                       fontSize: 13.5,
                       fontWeight: FontWeight.w800,
                     ),
@@ -290,7 +281,7 @@ class _AnggotaTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.sub,
+                      color: AppTheme.mutedText(context),
                       fontSize: 10.5,
                     ),
                   ),
@@ -306,7 +297,7 @@ class _AnggotaTile extends StatelessWidget {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: AppTheme.blueBg,
+                            color: AppTheme.accentSurface(context),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -430,10 +421,10 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                           return Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppTheme.surface(context),
                               borderRadius: BorderRadius.circular(17),
                               border: Border.all(
-                                color: const Color(0xFFE8EDF5),
+                                color: AppTheme.outline(context),
                               ),
                             ),
                             child: Column(
@@ -441,16 +432,9 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                               children: [
                                 Row(
                                   children: [
-                                    CircleAvatar(
-                                      radius: 21,
-                                      backgroundColor: AppTheme.blueBg,
-                                      child: Text(
-                                        _initials(p.siswaNama),
-                                        style: GoogleFonts.plusJakartaSans(
-                                          color: AppTheme.blue,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
+                                    PersonAvatar(
+                                      name: p.siswaNama ?? 'Pendaftar',
+                                      photoUrl: p.siswaRaw?['foto']?.toString(),
                                     ),
                                     const SizedBox(width: 10),
                                     Expanded(
@@ -461,7 +445,7 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                                           Text(
                                             p.siswaNama ?? 'Pendaftar Baru',
                                             style: GoogleFonts.plusJakartaSans(
-                                              color: AppTheme.ink,
+                                              color: AppTheme.text(context),
                                               fontSize: 13.5,
                                               fontWeight: FontWeight.w800,
                                             ),
@@ -471,7 +455,9 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                                             p.tanggalDaftar ??
                                                 'Permintaan bergabung',
                                             style: GoogleFonts.plusJakartaSans(
-                                              color: AppTheme.sub,
+                                              color: AppTheme.mutedText(
+                                                context,
+                                              ),
                                               fontSize: 10.5,
                                             ),
                                           ),
@@ -657,10 +643,10 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
                           return Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: AppTheme.surface(context),
                               borderRadius: BorderRadius.circular(17),
                               border: Border.all(
-                                color: const Color(0xFFE8EDF5),
+                                color: AppTheme.outline(context),
                               ),
                             ),
                             child: Column(
@@ -668,16 +654,9 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
                               children: [
                                 Row(
                                   children: [
-                                    CircleAvatar(
-                                      radius: 21,
-                                      backgroundColor: AppTheme.blueBg,
-                                      child: Text(
-                                        _initials(_studentName(p)),
-                                        style: GoogleFonts.plusJakartaSans(
-                                          color: AppTheme.blue,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
+                                    PersonAvatar(
+                                      name: _studentName(p) ?? 'Siswa',
+                                      photoUrl: _studentPhoto(p),
                                     ),
                                     const SizedBox(width: 10),
                                     Expanded(
@@ -688,7 +667,7 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
                                           Text(
                                             _studentName(p) ?? '-',
                                             style: GoogleFonts.plusJakartaSans(
-                                              color: AppTheme.ink,
+                                              color: AppTheme.text(context),
                                               fontSize: 13.5,
                                               fontWeight: FontWeight.w800,
                                             ),
@@ -697,7 +676,9 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
                                           Text(
                                             'Permohonan keluar dari ekskul',
                                             style: GoogleFonts.plusJakartaSans(
-                                              color: AppTheme.sub,
+                                              color: AppTheme.mutedText(
+                                                context,
+                                              ),
                                               fontSize: 10.5,
                                             ),
                                           ),
@@ -811,26 +792,18 @@ class _RequestNote extends StatelessWidget {
     width: double.infinity,
     padding: const EdgeInsets.all(11),
     decoration: BoxDecoration(
-      color: const Color(0xFFF8FAFC),
+      color: AppTheme.surfaceVariant(context),
       borderRadius: BorderRadius.circular(12),
     ),
     child: Text(
       text,
       style: GoogleFonts.plusJakartaSans(
-        color: AppTheme.sub,
+        color: AppTheme.mutedText(context),
         fontSize: 12,
         height: 1.4,
       ),
     ),
   );
-}
-
-String _initials(String? name) {
-  final parts = (name ?? '').trim().split(RegExp(r'\s+'));
-  if (parts.first.isEmpty) return 'S';
-  final first = parts.first.substring(0, 1);
-  if (parts.length == 1 || parts.last.isEmpty) return first.toUpperCase();
-  return '$first${parts.last.substring(0, 1)}'.toUpperCase();
 }
 
 String _statusLabel(String? status) => switch (status) {
@@ -846,6 +819,14 @@ String? _studentName(Map<String, dynamic> item) {
     return siswa['nama']?.toString();
   }
   return item['nama']?.toString();
+}
+
+String? _studentPhoto(Map<String, dynamic> item) {
+  final siswa = item['siswa'];
+  if (siswa is Map && siswa['foto'] != null) {
+    return siswa['foto'].toString();
+  }
+  return item['foto']?.toString();
 }
 
 List<Map<String, dynamic>> _filterByStudentName(

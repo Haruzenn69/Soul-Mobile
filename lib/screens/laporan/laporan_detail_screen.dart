@@ -249,7 +249,7 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
                     child: Text(
                       'Evaluasi & Catatan',
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.ink,
+                        color: AppTheme.text(context),
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
                       ),
@@ -470,7 +470,7 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
         'Masih berupa draft',
         'Periksa kembali isi laporan, lalu serahkan kepada pembina untuk ditinjau.',
         const Color(0xFF475569),
-        const Color(0xFFF1F5F9),
+        AppTheme.surfaceVariant(context),
       ),
       'ditolak' => (
         Icons.rate_review_outlined,
@@ -491,7 +491,7 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
         'Menunggu tinjauan pembina',
         'Laporan sudah diserahkan dan sedang menunggu pemeriksaan.',
         const Color(0xFF1D4ED8),
-        const Color(0xFFEFF6FF),
+        AppTheme.blue.withValues(alpha: 0.1),
       ),
     };
     return Container(
@@ -521,7 +521,7 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
                 Text(
                   message,
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.ink,
+                    color: AppTheme.text(context),
                     fontSize: 12,
                     height: 1.4,
                   ),
@@ -543,9 +543,9 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE8EDF5)),
+        border: Border.all(color: AppTheme.outline(context)),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0F172A).withValues(alpha: 0.035),
@@ -564,7 +564,7 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: AppTheme.blue.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: AppTheme.blue, size: 20),
@@ -577,7 +577,7 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
                     Text(
                       title,
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.ink,
+                        color: AppTheme.text(context),
                         fontSize: 14,
                         fontWeight: FontWeight.w800,
                       ),
@@ -586,7 +586,7 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
                     Text(
                       subtitle,
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.sub,
+                        color: AppTheme.mutedText(context),
                         fontSize: 11,
                         height: 1.35,
                       ),
@@ -608,7 +608,9 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
     return Text(
       text.isEmpty ? empty : text,
       style: GoogleFonts.plusJakartaSans(
-        color: text.isEmpty ? AppTheme.sub : AppTheme.ink,
+        color: text.isEmpty
+            ? AppTheme.mutedText(context)
+            : AppTheme.text(context),
         fontSize: 13,
         height: 1.55,
       ),
@@ -641,7 +643,7 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
               return Container(
                 width: 148,
                 height: 132,
-                color: const Color(0xFFF1F5F9),
+                color: AppTheme.surfaceVariant(context),
                 alignment: Alignment.center,
                 child: const SizedBox(
                   width: 22,
@@ -653,21 +655,21 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
             errorBuilder: (_, _, _) => Container(
               width: 148,
               height: 132,
-              color: const Color(0xFFF1F5F9),
+              color: AppTheme.surfaceVariant(context),
               alignment: Alignment.center,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.broken_image_outlined,
-                    color: AppTheme.sub,
+                    color: AppTheme.mutedText(context),
                     size: 25,
                   ),
                   const SizedBox(height: 5),
                   Text(
                     'Foto tidak tersedia',
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.sub,
+                      color: AppTheme.mutedText(context),
                       fontSize: 10,
                     ),
                   ),

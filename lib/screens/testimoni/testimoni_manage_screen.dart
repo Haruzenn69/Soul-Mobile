@@ -266,10 +266,10 @@ class _TestimoniManageScreenState extends ConsumerState<TestimoniManageScreen> {
                             return Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Colors.white,
+                                color: AppTheme.surface(context),
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: const Color(0xFFE8EDF5),
+                                  color: AppTheme.outline(context),
                                 ),
                                 boxShadow: [
                                   BoxShadow(
@@ -292,7 +292,9 @@ class _TestimoniManageScreenState extends ConsumerState<TestimoniManageScreen> {
                                         height: 38,
                                         alignment: Alignment.center,
                                         decoration: BoxDecoration(
-                                          color: const Color(0xFFEFF6FF),
+                                          color: AppTheme.blue.withValues(
+                                            alpha: 0.1,
+                                          ),
                                           borderRadius: BorderRadius.circular(
                                             12,
                                           ),
@@ -318,7 +320,9 @@ class _TestimoniManageScreenState extends ConsumerState<TestimoniManageScreen> {
                                               overflow: TextOverflow.ellipsis,
                                               style:
                                                   GoogleFonts.plusJakartaSans(
-                                                    color: AppTheme.ink,
+                                                    color: AppTheme.text(
+                                                      context,
+                                                    ),
                                                     fontWeight: FontWeight.w800,
                                                     fontSize: 14,
                                                   ),
@@ -334,7 +338,9 @@ class _TestimoniManageScreenState extends ConsumerState<TestimoniManageScreen> {
                                               overflow: TextOverflow.ellipsis,
                                               style:
                                                   GoogleFonts.plusJakartaSans(
-                                                    color: AppTheme.sub,
+                                                    color: AppTheme.mutedText(
+                                                      context,
+                                                    ),
                                                     fontSize: 11,
                                                   ),
                                             ),
@@ -355,7 +361,7 @@ class _TestimoniManageScreenState extends ConsumerState<TestimoniManageScreen> {
                                   Text(
                                     '“${item['quote'] ?? ''}”',
                                     style: GoogleFonts.plusJakartaSans(
-                                      color: AppTheme.ink,
+                                      color: AppTheme.text(context),
                                       fontSize: 13,
                                       fontStyle: FontStyle.italic,
                                       height: 1.45,
@@ -409,9 +415,9 @@ class _TestimoniManageScreenState extends ConsumerState<TestimoniManageScreen> {
                                         const SizedBox(width: 4),
                                       ],
                                       IconButton(
-                                        icon: const Icon(
+                                        icon: Icon(
                                           Icons.delete_outline,
-                                          color: AppTheme.sub,
+                                          color: AppTheme.mutedText(context),
                                           size: 20,
                                         ),
                                         onPressed: () => _delete(id),

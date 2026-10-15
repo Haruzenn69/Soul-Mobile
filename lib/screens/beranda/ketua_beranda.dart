@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/providers.dart';
-import '../../core/app_config.dart';
 import '../../data/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
@@ -192,25 +191,12 @@ class _Header extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  CircleAvatar(
+                  PersonAvatar(
+                    name: user.namaTampilan,
+                    photoUrl: user.fotoUrl,
                     radius: 24,
                     backgroundColor: Colors.white.withValues(alpha: 0.18),
-                    backgroundImage:
-                        (user.fotoUrl != null && user.fotoUrl!.isNotEmpty)
-                        ? NetworkImage(AppConfig.imageUrl(user.fotoUrl))
-                        : null,
-                    child: (user.fotoUrl == null || user.fotoUrl!.isEmpty)
-                        ? Text(
-                            user.namaTampilan.isEmpty
-                                ? '?'
-                                : user.namaTampilan[0],
-                            style: GoogleFonts.plusJakartaSans(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          )
-                        : null,
+                    foregroundColor: Colors.white,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -365,7 +351,7 @@ class _AttendanceChart extends StatelessWidget {
             Text(
               'Statistik kehadiran anggota pada 6 pertemuan terbaru.',
               style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.sub,
+                color: AppTheme.mutedText(context),
                 fontSize: 11,
               ),
             ),
@@ -422,7 +408,7 @@ class _AttendanceChart extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.plusJakartaSans(
-                                color: AppTheme.sub,
+                                color: AppTheme.mutedText(context),
                                 fontSize: 9,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -480,7 +466,7 @@ class _LegendItem extends StatelessWidget {
       Text(
         label,
         style: GoogleFonts.plusJakartaSans(
-          color: AppTheme.sub,
+          color: AppTheme.mutedText(context),
           fontSize: 10,
           fontWeight: FontWeight.w600,
         ),
@@ -584,7 +570,7 @@ class _ClassDistribution extends StatelessWidget {
             Text(
               'Komposisi anggota berdasarkan tingkat kelas.',
               style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.sub,
+                color: AppTheme.mutedText(context),
                 fontSize: 11,
               ),
             ),
@@ -604,7 +590,7 @@ class _ClassDistribution extends StatelessWidget {
                       child: Text(
                         i < labels.length ? '${labels[i]}' : 'Kelas',
                         style: GoogleFonts.plusJakartaSans(
-                          color: AppTheme.sub,
+                          color: AppTheme.mutedText(context),
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                         ),
@@ -618,7 +604,7 @@ class _ClassDistribution extends StatelessWidget {
                               ? 0
                               : counts[i].toDouble() / maxCount,
                           minHeight: 9,
-                          backgroundColor: const Color(0xFFEFF6FF),
+                          backgroundColor: AppTheme.accentSurface(context),
                           color: i == 1
                               ? const Color(0xFFF59E0B)
                               : AppTheme.blue,
@@ -631,7 +617,7 @@ class _ClassDistribution extends StatelessWidget {
                         '${counts[i]}',
                         textAlign: TextAlign.end,
                         style: GoogleFonts.plusJakartaSans(
-                          color: AppTheme.ink,
+                          color: AppTheme.text(context),
                           fontSize: 12,
                           fontWeight: FontWeight.w800,
                         ),
@@ -672,7 +658,7 @@ class _ModerationSummary extends StatelessWidget {
           Text(
             'Moderasi kontribusi siswa untuk katalog ekskul.',
             style: GoogleFonts.plusJakartaSans(
-              color: AppTheme.sub,
+              color: AppTheme.mutedText(context),
               fontSize: 11,
             ),
           ),
@@ -684,7 +670,7 @@ class _ModerationSummary extends StatelessWidget {
                   icon: Icons.rate_review_outlined,
                   title: 'Testimoni',
                   count: testimoniPending,
-                  tint: const Color(0xFFEFF6FF),
+                  tint: AppTheme.accentSurface(context),
                   color: AppTheme.blue,
                   onTap: onOpenTestimoni,
                 ),
@@ -757,7 +743,7 @@ class _ModerationTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.sub,
+                      color: AppTheme.mutedText(context),
                       fontSize: 9,
                       fontWeight: FontWeight.w600,
                     ),
@@ -802,7 +788,7 @@ class _PriorityActions extends StatelessWidget {
           Text(
             'Aksi cepat untuk tugas yang menunggu.',
             style: GoogleFonts.plusJakartaSans(
-              color: AppTheme.sub,
+              color: AppTheme.mutedText(context),
               fontSize: 11,
             ),
           ),
@@ -943,7 +929,7 @@ class _QuickActionTile extends StatelessWidget {
       style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
     ),
     subtitle: Text(subtitle),
-    trailing: const Icon(Icons.chevron_right, color: AppTheme.sub),
+    trailing: Icon(Icons.chevron_right, color: AppTheme.mutedText(context)),
     onTap: onTap,
   );
 }

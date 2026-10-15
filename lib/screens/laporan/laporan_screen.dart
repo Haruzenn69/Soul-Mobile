@@ -138,7 +138,7 @@ class _LaporanCard extends StatelessWidget {
     final ringkasan = data['ringkasan'] as String?;
 
     return Material(
-      color: Colors.white,
+      color: AppTheme.surface(context),
       borderRadius: BorderRadius.circular(19),
       child: InkWell(
         onTap: onTap,
@@ -147,7 +147,7 @@ class _LaporanCard extends StatelessWidget {
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(19),
-            border: Border.all(color: const Color(0xFFE8EDF5)),
+            border: Border.all(color: AppTheme.outline(context)),
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFF0F172A).withValues(alpha: 0.025),
@@ -165,7 +165,7 @@ class _LaporanCard extends StatelessWidget {
                     width: 43,
                     height: 43,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
+                      color: AppTheme.blue.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: const Icon(
@@ -182,7 +182,7 @@ class _LaporanCard extends StatelessWidget {
                         Text(
                           _formatBulan(bulan),
                           style: GoogleFonts.plusJakartaSans(
-                            color: AppTheme.ink,
+                            color: AppTheme.text(context),
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
                           ),
@@ -191,7 +191,7 @@ class _LaporanCard extends StatelessWidget {
                         Text(
                           _statusDescription(status),
                           style: GoogleFonts.plusJakartaSans(
-                            color: AppTheme.sub,
+                            color: AppTheme.mutedText(context),
                             fontSize: 10.5,
                           ),
                         ),
@@ -208,7 +208,7 @@ class _LaporanCard extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.sub,
+                    color: AppTheme.mutedText(context),
                     fontSize: 12,
                     height: 1.45,
                   ),
@@ -238,7 +238,7 @@ class _LaporanCard extends StatelessWidget {
                     tooltip: 'Unduh PDF',
                     style: IconButton.styleFrom(
                       foregroundColor: AppTheme.blue,
-                      backgroundColor: const Color(0xFFEFF6FF),
+                      backgroundColor: AppTheme.blue.withValues(alpha: 0.1),
                       minimumSize: const Size(38, 38),
                     ),
                   ),

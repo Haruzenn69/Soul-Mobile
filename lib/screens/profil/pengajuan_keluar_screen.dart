@@ -49,9 +49,9 @@ class _PengajuanKeluarScreenState extends ConsumerState<PengajuanKeluarScreen> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.surface(context),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppTheme.line),
+                    border: Border.all(color: AppTheme.outline(context)),
                   ),
                   child: Row(
                     children: [
@@ -59,7 +59,7 @@ class _PengajuanKeluarScreenState extends ConsumerState<PengajuanKeluarScreen> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: AppTheme.blue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Icon(
@@ -72,7 +72,7 @@ class _PengajuanKeluarScreenState extends ConsumerState<PengajuanKeluarScreen> {
                         child: Text(
                           ekskul['nama_ekskul'] as String? ?? '-',
                           style: GoogleFonts.plusJakartaSans(
-                            color: AppTheme.ink,
+                            color: AppTheme.text(context),
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
                           ),
@@ -87,9 +87,9 @@ class _PengajuanKeluarScreenState extends ConsumerState<PengajuanKeluarScreen> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppTheme.surface(context),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppTheme.line),
+                    border: Border.all(color: AppTheme.outline(context)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,14 +98,14 @@ class _PengajuanKeluarScreenState extends ConsumerState<PengajuanKeluarScreen> {
                         controller: _alasan,
                         maxLines: 4,
                         maxLength: 1000,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Alasan mengajukan keluar',
                           hintText: 'Jelaskan alasanmu secara singkat',
                           helperText:
                               'Minimal 10 karakter dan 2 kata bermakna.',
                           prefixIcon: Icon(
                             Icons.edit_note_outlined,
-                            color: AppTheme.sub,
+                            color: AppTheme.mutedText(context),
                           ),
                         ),
                       ),
@@ -178,16 +178,16 @@ class _PengajuanKeluarScreenState extends ConsumerState<PengajuanKeluarScreen> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppTheme.surface(context),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppTheme.line),
+                        border: Border.all(color: AppTheme.outline(context)),
                       ),
                       child: ListTile(
                         contentPadding: EdgeInsets.zero,
                         title: Text(
                           item['alasan'] as String? ?? '-',
                           style: GoogleFonts.plusJakartaSans(
-                            color: AppTheme.ink,
+                            color: AppTheme.text(context),
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                           ),
@@ -195,7 +195,7 @@ class _PengajuanKeluarScreenState extends ConsumerState<PengajuanKeluarScreen> {
                         subtitle: Text(
                           item['tanggal_pengajuan'] as String? ?? '-',
                           style: GoogleFonts.plusJakartaSans(
-                            color: AppTheme.sub,
+                            color: AppTheme.mutedText(context),
                             fontSize: 12,
                           ),
                         ),

@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../core/app_config.dart';
 import '../../core/providers.dart';
 import '../../core/upload_check.dart';
 import '../../data/providers.dart';
@@ -130,7 +131,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppTheme.blueBg,
+                    color: AppTheme.accentSurface(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(Icons.event_note, color: AppTheme.blue),
@@ -149,7 +150,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                     Text(
                       'Lengkapi detail kegiatan ekskul yang akan dicatat.',
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.sub,
+                        color: AppTheme.mutedText(context),
                         fontSize: 12,
                         height: 1.45,
                       ),
@@ -160,10 +161,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                       decoration: const InputDecoration(
                         labelText: 'Materi Kegiatan',
                         hintText: 'mis. Latihan Dasar',
-                        prefixIcon: Icon(
-                          Icons.edit_note_outlined,
-                          color: AppTheme.sub,
-                        ),
+                        prefixIcon: Icon(Icons.edit_note_outlined),
                       ),
                     ),
                     SwitchListTile(
@@ -171,7 +169,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                       title: Text(
                         'Kegiatan event/lomba',
                         style: GoogleFonts.plusJakartaSans(
-                          color: AppTheme.ink,
+                          color: AppTheme.text(context),
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
                         ),
@@ -179,7 +177,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                       subtitle: Text(
                         'Aktifkan jika berupa event atau lomba.',
                         style: GoogleFonts.plusJakartaSans(
-                          color: AppTheme.sub,
+                          color: AppTheme.mutedText(context),
                           fontSize: 12,
                         ),
                       ),
@@ -193,10 +191,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                       maxLines: 2,
                       decoration: const InputDecoration(
                         labelText: 'Deskripsi (opsional)',
-                        prefixIcon: Icon(
-                          Icons.description_outlined,
-                          color: AppTheme.sub,
-                        ),
+                        prefixIcon: Icon(Icons.description_outlined),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -229,10 +224,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                       },
                       decoration: const InputDecoration(
                         labelText: 'Tanggal Kegiatan',
-                        prefixIcon: Icon(
-                          Icons.calendar_today_outlined,
-                          color: AppTheme.sub,
-                        ),
+                        prefixIcon: Icon(Icons.calendar_today_outlined),
                       ),
                     ),
                     if (isEvent) ...[
@@ -259,10 +251,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                         },
                         decoration: const InputDecoration(
                           labelText: 'Tanggal berakhir (opsional)',
-                          prefixIcon: Icon(
-                            Icons.event_busy_outlined,
-                            color: AppTheme.sub,
-                          ),
+                          prefixIcon: Icon(Icons.event_busy_outlined),
                         ),
                       ),
                     ],
@@ -381,9 +370,9 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                 key: const ValueKey('kegiatan-pill-tabs'),
                 padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppTheme.surface(context),
                   borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: AppTheme.line),
+                  border: Border.all(color: AppTheme.outline(context)),
                 ),
                 child: TabBar(
                   key: const ValueKey('kegiatan-tab-bar'),
@@ -391,12 +380,12 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                   dividerHeight: 0,
                   overlayColor: WidgetStatePropertyAll(Colors.transparent),
                   labelColor: AppTheme.blue,
-                  unselectedLabelColor: AppTheme.sub,
+                  unselectedLabelColor: AppTheme.mutedText(context),
                   indicatorColor: Colors.transparent,
                   dividerColor: Colors.transparent,
                   indicatorSize: TabBarIndicatorSize.tab,
                   indicator: BoxDecoration(
-                    color: AppTheme.blueBg,
+                    color: AppTheme.accentSurface(context),
                     borderRadius: BorderRadius.all(Radius.circular(24)),
                   ),
                   labelPadding: EdgeInsets.zero,
@@ -431,9 +420,9 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                               setState(() => _cari = v.trim().toLowerCase()),
                           decoration: InputDecoration(
                             hintText: 'Cari kegiatan...',
-                            prefixIcon: const Icon(
+                            prefixIcon: Icon(
                               Icons.search,
-                              color: AppTheme.sub,
+                              color: AppTheme.mutedText(context),
                             ),
                             suffixIcon: _searchController.text.isEmpty
                                 ? null
@@ -479,7 +468,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                                             ? '${filtered.length} kegiatan'
                                             : '${filtered.length} hasil pencarian',
                                         style: GoogleFonts.plusJakartaSans(
-                                          color: AppTheme.sub,
+                                          color: AppTheme.mutedText(context),
                                           fontSize: 11,
                                           fontWeight: FontWeight.w700,
                                         ),
@@ -565,8 +554,9 @@ class _KegiatanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final documentation = kegiatan.dokumentasi?.trim();
     return Material(
-      color: Colors.white,
+      color: AppTheme.surface(context),
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
@@ -575,7 +565,7 @@ class _KegiatanCard extends StatelessWidget {
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE8EDF5)),
+            border: Border.all(color: AppTheme.outline(context)),
             boxShadow: [
               BoxShadow(
                 color: const Color(0xFF0F172A).withValues(alpha: 0.025),
@@ -590,14 +580,34 @@ class _KegiatanCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppTheme.blueBg,
+                  color: AppTheme.accentSurface(context),
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: const Icon(
-                  Icons.event_note,
-                  color: AppTheme.blue,
-                  size: 22,
-                ),
+                child: documentation?.isNotEmpty == true
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(15),
+                        child: Image.network(
+                          AppConfig.imageUrl(documentation),
+                          key: ValueKey(
+                            'activity-documentation-${kegiatan.id}',
+                          ),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Icon(
+                            Icons.event_note,
+                            key: ValueKey(
+                              'activity-documentation-fallback-${kegiatan.id}',
+                            ),
+                            color: AppTheme.blue,
+                            size: 22,
+                          ),
+                        ),
+                      )
+                    : const Icon(
+                        Icons.event_note,
+                        key: ValueKey('activity-documentation-fallback'),
+                        color: AppTheme.blue,
+                        size: 22,
+                      ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -609,7 +619,7 @@ class _KegiatanCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.ink,
+                        color: AppTheme.text(context),
                         fontSize: 14,
                         height: 1.3,
                         fontWeight: FontWeight.w800,
@@ -618,9 +628,9 @@ class _KegiatanCard extends StatelessWidget {
                     const SizedBox(height: 3),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.calendar_today_outlined,
-                          color: AppTheme.sub,
+                          color: AppTheme.mutedText(context),
                           size: 12,
                         ),
                         const SizedBox(width: 5),
@@ -630,23 +640,23 @@ class _KegiatanCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.plusJakartaSans(
-                              color: AppTheme.sub,
+                              color: AppTheme.mutedText(context),
                               fontSize: 11,
                             ),
                           ),
                         ),
                         if (kegiatan.presensisCount != null) ...[
                           const SizedBox(width: 7),
-                          const Icon(
+                          Icon(
                             Icons.people_alt_outlined,
-                            color: AppTheme.sub,
+                            color: AppTheme.mutedText(context),
                             size: 13,
                           ),
                           const SizedBox(width: 3),
                           Text(
                             '${kegiatan.presensisCount}',
                             style: GoogleFonts.plusJakartaSans(
-                              color: AppTheme.sub,
+                              color: AppTheme.mutedText(context),
                               fontSize: 10.5,
                               fontWeight: FontWeight.w700,
                             ),
@@ -661,9 +671,9 @@ class _KegiatanCard extends StatelessWidget {
               if (kegiatan.isEvent)
                 const StatusChip('Event')
               else
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
-                  color: AppTheme.sub,
+                  color: AppTheme.mutedText(context),
                   size: 22,
                 ),
             ],

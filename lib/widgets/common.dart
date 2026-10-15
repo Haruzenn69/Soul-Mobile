@@ -2,9 +2,79 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../core/app_config.dart';
 import '../core/api_client.dart';
 import '../core/providers.dart';
 import '../theme/app_theme.dart';
+
+class PersonAvatar extends StatelessWidget {
+  const PersonAvatar({
+    super.key,
+    required this.name,
+    this.photoUrl,
+    this.radius = 21,
+    this.backgroundColor = AppTheme.blueBg,
+    this.foregroundColor = AppTheme.blue,
+  });
+
+  final String name;
+  final String? photoUrl;
+  final double radius;
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final effectiveBackground =
+        backgroundColor == AppTheme.blueBg &&
+            theme.brightness == Brightness.dark
+        ? AppTheme.accentSurface(context)
+        : backgroundColor;
+    final effectiveForeground =
+        foregroundColor == AppTheme.blue && theme.brightness == Brightness.dark
+        ? const Color(0xFF93C5FD)
+        : foregroundColor;
+    final normalizedUrl = photoUrl?.trim();
+    final hasPhoto = normalizedUrl != null && normalizedUrl.isNotEmpty;
+    final initials = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .take(2)
+        .map((part) => part.characters.first.toUpperCase())
+        .join();
+
+    Widget fallback() => Center(
+      child: Text(
+        initials.isEmpty ? '?' : initials,
+        style: GoogleFonts.plusJakartaSans(
+          color: effectiveForeground,
+          fontSize: radius * 0.66,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: effectiveBackground,
+      child: !hasPhoto
+          ? fallback()
+          : ClipOval(
+              child: Image.network(
+                AppConfig.imageUrl(normalizedUrl),
+                width: radius * 2,
+                height: radius * 2,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => fallback(),
+                loadingBuilder: (_, child, progress) =>
+                    progress == null ? child : fallback(),
+              ),
+            ),
+    );
+  }
+}
 
 class ApiAsyncView<T> extends ConsumerWidget {
   const ApiAsyncView({
@@ -49,11 +119,11 @@ class _LoadingState extends StatelessWidget {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const SizedBox(
+        SizedBox(
           width: 28,
           height: 28,
           child: CircularProgressIndicator(
-            color: AppTheme.blue,
+            color: AppTheme.accent(context),
             strokeWidth: 2.5,
           ),
         ),
@@ -61,7 +131,7 @@ class _LoadingState extends StatelessWidget {
         Text(
           'Memuat data...',
           style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.sub,
+            color: AppTheme.mutedText(context),
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -101,7 +171,7 @@ class PageHeader extends StatelessWidget {
                 Text(
                   eyebrow!.toUpperCase(),
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.blue,
+                    color: AppTheme.accent(context),
                     fontSize: 9,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1,
@@ -114,7 +184,7 @@ class PageHeader extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.ink,
+                  color: AppTheme.text(context),
                   fontSize: 22,
                   fontWeight: FontWeight.w900,
                   height: 1.15,
@@ -127,7 +197,7 @@ class PageHeader extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.sub,
+                    color: AppTheme.mutedText(context),
                     fontSize: 11.5,
                     height: 1.35,
                   ),
@@ -174,7 +244,7 @@ class BuildErrorCard extends StatelessWidget {
               message,
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.sub,
+                color: AppTheme.mutedText(context),
                 fontSize: 13.5,
                 height: 1.4,
               ),
@@ -186,8 +256,8 @@ class BuildErrorCard extends StatelessWidget {
                 icon: const Icon(Icons.refresh, size: 18),
                 label: const Text('Coba Lagi'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppTheme.blue,
-                  side: const BorderSide(color: AppTheme.blue),
+                  foregroundColor: AppTheme.accent(context),
+                  side: BorderSide(color: AppTheme.accent(context)),
                 ),
               ),
             ],
@@ -216,7 +286,7 @@ class SectionTitle extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.plusJakartaSans(
-              color: AppTheme.ink,
+              color: AppTheme.text(context),
               fontSize: 17,
               fontWeight: FontWeight.w800,
             ),
@@ -228,7 +298,7 @@ class SectionTitle extends StatelessWidget {
             child: Text(
               actionText ?? 'Lihat semua',
               style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.blue,
+                color: AppTheme.accent(context),
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
               ),
@@ -257,12 +327,17 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final valueColor =
+        color == AppTheme.blue &&
+            Theme.of(context).brightness == Brightness.dark
+        ? AppTheme.accent(context)
+        : color;
     return Container(
       padding: EdgeInsets.all(compact ? 12 : 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surface(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.line),
+        border: Border.all(color: AppTheme.outline(context)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x080F172A),
@@ -275,7 +350,7 @@ class StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (icon != null) ...[
-            Icon(icon, color: color, size: 22),
+            Icon(icon, color: valueColor, size: 22),
             SizedBox(height: compact ? 1 : 10),
           ],
           Text(
@@ -283,7 +358,7 @@ class StatCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.plusJakartaSans(
-              color: color,
+              color: valueColor,
               fontSize: compact ? 18 : 24,
               fontWeight: FontWeight.w900,
             ),
@@ -294,7 +369,7 @@ class StatCard extends StatelessWidget {
             maxLines: compact ? 1 : 2,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.plusJakartaSans(
-              color: AppTheme.sub,
+              color: AppTheme.mutedText(context),
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -312,7 +387,7 @@ class StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _colorOf(label);
+    final color = _colorOf(label, context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -331,7 +406,7 @@ class StatusChip extends StatelessWidget {
     );
   }
 
-  Color _colorOf(String raw) {
+  Color _colorOf(String raw, BuildContext context) {
     final s = raw.toLowerCase().trim();
     if (s.contains('nonaktif') ||
         s.contains('tidak aktif') ||
@@ -341,7 +416,7 @@ class StatusChip extends StatelessWidget {
       return const Color(0xFFE11D48);
     }
     if (s == 'izin') {
-      return AppTheme.blue;
+      return AppTheme.accent(context);
     }
     if (s == 'sakit') {
       return const Color(0xFFC77700);
@@ -363,7 +438,7 @@ class StatusChip extends StatelessWidget {
         s.contains('keluar')) {
       return const Color(0xFF64748B);
     }
-    return AppTheme.blue;
+    return AppTheme.accent(context);
   }
 }
 
@@ -391,17 +466,17 @@ class EmptyState extends StatelessWidget {
               width: 68,
               height: 68,
               decoration: BoxDecoration(
-                color: AppTheme.blueBg,
+                color: AppTheme.accentSurface(context),
                 borderRadius: BorderRadius.circular(22),
               ),
-              child: Icon(icon, color: AppTheme.blue, size: 32),
+              child: Icon(icon, color: AppTheme.accent(context), size: 32),
             ),
             const SizedBox(height: 12),
             Text(
               title,
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.sub,
+                color: AppTheme.mutedText(context),
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
               ),
@@ -412,7 +487,7 @@ class EmptyState extends StatelessWidget {
                 subtitle!,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.sub.withValues(alpha: 0.7),
+                  color: AppTheme.mutedText(context).withValues(alpha: 0.7),
                   fontSize: 12.5,
                 ),
               ),
@@ -470,7 +545,7 @@ class StatusFilterChips extends StatelessWidget {
           children: [
             for (var i = 0; i < items.length; i++) ...[
               if (i > 0) const SizedBox(width: 8),
-              _chip(items[i]),
+              _chip(items[i], context),
             ],
           ],
         ),
@@ -478,7 +553,7 @@ class StatusFilterChips extends StatelessWidget {
     );
   }
 
-  Widget _chip(StatusFilter item) {
+  Widget _chip(StatusFilter item, BuildContext context) {
     final isSelected = selected == item.value;
     return GestureDetector(
       key: ValueKey('status-chip-${item.value}'),
@@ -486,10 +561,10 @@ class StatusFilterChips extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.blue : Colors.white,
+          color: isSelected ? AppTheme.blue : AppTheme.surface(context),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: isSelected ? AppTheme.blue : const Color(0xFFE0E7EF),
+            color: isSelected ? AppTheme.blue : AppTheme.outline(context),
           ),
         ),
         child: Row(
@@ -498,7 +573,7 @@ class StatusFilterChips extends StatelessWidget {
             Text(
               item.label,
               style: GoogleFonts.plusJakartaSans(
-                color: isSelected ? Colors.white : AppTheme.ink,
+                color: isSelected ? Colors.white : AppTheme.text(context),
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
               ),
@@ -510,13 +585,13 @@ class StatusFilterChips extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? Colors.white.withValues(alpha: 0.22)
-                      : AppTheme.blueBg,
+                      : AppTheme.accentSurface(context),
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   '${item.count}',
                   style: GoogleFonts.plusJakartaSans(
-                    color: isSelected ? Colors.white : AppTheme.blue,
+                    color: isSelected ? Colors.white : AppTheme.accent(context),
                     fontSize: 10.5,
                     fontWeight: FontWeight.w800,
                   ),
@@ -596,18 +671,18 @@ class ListCountLabel extends StatelessWidget {
         Text(
           '$count $label',
           style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.sub,
+            color: AppTheme.mutedText(context),
             fontSize: 11,
             fontWeight: FontWeight.w700,
           ),
         ),
         const Spacer(),
-        const Tooltip(
+        Tooltip(
           message: 'Tarik daftar ke bawah untuk memperbarui',
           child: Icon(
             Icons.swipe_down_alt_rounded,
             size: 16,
-            color: AppTheme.sub,
+            color: AppTheme.mutedText(context),
           ),
         ),
       ],

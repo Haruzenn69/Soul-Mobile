@@ -42,7 +42,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final auth = ref.watch(authControllerProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final compact =
@@ -184,7 +184,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   Container(
-                    color: Colors.white,
+                    color: AppTheme.surface(context),
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
                         24,
@@ -198,7 +198,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           Text(
                             'Log In Akun',
                             style: GoogleFonts.inter(
-                              color: AppTheme.ink,
+                              color: AppTheme.text(context),
                               fontSize: 24,
                               fontWeight: FontWeight.w800,
                             ),
@@ -207,7 +207,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           Text(
                             'Masuk dengan NIS/NIP atau username kamu.',
                             style: GoogleFonts.inter(
-                              color: AppTheme.sub,
+                              color: AppTheme.mutedText(context),
                               fontSize: 13,
                             ),
                           ),
@@ -308,7 +308,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   _showPassword
                                       ? Icons.visibility_off_outlined
                                       : Icons.visibility_outlined,
-                                  color: AppTheme.sub,
+                                  color: AppTheme.mutedText(context),
                                 ),
                               ),
                             ),
