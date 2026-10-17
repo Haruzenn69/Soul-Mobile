@@ -78,6 +78,7 @@ class AuthController extends Notifier<AuthState> {
         user: user,
         token: token,
       );
+      ref.read(selectedSiswaEkskulProvider.notifier).clear();
     } catch (_) {
       try {
         await api.clearToken();
@@ -115,6 +116,7 @@ class AuthController extends Notifier<AuthState> {
         user: user,
         token: token,
       );
+      ref.read(selectedSiswaEkskulProvider.notifier).clear();
     } catch (e) {
       final msg = e is ApiException ? e.message : 'Login gagal. Coba lagi.';
       state = state.copyWith(loading: false, loginError: msg);
@@ -127,6 +129,7 @@ class AuthController extends Notifier<AuthState> {
       await api.post('/auth/logout');
     } catch (_) {}
     await api.clearToken();
+    ref.read(selectedSiswaEkskulProvider.notifier).clear();
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
@@ -136,6 +139,18 @@ class AuthController extends Notifier<AuthState> {
 final authControllerProvider = NotifierProvider<AuthController, AuthState>(
   AuthController.new,
 );
+
+final selectedSiswaEkskulProvider =
+    NotifierProvider<_SelectedSiswaEkskul, int?>(_SelectedSiswaEkskul.new);
+
+class _SelectedSiswaEkskul extends Notifier<int?> {
+  @override
+  int? build() => null;
+
+  void select(int id) => state = id;
+
+  void clear() => state = null;
+}
 
 class _ShellTab extends Notifier<int> {
   @override

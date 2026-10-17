@@ -121,12 +121,14 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
   }
 
   Widget _body(BuildContext context, Map<String, dynamic> data) {
-    final pending = data['pending'] is Map
-        ? Map<String, dynamic>.from(data['pending'] as Map)
-        : null;
-    final pendaftaran = data['pendaftaran'] is Map
-        ? Map<String, dynamic>.from(data['pendaftaran'] as Map)
-        : null;
+    final pending = listOf(data, 'pending_pendaftarans').toList();
+    if (pending.isEmpty && data['pending'] is Map) {
+      pending.add(Map<String, dynamic>.from(data['pending'] as Map));
+    }
+    final pendaftaran = listOf(data, 'active_pendaftarans').toList();
+    if (pendaftaran.isEmpty && data['pendaftaran'] is Map) {
+      pendaftaran.add(Map<String, dynamic>.from(data['pendaftaran'] as Map));
+    }
     final adaJoinable =
         (data['joinable'] is List) && (data['joinable'] as List).isNotEmpty;
     final joinable = listOf(data, 'joinable');
@@ -154,9 +156,7 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
           }).toList();
 
     final itemCount =
-        (pending != null ? 1 : 0) +
-        (pendaftaran != null ? 1 : 0) +
-        filteredByCategory.length;
+        pending.length + pendaftaran.length + filteredByCategory.length;
 
     if (itemCount == 0) {
       return EmptyState(
@@ -173,42 +173,45 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
       itemCount: itemCount,
       itemBuilder: (context, index) {
         var i = index;
-        if (pending != null) {
-          i -= 1;
-          if (i < 0) {
-            return _InfoBanner(
-              color: const Color(0xFFFFF7E6),
-              border: const Color(0xFFF0B429),
-              icon: const Icon(
-                Icons.hourglass_top,
-                color: Color(0xFFB45309),
-                size: 20,
-              ),
-              text:
-                  'Pendaftaran kamu ke ${((pending['ekskul'] is Map) ? (pending['ekskul'] as Map)['nama_ekskul'] : 'ekskul').toString()} masih menunggu persetujuan ketua.',
-              textColor: const Color(0xFF92400E),
-              onTap: () => _openDetail(context, pending),
-            );
-          }
+        if (i < pending.length) {
+          final item = pending[i];
+          final club = item['ekskul'] is Map
+              ? (item['ekskul'] as Map)['nama_ekskul']?.toString()
+              : null;
+          return _InfoBanner(
+            color: AppTheme.warningSurface(context),
+            border: AppTheme.warningBorder(context),
+            icon: Icon(
+              Icons.hourglass_top,
+              color: AppTheme.warningText(context),
+              size: 20,
+            ),
+            text:
+                'Pendaftaran kamu ke ${club ?? 'ekskul'} masih menunggu persetujuan ketua.',
+            textColor: AppTheme.warningText(context),
+            onTap: () => _openDetail(context, item),
+          );
         }
-        if (pendaftaran != null) {
-          i -= 1;
-          if (i < 0) {
-            return _InfoBanner(
-              color: const Color(0xFFEDF7EF),
-              border: const Color(0xFFBBE7C5),
-              icon: const Icon(
-                Icons.check_circle,
-                color: Color(0xFF16803C),
-                size: 20,
-              ),
-              text:
-                  'Kamu sudah aktif di ${((pendaftaran['ekskul'] is Map) ? (pendaftaran['ekskul'] as Map)['nama_ekskul'] : 'ekskul').toString()}.',
-              textColor: const Color(0xFF14532D),
-              onTap: () => _openDetail(context, pendaftaran),
-            );
-          }
+        i -= pending.length;
+        if (i < pendaftaran.length) {
+          final item = pendaftaran[i];
+          final club = item['ekskul'] is Map
+              ? (item['ekskul'] as Map)['nama_ekskul']?.toString()
+              : null;
+          return _InfoBanner(
+            color: AppTheme.successSurface(context),
+            border: AppTheme.successBorder(context),
+            icon: Icon(
+              Icons.check_circle,
+              color: AppTheme.successText(context),
+              size: 20,
+            ),
+            text: 'Kamu sudah aktif di ${club ?? 'ekskul'}.',
+            textColor: AppTheme.successText(context),
+            onTap: () => _openDetail(context, item),
+          );
         }
+        i -= pendaftaran.length;
         if (i < filteredByCategory.length) {
           final raw = filteredByCategory[i];
           return Padding(

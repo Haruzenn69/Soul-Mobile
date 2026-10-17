@@ -693,12 +693,12 @@ class _PrestasiTabState extends ConsumerState<_PrestasiTab> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFEF3C7),
+                        color: AppTheme.warningSurface(context),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.emoji_events,
-                        color: Color(0xFFB45309),
+                        color: AppTheme.warningText(context),
                       ),
                     ),
                     const SizedBox(width: 12),

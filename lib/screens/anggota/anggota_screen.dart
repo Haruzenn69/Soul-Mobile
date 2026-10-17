@@ -490,11 +490,12 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                                             'ditolak',
                                           ),
                                           style: OutlinedButton.styleFrom(
-                                            foregroundColor: const Color(
-                                              0xFFE11D48,
-                                            ),
-                                            side: const BorderSide(
-                                              color: Color(0xFFFECDD3),
+                                            foregroundColor:
+                                                AppTheme.dangerText(context),
+                                            side: BorderSide(
+                                              color: AppTheme.dangerBorder(
+                                                context,
+                                              ),
                                             ),
                                           ),
                                           child: const Text('Tolak'),
@@ -714,11 +715,12 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
                                             'ditolak',
                                           ),
                                           style: OutlinedButton.styleFrom(
-                                            foregroundColor: const Color(
-                                              0xFFE11D48,
-                                            ),
-                                            side: const BorderSide(
-                                              color: Color(0xFFFECDD3),
+                                            foregroundColor:
+                                                AppTheme.dangerText(context),
+                                            side: BorderSide(
+                                              color: AppTheme.dangerBorder(
+                                                context,
+                                              ),
                                             ),
                                           ),
                                           child: const Text('Tolak'),

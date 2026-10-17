@@ -13,12 +13,46 @@ class AppTheme {
   static const ink = Color(0xFF0F172A);
   static const sub = Color(0xFF64748B);
   static const canvas = Color(0xFFF8FAFC);
-  static const line = Color(0xFFE2E8F0);
+  static const line = Color(0xFFE3EAF4);
+  static const lightSurfaceVariant = Color(0xFFF1F5FB);
+  static const lightAccentSurface = Color(0xFFEDF4FF);
   static const darkCanvas = Color(0xFF171717);
-  static const darkSurface = Color(0xFF262626);
-  static const darkLine = Color(0xFF404040);
+  static const darkSurface = Color(0xFF24262B);
+  static const darkSurfaceVariant = Color(0xFF2C3038);
+  static const darkLine = Color(0xFF3B414A);
   static const darkInk = Color(0xFFF5F5F5);
-  static const darkSub = Color(0xFFA3A3A3);
+  static const darkSub = Color(0xFFA6AFBD);
+
+  static bool isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
+  static Color warningSurface(BuildContext context) =>
+      isDark(context) ? const Color(0xFF332A1B) : const Color(0xFFFFFBEB);
+  static Color warningBorder(BuildContext context) =>
+      isDark(context) ? const Color(0xFF5B4828) : const Color(0xFFFDE68A);
+  static Color warningText(BuildContext context) =>
+      isDark(context) ? const Color(0xFFFCD275) : const Color(0xFF92400E);
+
+  static Color dangerSurface(BuildContext context) =>
+      isDark(context) ? const Color(0xFF351F25) : const Color(0xFFFFF1F2);
+  static Color dangerBorder(BuildContext context) =>
+      isDark(context) ? const Color(0xFF63313D) : const Color(0xFFFECDD3);
+  static Color dangerText(BuildContext context) =>
+      isDark(context) ? const Color(0xFFFF9AAA) : const Color(0xFFBE123C);
+
+  static Color successSurface(BuildContext context) =>
+      isDark(context) ? const Color(0xFF1D3327) : const Color(0xFFECFDF5);
+  static Color successBorder(BuildContext context) =>
+      isDark(context) ? const Color(0xFF315740) : const Color(0xFFA7F3D0);
+  static Color successText(BuildContext context) =>
+      isDark(context) ? const Color(0xFF8ADDAB) : const Color(0xFF15803D);
+
+  static Color infoSurface(BuildContext context) =>
+      isDark(context) ? const Color(0xFF1D2F40) : const Color(0xFFE0F2FE);
+  static Color infoBorder(BuildContext context) =>
+      isDark(context) ? const Color(0xFF31516D) : const Color(0xFFBFDBFE);
+  static Color infoText(BuildContext context) =>
+      isDark(context) ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8);
 
   static Color surface(BuildContext context) =>
       Theme.of(context).colorScheme.surface;
@@ -34,8 +68,21 @@ class AppTheme {
       Theme.of(context).colorScheme.outline;
   static Color accentSurface(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
-      ? blue.withValues(alpha: 0.16)
-      : blueBg;
+      ? const Color(0xFF202B3A)
+      : lightAccentSurface;
+  static LinearGradient brandHeroGradient(BuildContext context) {
+    final colors = isDark(context)
+        ? const [Color(0xFF17283D), Color(0xFF1E3A5F), Color(0xFF1D4ED8)]
+        : const [sky, Color(0xFF60A5FA), blue];
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: colors,
+    );
+  }
+
+  static Color brandHeroShadow(BuildContext context) =>
+      blue.withValues(alpha: isDark(context) ? 0.1 : 0.18);
 
   static ThemeData light() {
     final base = ThemeData.light(useMaterial3: true);
@@ -48,7 +95,7 @@ class AppTheme {
           primary: blue,
           secondary: sky,
           surface: Colors.white,
-          surfaceContainerHighest: const Color(0xFFF1F5F9),
+          surfaceContainerHighest: lightSurfaceVariant,
           outline: line,
         );
 
@@ -61,7 +108,7 @@ class AppTheme {
         displayColor: ink,
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: const Color(0xF2FFFFFF),
+        backgroundColor: const Color(0xF7FFFFFF),
         foregroundColor: ink,
         elevation: 0,
         centerTitle: false,
@@ -143,7 +190,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFFF8FAFC),
+        fillColor: const Color(0xFFF5F8FC),
         hintStyle: GoogleFonts.plusJakartaSans(
           color: const Color(0xFF94A3B8),
           fontSize: 13,
@@ -180,7 +227,7 @@ class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: const Color(0xFFDBEAFE),
+        indicatorColor: lightAccentSurface,
         height: 74,
         elevation: 0,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
@@ -237,7 +284,7 @@ class AppTheme {
           primary: const Color(0xFF60A5FA),
           secondary: const Color(0xFF7DD3FC),
           surface: darkSurface,
-          surfaceContainerHighest: darkSurface,
+          surfaceContainerHighest: darkSurfaceVariant,
           outline: darkLine,
         );
 
@@ -369,7 +416,7 @@ class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: darkSurface,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: const Color(0xFF1E3A5F),
+        indicatorColor: const Color(0xFF26374D),
         height: 74,
         elevation: 0,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,

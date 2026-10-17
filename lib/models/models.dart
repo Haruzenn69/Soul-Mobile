@@ -253,6 +253,7 @@ class AuthUser {
   final bool needsProfileCompletion;
   final Siswa? siswa;
   final Ekskul? aktivEkskul;
+  final List<Ekskul> activeEkskuls;
   final String? jabatan;
   final String? foto;
 
@@ -265,6 +266,7 @@ class AuthUser {
     required this.needsProfileCompletion,
     this.siswa,
     this.aktivEkskul,
+    this.activeEkskuls = const [],
     this.jabatan,
     this.foto,
   });
@@ -284,6 +286,12 @@ class AuthUser {
       aktivEkskul: j?['aktiv_ekskul'] is Map
           ? Ekskul.fromJson(j!['aktiv_ekskul'] as Map<String, dynamic>)
           : null,
+      activeEkskuls: j?['active_ekskuls'] is List
+          ? (j!['active_ekskuls'] as List)
+                .whereType<Map>()
+                .map((item) => Ekskul.fromJson(Map<String, dynamic>.from(item)))
+                .toList()
+          : const [],
       jabatan:
           jabatanRaw ??
           (j?['siswa'] is Map

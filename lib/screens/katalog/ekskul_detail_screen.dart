@@ -363,9 +363,56 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
                 loading: () => const SizedBox.shrink(),
                 error: (_, _) => const SizedBox.shrink(),
                 data: (data) {
-                  final sudahAktif = data['pendaftaran'] is Map;
-                  final sudahPending = data['pending'] is Map;
+                  final activeRegistrations = listOf(
+                    data,
+                    'active_pendaftarans',
+                  );
+                  final pendingRegistrations = listOf(
+                    data,
+                    'pending_pendaftarans',
+                  );
+                  final activeIds = activeRegistrations
+                      .map(
+                        (item) => item['ekskul'] is Map
+                            ? (item['ekskul'] as Map)['id']
+                            : null,
+                      )
+                      .whereType<num>()
+                      .map((id) => id.toInt())
+                      .toSet();
+                  final pendingIds = pendingRegistrations
+                      .map(
+                        (item) => item['ekskul'] is Map
+                            ? (item['ekskul'] as Map)['id']
+                            : null,
+                      )
+                      .whereType<num>()
+                      .map((id) => id.toInt())
+                      .toSet();
+                  if (activeIds.isEmpty && data['pendaftaran'] is Map) {
+                    final id = ((data['pendaftaran'] as Map)['ekskul'] is Map)
+                        ? (((data['pendaftaran'] as Map)['ekskul'] as Map)['id']
+                              as num?)
+                        : null;
+                    if (id != null) activeIds.add(id.toInt());
+                  }
+                  if (pendingIds.isEmpty && data['pending'] is Map) {
+                    final id = ((data['pending'] as Map)['ekskul'] is Map)
+                        ? (((data['pending'] as Map)['ekskul'] as Map)['id']
+                              as num?)
+                        : null;
+                    if (id != null) pendingIds.add(id.toInt());
+                  }
+                  final sudahAktif = activeIds.contains(ekskul.id);
+                  final sudahPending = pendingIds.contains(ekskul.id);
                   final profilLengkap = data['profile_complete'] == true;
+                  final reasons = data['alasan_per_ekskul'] is Map
+                      ? Map<String, dynamic>.from(
+                          data['alasan_per_ekskul'] as Map,
+                        )
+                      : const <String, dynamic>{};
+                  final registrationBlockReason = reasons[ekskul.id.toString()]
+                      ?.toString();
                   if (sudahAktif || sudahPending) {
                     return SizedBox(
                       width: double.infinity,
@@ -385,6 +432,15 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
                       child: OutlinedButton(
                         onPressed: null,
                         child: Text('Lengkapi profil sebelum mendaftar'),
+                      ),
+                    );
+                  }
+                  if (registrationBlockReason != null) {
+                    return SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: null,
+                        child: Text(registrationBlockReason),
                       ),
                     );
                   }
@@ -459,17 +515,9 @@ class _DetailHero extends StatelessWidget {
                 if ((ekskul.cover ?? '').isNotEmpty)
                   _ImageOrPlaceholder(url: AppConfig.imageUrl(ekskul.cover))
                 else
-                  const DecoratedBox(
+                  DecoratedBox(
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppTheme.sky,
-                          Color(0xFF3B82F6),
-                          AppTheme.blue,
-                        ],
-                      ),
+                      gradient: AppTheme.brandHeroGradient(context),
                     ),
                   ),
                 const DecoratedBox(
@@ -540,10 +588,8 @@ class _DetailHero extends StatelessWidget {
                               url: AppConfig.imageUrl(ekskul.logo),
                             )
                           : DecoratedBox(
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [AppTheme.sky, AppTheme.blue],
-                                ),
+                              decoration: BoxDecoration(
+                                gradient: AppTheme.brandHeroGradient(context),
                               ),
                               child: Center(
                                 child: Text(
@@ -651,15 +697,15 @@ class _DetailHero extends StatelessWidget {
                             icon: Icons.sports_outlined,
                             label: 'Pelatih',
                             value: pelatih?['nama']?.toString() ?? 'Belum ada',
-                            tint: const Color(0xFFFFF7E6),
-                            iconColor: const Color(0xFFB45309),
+                            tint: AppTheme.warningSurface(context),
+                            iconColor: AppTheme.warningText(context),
                           ),
                           _MetricTile(
                             icon: Icons.groups_outlined,
                             label: 'Anggota aktif',
                             value: '${ekskul.anggotaCount} siswa',
-                            tint: const Color(0xFFECFDF5),
-                            iconColor: const Color(0xFF15803D),
+                            tint: AppTheme.successSurface(context),
+                            iconColor: AppTheme.successText(context),
                           ),
                           _MetricTile(
                             icon: Icons.calendar_month_outlined,
@@ -839,18 +885,18 @@ class _AboutCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFBEB),
+          color: AppTheme.warningSurface(context),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFFDE68A)),
+          border: Border.all(color: AppTheme.warningBorder(context)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.track_changes_outlined,
-                  color: Color(0xFFB45309),
+                  color: AppTheme.warningText(context),
                   size: 19,
                 ),
                 const SizedBox(width: 8),
@@ -936,19 +982,19 @@ class _CountBadge extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
     decoration: BoxDecoration(
-      color: const Color(0xFFFFF7E6),
+      color: AppTheme.warningSurface(context),
       borderRadius: BorderRadius.circular(999),
-      border: Border.all(color: const Color(0xFFFDE68A)),
+      border: Border.all(color: AppTheme.warningBorder(context)),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: const Color(0xFFB45309), size: 14),
+        Icon(icon, color: AppTheme.warningText(context), size: 14),
         const SizedBox(width: 4),
         Text(
           text,
           style: GoogleFonts.plusJakartaSans(
-            color: const Color(0xFF92400E),
+            color: AppTheme.warningText(context),
             fontSize: 10,
             fontWeight: FontWeight.w800,
           ),
@@ -980,15 +1026,22 @@ class _FeedbackActionCard extends StatelessWidget {
     margin: const EdgeInsets.only(top: 8),
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: isComplete ? const Color(0xFFFFFBEB) : AppTheme.surface(context),
+      color: isComplete
+          ? AppTheme.warningSurface(context)
+          : AppTheme.surface(context),
       borderRadius: BorderRadius.circular(16),
       border: Border.all(
-        color: isComplete ? const Color(0xFFFDE68A) : AppTheme.outline(context),
+        color: isComplete
+            ? AppTheme.warningBorder(context)
+            : AppTheme.outline(context),
       ),
     ),
     child: Row(
       children: [
-        Icon(icon, color: isComplete ? const Color(0xFFB45309) : AppTheme.blue),
+        Icon(
+          icon,
+          color: isComplete ? AppTheme.warningText(context) : AppTheme.blue,
+        ),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -1078,16 +1131,14 @@ class _PrestasiCard extends StatelessWidget {
             Container(
               height: 66,
               padding: const EdgeInsets.symmetric(horizontal: 14),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFFFFF7E6), Color(0xFFFFFBEB)],
-                ),
+              decoration: BoxDecoration(
+                color: AppTheme.warningSurface(context),
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.military_tech,
-                    color: Color(0xFFB45309),
+                    color: AppTheme.warningText(context),
                     size: 28,
                   ),
                   const Spacer(),
@@ -1164,11 +1215,7 @@ class _KegiatanMini extends StatelessWidget {
             width: 43,
             height: 48,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppTheme.sky, AppTheme.blue],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: AppTheme.brandHeroGradient(context),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -1231,9 +1278,9 @@ class _TestimoniCard extends StatelessWidget {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBEB),
+        color: AppTheme.warningSurface(context),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFDE68A)),
+        border: Border.all(color: AppTheme.warningBorder(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1335,14 +1382,14 @@ class _FaqCard extends StatelessWidget {
                 width: 23,
                 height: 23,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFF7E6),
+                  color: AppTheme.warningSurface(context),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Center(
+                child: Center(
                   child: Text(
                     'A',
                     style: TextStyle(
-                      color: Color(0xFFB45309),
+                      color: AppTheme.warningText(context),
                       fontSize: 11,
                       fontWeight: FontWeight.w900,
                     ),

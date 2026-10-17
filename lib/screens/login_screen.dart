@@ -61,15 +61,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     height: heroHeight,
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            AppTheme.sky,
-                            const Color(0xFF60A5FA),
-                            AppTheme.blue,
-                          ],
-                        ),
+                        gradient: AppTheme.brandHeroGradient(context),
                       ),
                       child: SafeArea(
                         child: Padding(
@@ -99,7 +91,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     const SizedBox(width: 10),
                                     Text(
                                       AppConfig.appName,
-                                      style: GoogleFonts.inter(
+                                      style: GoogleFonts.plusJakartaSans(
                                         color: Colors.white,
                                         fontSize: 17,
                                         fontWeight: FontWeight.w900,
@@ -113,7 +105,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         textAlign: TextAlign.end,
-                                        style: GoogleFonts.inter(
+                                        style: GoogleFonts.plusJakartaSans(
                                           color: Colors.white,
                                           fontSize: 13,
                                           fontWeight: FontWeight.w700,
@@ -146,7 +138,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         const SizedBox(width: 12),
                                         Text(
                                           AppConfig.appName,
-                                          style: GoogleFonts.inter(
+                                          style: GoogleFonts.plusJakartaSans(
                                             color: Colors.white,
                                             fontSize: 18,
                                             fontWeight: FontWeight.w900,
@@ -158,7 +150,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     const Spacer(),
                                     Text(
                                       'Satu Akun,\nSemua Ekskul',
-                                      style: GoogleFonts.inter(
+                                      style: GoogleFonts.plusJakartaSans(
                                         color: Colors.white,
                                         fontSize: 30,
                                         fontWeight: FontWeight.w900,
@@ -168,7 +160,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     const SizedBox(height: 10),
                                     Text(
                                       'Daftar ekskul, isi presensi, dan pantau laporan dalam satu aplikasi.',
-                                      style: GoogleFonts.inter(
+                                      style: GoogleFonts.plusJakartaSans(
                                         color: Colors.white.withValues(
                                           alpha: 0.9,
                                         ),
@@ -184,7 +176,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   Container(
-                    color: AppTheme.surface(context),
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     child: Padding(
                       padding: EdgeInsets.fromLTRB(
                         24,
@@ -197,7 +189,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         children: [
                           Text(
                             'Log In Akun',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.plusJakartaSans(
                               color: AppTheme.text(context),
                               fontSize: 24,
                               fontWeight: FontWeight.w800,
@@ -206,7 +198,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           const SizedBox(height: 4),
                           Text(
                             'Masuk dengan NIS/NIP atau username kamu.',
-                            style: GoogleFonts.inter(
+                            style: GoogleFonts.plusJakartaSans(
                               color: AppTheme.mutedText(context),
                               fontSize: 13,
                             ),
@@ -216,25 +208,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFFF1F2),
+                                color: AppTheme.dangerSurface(context),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: const Color(0xFFFECDD3),
+                                  color: AppTheme.dangerBorder(context),
                                 ),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.error_outline,
-                                    color: Color(0xFFE11D48),
+                                    color: AppTheme.dangerText(context),
                                     size: 18,
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       _localError!,
-                                      style: GoogleFonts.inter(
-                                        color: const Color(0xFFE11D48),
+                                      style: GoogleFonts.plusJakartaSans(
+                                        color: AppTheme.dangerText(context),
                                         fontSize: 12.5,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -249,25 +241,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFFF1F2),
+                                color: AppTheme.dangerSurface(context),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: const Color(0xFFFECDD3),
+                                  color: AppTheme.dangerBorder(context),
                                 ),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.error_outline,
-                                    color: Color(0xFFE11D48),
+                                    color: AppTheme.dangerText(context),
                                     size: 18,
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       auth.loginError!,
-                                      style: GoogleFonts.inter(
-                                        color: const Color(0xFFE11D48),
+                                      style: GoogleFonts.plusJakartaSans(
+                                        color: AppTheme.dangerText(context),
                                         fontSize: 12.5,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -313,55 +305,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 10),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF7E6),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: const Color(0xFFF0B429),
-                                style: BorderStyle.solid,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.info_outline,
-                                  size: 15,
-                                  color: Color(0xFFB45309),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text.rich(
-                                    TextSpan(
-                                      children: [
-                                        const TextSpan(
-                                          text: 'Password default: ',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Color(0xFF92400E),
-                                          ),
-                                        ),
-                                        TextSpan(
-                                          text: 'password',
-                                          style: GoogleFonts.inter(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w800,
-                                            color: const Color(0xFF7C3E00),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 26),
+                          const SizedBox(height: 24),
                           SizedBox(
                             height: 52,
                             child: ElevatedButton(

@@ -155,16 +155,16 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFEF2F2),
+                    color: AppTheme.dangerSurface(context),
                     borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFFECDD3)),
+                    border: Border.all(color: AppTheme.dangerBorder(context)),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.info_outline,
-                        color: Color(0xFFE11D48),
+                        color: AppTheme.dangerText(context),
                         size: 20,
                       ),
                       const SizedBox(width: 8),
@@ -374,15 +374,11 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppTheme.sky, Color(0xFF60A5FA), AppTheme.blue],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: AppTheme.brandHeroGradient(context),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.blue.withValues(alpha: 0.18),
+            color: AppTheme.brandHeroShadow(context),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -476,15 +472,15 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
         Icons.rate_review_outlined,
         'Perlu diperbaiki',
         'Baca catatan pembina di bawah, perbarui laporan, lalu kirim ulang.',
-        const Color(0xFFBE123C),
-        const Color(0xFFFFF1F2),
+        AppTheme.dangerText(context),
+        AppTheme.dangerSurface(context),
       ),
       'disetujui' => (
         Icons.verified_outlined,
         'Laporan disetujui',
         'Pembina telah menyetujui laporan untuk periode ini.',
-        const Color(0xFF15803D),
-        const Color(0xFFF0FDF4),
+        AppTheme.successText(context),
+        AppTheme.successSurface(context),
       ),
       _ => (
         Icons.hourglass_top_rounded,

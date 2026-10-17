@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../core/providers.dart';
 import '../../data/providers.dart';
 import '../nilai/nilai_screen.dart';
 import '../../theme/app_theme.dart';
@@ -129,11 +130,23 @@ class _PresensiTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final value = ref.watch(siswaPresensiProvider);
+    final selectedEkskulId = ref.watch(selectedSiswaEkskulProvider);
+    final value = ref.watch(siswaPresensiProvider(selectedEkskulId));
     return ApiAsyncView(
       value: value,
-      onRetry: () => ref.invalidate(siswaPresensiProvider),
+      onRetry: () => ref.invalidate(siswaPresensiProvider(selectedEkskulId)),
       builder: (context, data) {
+        final activeEkskuls = listOf(data, 'active_ekskuls');
+        final currentEkskulId =
+            selectedEkskulId ??
+            ((data['pendaftaran'] is Map &&
+                    (data['pendaftaran'] as Map)['ekskul'] is Map)
+                ? (((data['pendaftaran'] as Map)['ekskul'] as Map)['id']
+                          as num?)
+                      ?.toInt()
+                : (data['ekskul'] is Map
+                      ? ((data['ekskul'] as Map)['id'] as num?)?.toInt()
+                      : null));
         final rows = listOf(data, 'presensi')
           ..sort((a, b) {
             final aKegiatan = a['kegiatan'] is Map
@@ -147,21 +160,38 @@ class _PresensiTab extends ConsumerWidget {
             );
           });
         if (rows.isEmpty) {
-          return const EmptyState(
-            title: 'Belum ada data presensi',
-            icon: Icons.fact_check_outlined,
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+            children: [
+              ActiveEkskulSelector(
+                ekskuls: activeEkskuls,
+                selectedId: currentEkskulId,
+                onChanged: (id) =>
+                    ref.read(selectedSiswaEkskulProvider.notifier).select(id),
+              ),
+              const EmptyState(
+                title: 'Belum ada data presensi',
+                icon: Icons.fact_check_outlined,
+              ),
+            ],
           );
         }
         return RefreshIndicator(
           onRefresh: () async {
-            ref.invalidate(siswaPresensiProvider);
+            ref.invalidate(siswaPresensiProvider(selectedEkskulId));
             try {
-              await ref.read(siswaPresensiProvider.future);
+              await ref.read(siswaPresensiProvider(selectedEkskulId).future);
             } catch (_) {}
           },
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
             children: [
+              ActiveEkskulSelector(
+                ekskuls: activeEkskuls,
+                selectedId: currentEkskulId,
+                onChanged: (id) =>
+                    ref.read(selectedSiswaEkskulProvider.notifier).select(id),
+              ),
               SectionTitle('Riwayat Kegiatan (${rows.length})'),
               const SizedBox(height: 10),
               ...rows.map((row) {
@@ -200,18 +230,40 @@ class _RekapTabState extends ConsumerState<_RekapTab> {
 
   @override
   Widget build(BuildContext context) {
-    final value = ref.watch(siswaRekapMonthProvider(_selectedMonth));
+    final selectedEkskulId = ref.watch(selectedSiswaEkskulProvider);
+    final params = (bulan: _selectedMonth, ekskulId: selectedEkskulId);
+    final value = ref.watch(siswaRekapMonthProvider(params));
     return ApiAsyncView(
       value: value,
-      onRetry: () => ref.invalidate(siswaRekapMonthProvider(_selectedMonth)),
+      onRetry: () => ref.invalidate(siswaRekapMonthProvider(params)),
       builder: (context, data) {
+        final activeEkskuls = listOf(data, 'active_ekskuls');
+        final currentEkskulId =
+            selectedEkskulId ??
+            ((data['pendaftaran'] is Map &&
+                    (data['pendaftaran'] as Map)['ekskul'] is Map)
+                ? (((data['pendaftaran'] as Map)['ekskul'] as Map)['id']
+                          as num?)
+                      ?.toInt()
+                : null);
         final row = data['rekap_siswa'] is Map
             ? Map<String, dynamic>.from(data['rekap_siswa'] as Map)
             : null;
         if (row == null) {
-          return const EmptyState(
-            title: 'Belum ada rekap absensi',
-            icon: Icons.analytics_outlined,
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+            children: [
+              ActiveEkskulSelector(
+                ekskuls: activeEkskuls,
+                selectedId: currentEkskulId,
+                onChanged: (id) =>
+                    ref.read(selectedSiswaEkskulProvider.notifier).select(id),
+              ),
+              const EmptyState(
+                title: 'Belum ada rekap absensi',
+                icon: Icons.analytics_outlined,
+              ),
+            ],
           );
         }
         final months = (data['available_months'] as List?) ?? const [];
@@ -219,6 +271,12 @@ class _RekapTabState extends ConsumerState<_RekapTab> {
         return ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
           children: [
+            ActiveEkskulSelector(
+              ekskuls: activeEkskuls,
+              selectedId: currentEkskulId,
+              onChanged: (id) =>
+                  ref.read(selectedSiswaEkskulProvider.notifier).select(id),
+            ),
             _StudentPeriodHero(
               month: month,
               selectedMonth: _selectedMonth,
@@ -486,15 +544,11 @@ class _StudentPeriodHero extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppTheme.sky, Color(0xFF60A5FA), AppTheme.blue],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: AppTheme.brandHeroGradient(context),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.blue.withValues(alpha: 0.18),
+            color: AppTheme.brandHeroShadow(context),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),

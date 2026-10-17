@@ -116,22 +116,35 @@ final siswaRekapProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   return dataOf(res) ?? {};
 });
 
-final siswaPresensiProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  final res = await ref.read(apiClientProvider).get('/siswa/presensi');
-  return dataOf(res) ?? {};
-});
+Map<String, dynamic>? _ekskulQuery(int? ekskulId) =>
+    ekskulId == null ? null : {'ekskul_id': ekskulId};
 
-final siswaNilaiProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  final res = await ref.read(apiClientProvider).get('/siswa/nilai');
-  return dataOf(res) ?? {};
-});
+final siswaPresensiProvider = FutureProvider.family<Map<String, dynamic>, int?>(
+  (ref, ekskulId) async {
+    final res = await ref
+        .read(apiClientProvider)
+        .get('/siswa/presensi', query: _ekskulQuery(ekskulId));
+    return dataOf(res) ?? {};
+  },
+);
 
-final siswaPengajuanProvider = FutureProvider<Map<String, dynamic>>((
+final siswaNilaiProvider = FutureProvider.family<Map<String, dynamic>, int?>((
   ref,
+  ekskulId,
 ) async {
-  final res = await ref.read(apiClientProvider).get('/siswa/pengajuan-keluar');
+  final res = await ref
+      .read(apiClientProvider)
+      .get('/siswa/nilai', query: _ekskulQuery(ekskulId));
   return dataOf(res) ?? {};
 });
+
+final siswaPengajuanProvider =
+    FutureProvider.family<Map<String, dynamic>, int?>((ref, ekskulId) async {
+      final res = await ref
+          .read(apiClientProvider)
+          .get('/siswa/pengajuan-keluar', query: _ekskulQuery(ekskulId));
+      return dataOf(res) ?? {};
+    });
 
 final siswaProfilProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final res = await ref.read(apiClientProvider).get('/siswa/profile');
@@ -169,13 +182,18 @@ final laporanDetailProvider = FutureProvider.family<Map<String, dynamic>, int>((
 });
 
 final siswaRekapMonthProvider =
-    FutureProvider.family<Map<String, dynamic>, String?>((ref, bulan) async {
-      final query = (bulan != null && bulan.isNotEmpty)
-          ? {'bulan': bulan}
-          : null;
+    FutureProvider.family<
+      Map<String, dynamic>,
+      ({String? bulan, int? ekskulId})
+    >((ref, params) async {
+      final query = <String, dynamic>{
+        if (params.bulan != null && params.bulan!.isNotEmpty)
+          'bulan': params.bulan,
+        if (params.ekskulId != null) 'ekskul_id': params.ekskulId,
+      };
       final res = await ref
           .read(apiClientProvider)
-          .get('/siswa/rekap', query: query);
+          .get('/siswa/rekap', query: query.isEmpty ? null : query);
       return dataOf(res) ?? {};
     });
 

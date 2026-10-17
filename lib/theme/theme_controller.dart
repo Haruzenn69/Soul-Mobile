@@ -15,7 +15,7 @@ class ThemeModeController extends Notifier<ThemeMode> {
   @override
   ThemeMode build() {
     _restore();
-    return ThemeMode.system;
+    return ThemeMode.light;
   }
 
   Future<void> _restore() async {
@@ -25,7 +25,7 @@ class ThemeModeController extends Notifier<ThemeMode> {
       final mode = saved == 'dark' ? ThemeMode.dark : ThemeMode.light;
       if (_revision == 0) state = mode;
     } catch (_) {
-      // Keep the system theme if the device cannot read the optional setting.
+      // Keep light mode if the device cannot read the optional setting.
     }
   }
 

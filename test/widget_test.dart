@@ -29,6 +29,14 @@ class _TestAuthController extends AuthController {
   AuthState build() => const AuthState(status: AuthStatus.unauthenticated);
 }
 
+class _LoginErrorAuthController extends AuthController {
+  @override
+  AuthState build() => const AuthState(
+    status: AuthStatus.unauthenticated,
+    loginError: 'Server tidak tersedia.',
+  );
+}
+
 class _IncompleteProfileAuthController extends AuthController {
   @override
   AuthState build() => const AuthState(
@@ -78,9 +86,22 @@ void main() {
     expect(AppTheme.yellow, const Color(0xFFFACC15));
     expect(AppTheme.ink, const Color(0xFF0F172A));
     expect(AppTheme.canvas, const Color(0xFFF8FAFC));
+    expect(AppTheme.line, const Color(0xFFE3EAF4));
+    expect(AppTheme.lightSurfaceVariant, const Color(0xFFF1F5FB));
+    expect(AppTheme.lightAccentSurface, const Color(0xFFEDF4FF));
     expect(AppTheme.darkCanvas, const Color(0xFF171717));
-    expect(AppTheme.darkSurface, const Color(0xFF262626));
-    expect(AppTheme.darkLine, const Color(0xFF404040));
+    expect(AppTheme.darkSurface, const Color(0xFF24262B));
+    expect(AppTheme.darkSurfaceVariant, const Color(0xFF2C3038));
+    expect(AppTheme.darkLine, const Color(0xFF3B414A));
+    expect(AppTheme.darkSub, const Color(0xFFA6AFBD));
+    expect(
+      AppTheme.light().colorScheme.surfaceContainerHighest,
+      AppTheme.lightSurfaceVariant,
+    );
+    expect(
+      AppTheme.dark().colorScheme.surfaceContainerHighest,
+      AppTheme.darkSurfaceVariant,
+    );
   });
 
   testWidgets('shared widgets use dark theme surfaces and text colors', (
@@ -137,6 +158,32 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('brand hero gradient tones down in dark mode', (tester) async {
+    List<Color>? gradientColors;
+    Widget captureGradient(ThemeData theme) => MaterialApp(
+      home: Theme(
+        data: theme,
+        child: Builder(
+          builder: (context) {
+            gradientColors = AppTheme.brandHeroGradient(context).colors;
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(captureGradient(AppTheme.light()));
+    final lightColors = gradientColors;
+    await tester.pumpWidget(captureGradient(AppTheme.dark()));
+    final darkColors = gradientColors;
+
+    expect(lightColors, isNotNull);
+    expect(darkColors, isNotNull);
+    expect(darkColors, isNot(equals(lightColors)));
+    expect(darkColors!.first, const Color(0xFF17283D));
+    expect(darkColors.last, const Color(0xFF1D4ED8));
+  });
+
   testWidgets('app boots and shows splash', (tester) async {
     await tester.pumpWidget(const ProviderScope(child: SoulApp()));
     await tester.pump();
@@ -169,15 +216,37 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -700));
     await tester.pumpAndSettle();
 
-    final modeSwitch = tester.widget<SwitchListTile>(
-      find.widgetWithText(SwitchListTile, 'Mode gelap'),
-    );
+    final modeSwitch = tester.widget<Switch>(find.byType(Switch));
     expect(modeSwitch.value, isFalse);
-    await tester.tap(find.byType(SwitchListTile));
+    final modeTitle = tester.widget<Text>(find.text('Mode gelap'));
+    final modeSubtitle = tester.widget<Text>(
+      find.text('Gunakan tampilan gelap aplikasi.'),
+    );
+    expect(modeTitle.style?.fontFamily, startsWith('PlusJakartaSans'));
+    expect(modeTitle.style?.fontWeight, FontWeight.w800);
+    expect(modeTitle.style?.fontSize, 14);
+    expect(modeSubtitle.style?.fontFamily, startsWith('PlusJakartaSans'));
+    expect(modeSubtitle.style?.fontSize, 11);
+    expect(
+      tester.getTopLeft(find.text('Mode gelap')).dx,
+      tester.getTopLeft(find.text('Edit Profil')).dx,
+    );
+    expect(
+      tester.getTopLeft(find.text('Gunakan tampilan gelap aplikasi.')).dx,
+      tester.getTopLeft(find.text('Perbarui data pribadimu.')).dx,
+    );
+    await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
 
     expect(container.read(themeModeProvider), ThemeMode.dark);
     expect(tester.takeException(), isNull);
+  });
+
+  test('theme preference defaults to light mode', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    expect(container.read(themeModeProvider), ThemeMode.light);
   });
 
   testWidgets('login screen scrolls without overflow with keyboard open', (
@@ -202,6 +271,10 @@ void main() {
 
     expect(find.text('Log In Akun'), findsOneWidget);
     expect(
+      tester.widget<Text>(find.text('Log In Akun')).style?.fontFamily,
+      startsWith('PlusJakartaSans'),
+    );
+    expect(
       tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
       AppTheme.darkCanvas,
     );
@@ -213,7 +286,39 @@ void main() {
           )
           .first,
     );
-    expect(formSurface.color, AppTheme.darkSurface);
+    expect(formSurface.color, AppTheme.darkCanvas);
+    expect(find.textContaining('Password default'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('login error banner uses dark semantic colors', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authControllerProvider.overrideWith(_LoginErrorAuthController.new),
+        ],
+        child: MaterialApp(theme: AppTheme.dark(), home: const LoginScreen()),
+      ),
+    );
+
+    final banner = tester.widget<Container>(
+      find
+          .ancestor(
+            of: find.text('Server tidak tersedia.'),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
+    expect(
+      (banner.decoration! as BoxDecoration).color,
+      AppTheme.dangerSurface(
+        tester.element(find.text('Server tidak tersedia.')),
+      ),
+    );
+    expect(
+      (banner.decoration! as BoxDecoration).color,
+      isNot(const Color(0xFFFFF1F2)),
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -288,7 +393,7 @@ void main() {
         overrides: [
           authControllerProvider.overrideWith(_TestAuthController.new),
           siswaDashboardProvider.overrideWith((ref) async => {}),
-          siswaPresensiProvider.overrideWith((ref) async => {}),
+          siswaPresensiProvider.overrideWith((ref, ekskulId) async => {}),
           katalogProvider.overrideWith((ref) async => {}),
         ],
         child: const MaterialApp(home: MainShell(user: user)),
@@ -519,7 +624,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            siswaRekapMonthProvider(null).overrideWith(
+            siswaRekapMonthProvider((bulan: null, ekskulId: null)).overrideWith(
               (ref) async => {
                 'bulan': '2026-10',
                 'available_months': ['2026-10', '2026-09'],
@@ -570,7 +675,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          siswaPresensiProvider.overrideWith(
+          siswaPresensiProvider(null).overrideWith(
             (ref) async => {
               'presensi': [
                 {
@@ -606,6 +711,53 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('student activity switches attendance between active clubs', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(360, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          siswaPresensiProvider.overrideWith((ref, ekskulId) async {
+            final selectedId = ekskulId ?? 11;
+            final name = selectedId == 11 ? 'Basket' : 'Futsal';
+            return {
+              'pendaftaran': {
+                'ekskul': {'id': selectedId},
+              },
+              'active_ekskuls': [
+                {'id': 11, 'nama_ekskul': 'Basket'},
+                {'id': 12, 'nama_ekskul': 'Futsal'},
+              ],
+              'presensi': [
+                {
+                  'status': 'hadir',
+                  'kegiatan': {
+                    'materi': 'Latihan $name',
+                    'tanggal_kegiatan': '2026-10-02',
+                    'tanggal_text': '2 Oktober 2026',
+                  },
+                },
+              ],
+            };
+          }),
+        ],
+        child: const MaterialApp(home: Scaffold(body: SiswaAktivitasScreen())),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Latihan Basket'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'Futsal'));
+    await tester.pumpAndSettle();
+    expect(find.text('Latihan Futsal'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('student activity grade tab uses the full grade view', (
     tester,
   ) async {
@@ -617,7 +769,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          siswaNilaiProvider.overrideWith(
+          siswaNilaiProvider(null).overrideWith(
             (ref) async => {
               'pendaftaran': {'id': 1},
               'ekskul': {'nama_ekskul': 'Klub Teater'},

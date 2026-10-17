@@ -174,7 +174,7 @@ class _ProfilEditScreenState extends ConsumerState<ProfilEditScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                 children: [
-                  _introCard(),
+                  _introCard(context),
                   const SizedBox(height: 16),
                   _photoCard(),
                   const SizedBox(height: 16),
@@ -229,14 +229,10 @@ class _ProfilEditScreenState extends ConsumerState<ProfilEditScreen> {
     );
   }
 
-  Widget _introCard() => Container(
+  Widget _introCard(BuildContext context) => Container(
     padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [AppTheme.blue, Color(0xFF38BDF8)],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
+      gradient: AppTheme.brandHeroGradient(context),
       borderRadius: BorderRadius.circular(18),
     ),
     child: Row(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../core/providers.dart';
 import '../../data/providers.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
@@ -29,21 +30,41 @@ String _fmtTanggal(String? iso) {
   return '${tgl.day} ${_namaBulan[tgl.month - 1]} ${tgl.year}';
 }
 
-Color _predikatColor(String predikat) => switch (predikat) {
-  'A' => const Color(0xFF16803C),
-  'B' => const Color(0xFF0284C7),
-  'C' => const Color(0xFFB45309),
-  'D' => const Color(0xFFC2410C),
-  _ => const Color(0xFFE11D48),
-};
+Color _predikatColor(BuildContext context, String predikat) {
+  if (!AppTheme.isDark(context)) {
+    return switch (predikat) {
+      'A' => const Color(0xFF16803C),
+      'B' => const Color(0xFF0284C7),
+      'C' => const Color(0xFFB45309),
+      'D' => const Color(0xFFC2410C),
+      _ => const Color(0xFFE11D48),
+    };
+  }
+  return switch (predikat) {
+    'A' => AppTheme.successText(context),
+    'B' => AppTheme.infoText(context),
+    'C' || 'D' => AppTheme.warningText(context),
+    _ => AppTheme.dangerText(context),
+  };
+}
 
-Color _predikatBg(String predikat) => switch (predikat) {
-  'A' => const Color(0xFFECFDF5),
-  'B' => const Color(0xFFE0F2FE),
-  'C' => const Color(0xFFFFFBEB),
-  'D' => const Color(0xFFFFF7ED),
-  _ => const Color(0xFFFEF2F2),
-};
+Color _predikatBg(BuildContext context, String predikat) {
+  if (!AppTheme.isDark(context)) {
+    return switch (predikat) {
+      'A' => const Color(0xFFECFDF5),
+      'B' => const Color(0xFFE0F2FE),
+      'C' => const Color(0xFFFFFBEB),
+      'D' => const Color(0xFFFFF7ED),
+      _ => const Color(0xFFFEF2F2),
+    };
+  }
+  return switch (predikat) {
+    'A' => AppTheme.successSurface(context),
+    'B' => AppTheme.infoSurface(context),
+    'C' || 'D' => AppTheme.warningSurface(context),
+    _ => AppTheme.dangerSurface(context),
+  };
+}
 
 class NilaiScreen extends ConsumerWidget {
   const NilaiScreen({super.key, this.showAppBar = true});
@@ -52,15 +73,31 @@ class NilaiScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final value = ref.watch(siswaNilaiProvider);
+    final selectedEkskulId = ref.watch(selectedSiswaEkskulProvider);
+    final value = ref.watch(siswaNilaiProvider(selectedEkskulId));
     return Scaffold(
       appBar: showAppBar ? AppBar(title: const Text('Nilai Akhir')) : null,
       body: SafeArea(
         top: false,
         child: ApiAsyncView(
           value: value,
-          onRetry: () => ref.invalidate(siswaNilaiProvider),
+          onRetry: () => ref.invalidate(siswaNilaiProvider(selectedEkskulId)),
           builder: (context, data) {
+            final activeEkskuls = listOf(data, 'active_ekskuls');
+            final currentEkskulId =
+                selectedEkskulId ??
+                ((data['pendaftaran'] is Map &&
+                        (data['pendaftaran'] as Map)['ekskul'] is Map)
+                    ? (((data['pendaftaran'] as Map)['ekskul'] as Map)['id']
+                              as num?)
+                          ?.toInt()
+                    : null);
+            final selector = ActiveEkskulSelector(
+              ekskuls: activeEkskuls,
+              selectedId: currentEkskulId,
+              onChanged: (id) =>
+                  ref.read(selectedSiswaEkskulProvider.notifier).select(id),
+            );
             final pendaftaran = data['pendaftaran'] is Map
                 ? Map<String, dynamic>.from(data['pendaftaran'] as Map)
                 : null;
@@ -75,12 +112,19 @@ class NilaiScreen extends ConsumerWidget {
                 : null;
 
             if (pendaftaran == null) {
-              return const EmptyState(
-                title: 'Belum Terdaftar di Ekskul',
-                subtitle:
-                    'Nilai akan muncul setelah kamu menjadi anggota aktif '
-                    'sebuah ekskul dan pembina menilai.',
-                icon: Icons.workspace_premium_outlined,
+              return Column(
+                children: [
+                  selector,
+                  const Expanded(
+                    child: EmptyState(
+                      title: 'Belum Terdaftar di Ekskul',
+                      subtitle:
+                          'Nilai akan muncul setelah kamu menjadi anggota aktif '
+                          'sebuah ekskul dan pembina menilai.',
+                      icon: Icons.workspace_premium_outlined,
+                    ),
+                  ),
+                ],
               );
             }
 
@@ -90,17 +134,31 @@ class NilaiScreen extends ConsumerWidget {
               final rekap = data['rekap'] is Map
                   ? Map<String, dynamic>.from(data['rekap'] as Map)
                   : null;
-              return _NilaiBelumAda(
-                ekskulNama: ekskul?['nama_ekskul']?.toString(),
-                periodeLabel: periodeLabel,
-                rekap: rekap,
+              return Column(
+                children: [
+                  selector,
+                  Expanded(
+                    child: _NilaiBelumAda(
+                      ekskulNama: ekskul?['nama_ekskul']?.toString(),
+                      periodeLabel: periodeLabel,
+                      rekap: rekap,
+                    ),
+                  ),
+                ],
               );
             }
 
-            return _NilaiDetail(
-              ekskulNama: ekskul?['nama_ekskul']?.toString(),
-              periodeLabel: periodeLabel,
-              penilaian: penilaian,
+            return Column(
+              children: [
+                selector,
+                Expanded(
+                  child: _NilaiDetail(
+                    ekskulNama: ekskul?['nama_ekskul']?.toString(),
+                    periodeLabel: periodeLabel,
+                    penilaian: penilaian,
+                  ),
+                ),
+              ],
             );
           },
         ),
@@ -134,13 +192,13 @@ class _NilaiBelumAda extends StatelessWidget {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFFBEB),
+                  color: AppTheme.warningSurface(context),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFFDE68A)),
+                  border: Border.all(color: AppTheme.warningBorder(context)),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.schedule_rounded,
-                  color: Color(0xFFB45309),
+                  color: AppTheme.warningText(context),
                   size: 30,
                 ),
               ),
@@ -284,11 +342,7 @@ class _NilaiDetail extends StatelessWidget {
               height: 52,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppTheme.sky, Color(0xFF60A5FA), AppTheme.blue],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                gradient: AppTheme.brandHeroGradient(context),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Text(
@@ -335,14 +389,14 @@ class _NilaiDetail extends StatelessWidget {
                   vertical: 7,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFECFDF5),
+                  color: AppTheme.successSurface(context),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0xFFA7F3D0)),
+                  border: Border.all(color: AppTheme.successBorder(context)),
                 ),
                 child: Text(
                   'Dikeluarkan $dikirimAt',
                   style: GoogleFonts.plusJakartaSans(
-                    color: const Color(0xFF16803C),
+                    color: AppTheme.successText(context),
                     fontSize: 10.5,
                     fontWeight: FontWeight.w800,
                   ),
@@ -382,15 +436,11 @@ class _NilaiHero extends StatelessWidget {
             height: 130,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AppTheme.sky, Color(0xFF60A5FA), AppTheme.blue],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: AppTheme.brandHeroGradient(context),
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.blue.withValues(alpha: 0.25),
+                  color: AppTheme.brandHeroShadow(context),
                   blurRadius: 18,
                   offset: const Offset(0, 8),
                 ),
@@ -439,16 +489,19 @@ class _NilaiHero extends StatelessWidget {
                 height: 46,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: _predikatBg(predikat),
+                  color: _predikatBg(context, predikat),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: _predikatColor(predikat).withValues(alpha: 0.35),
+                    color: _predikatColor(
+                      context,
+                      predikat,
+                    ).withValues(alpha: 0.35),
                   ),
                 ),
                 child: Text(
                   predikat,
                   style: GoogleFonts.plusJakartaSans(
-                    color: _predikatColor(predikat),
+                    color: _predikatColor(context, predikat),
                     fontSize: 20,
                     fontWeight: FontWeight.w900,
                   ),

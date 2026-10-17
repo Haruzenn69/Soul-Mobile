@@ -27,22 +27,39 @@ class _PengajuanKeluarScreenState extends ConsumerState<PengajuanKeluarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final value = ref.watch(siswaPengajuanProvider);
+    final selectedEkskulId = ref.watch(selectedSiswaEkskulProvider);
+    final value = ref.watch(siswaPengajuanProvider(selectedEkskulId));
     return Scaffold(
       appBar: AppBar(title: const Text('Pengajuan Keluar')),
       body: ApiAsyncView(
         value: value,
-        onRetry: () => ref.invalidate(siswaPengajuanProvider),
+        onRetry: () => ref.invalidate(siswaPengajuanProvider(selectedEkskulId)),
         builder: (context, data) {
+          final activeEkskuls = listOf(data, 'active_ekskuls');
           final ekskul = data['ekskul'] is Map
               ? Map<String, dynamic>.from(data['ekskul'] as Map)
               : null;
+          final ekskulId = selectedEkskulId ?? (ekskul?['id'] as num?)?.toInt();
           final items = listOf(data, 'pengajuans');
-          final hasPending = items.any((e) => e['status'] == 'pending');
+          final hasPending = items.any((item) {
+            if (item['status'] != 'pending') return false;
+            final itemEkskulId =
+                (item['ekskul_id'] as num?)?.toInt() ??
+                (item['ekskul'] is Map
+                    ? ((item['ekskul'] as Map)['id'] as num?)?.toInt()
+                    : null);
+            return ekskulId == null || itemEkskulId == ekskulId;
+          });
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             children: [
+              ActiveEkskulSelector(
+                ekskuls: activeEkskuls,
+                selectedId: ekskulId,
+                onChanged: (id) =>
+                    ref.read(selectedSiswaEkskulProvider.notifier).select(id),
+              ),
               if (ekskul != null) ...[
                 SectionTitle('Ekskul Aktif'),
                 const SizedBox(height: 8),
@@ -113,7 +130,9 @@ class _PengajuanKeluarScreenState extends ConsumerState<PengajuanKeluarScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
-                          onPressed: hasPending || _sending ? null : _submit,
+                          onPressed: hasPending || _sending || ekskulId == null
+                              ? null
+                              : () => _submit(ekskulId),
                           icon: const Icon(Icons.send_outlined, size: 18),
                           label: Text(
                             _sending ? 'Mengirim...' : 'Kirim Pengajuan',
@@ -125,22 +144,24 @@ class _PengajuanKeluarScreenState extends ConsumerState<PengajuanKeluarScreen> {
                         Container(
                           padding: const EdgeInsets.all(11),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFFBEB),
+                            color: AppTheme.warningSurface(context),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFFDE68A)),
+                            border: Border.all(
+                              color: AppTheme.warningBorder(context),
+                            ),
                           ),
-                          child: const Row(
+                          child: Row(
                             children: [
                               Icon(
                                 Icons.hourglass_top,
-                                color: Color(0xFFB45309),
+                                color: AppTheme.warningText(context),
                               ),
                               SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   'Ada pengajuan yang masih menunggu persetujuan ketua.',
                                   style: TextStyle(
-                                    color: Color(0xFF92400E),
+                                    color: AppTheme.warningText(context),
                                     fontSize: 12,
                                     height: 1.4,
                                   ),
@@ -193,7 +214,16 @@ class _PengajuanKeluarScreenState extends ConsumerState<PengajuanKeluarScreen> {
                           ),
                         ),
                         subtitle: Text(
-                          item['tanggal_pengajuan'] as String? ?? '-',
+                          [
+                                if (item['ekskul'] is Map)
+                                  (item['ekskul'] as Map)['nama_ekskul']
+                                      ?.toString(),
+                                item['tanggal_pengajuan'] as String? ?? '-',
+                              ]
+                              .where(
+                                (value) => value != null && value.isNotEmpty,
+                              )
+                              .join(' · '),
                           style: GoogleFonts.plusJakartaSans(
                             color: AppTheme.mutedText(context),
                             fontSize: 12,
@@ -210,7 +240,7 @@ class _PengajuanKeluarScreenState extends ConsumerState<PengajuanKeluarScreen> {
     );
   }
 
-  Future<void> _submit() async {
+  Future<void> _submit(int ekskulId) async {
     final alasan = _alasan.text.trim();
     final error = _validateAlasan(alasan);
     if (error != null) {
@@ -222,9 +252,12 @@ class _PengajuanKeluarScreenState extends ConsumerState<PengajuanKeluarScreen> {
     try {
       await ref
           .read(apiClientProvider)
-          .post('/siswa/pengajuan-keluar', data: {'alasan': alasan});
+          .post(
+            '/siswa/pengajuan-keluar',
+            data: {'alasan': alasan, 'ekskul_id': ekskulId},
+          );
       _alasan.clear();
-      ref.invalidate(siswaPengajuanProvider);
+      ref.invalidate(siswaPengajuanProvider(ekskulId));
       ref.invalidate(siswaDashboardProvider);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

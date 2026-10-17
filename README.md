@@ -21,13 +21,16 @@ cleartext traffic is enabled only by the debug manifest.
 
 ## Dark mode
 
-Dark mode follows the device theme by default. Change it from **Profil & Pengaturan
-> Akun & Keamanan > Mode gelap**; the selection is saved on the device.
+Light mode is enabled by default and does not follow the device theme. Enable
+dark mode manually from **Profil & Pengaturan > Akun & Keamanan > Mode gelap**;
+the selection is saved on the device.
 The app theme follows Laravel's shared colors: blue `#2563EB`, dark blue
 `#1D4ED8`, yellow `#FACC15`, dark ink `#0F172A`, and light background `#F8FAFC`.
-In dark mode, the page background is `#171717`, cards and inputs use `#262626`,
-and borders use `#404040`; text and muted text use neutral gray tones for
-contrast.
+Light mode keeps the cool near-white canvas with softly blue-tinted borders,
+surfaces, and selected navigation. Dark mode keeps the charcoal background
+`#171717`, with cards and inputs at `#24262B`, raised surfaces at `#2C3038`,
+and softer neutral borders at `#3B414A`. Blue accents remain prominent in both
+modes without flattening every surface into the same color.
 
 ## Flutter resources
 

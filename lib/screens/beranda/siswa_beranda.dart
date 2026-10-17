@@ -56,10 +56,10 @@ class BerandaSiswa extends ConsumerWidget {
       child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(siswaDashboardProvider);
-          ref.invalidate(siswaPresensiProvider);
+          ref.invalidate(siswaPresensiProvider(null));
           await Future.wait([
             ref.read(siswaDashboardProvider.future),
-            ref.read(siswaPresensiProvider.future),
+            ref.read(siswaPresensiProvider(null).future),
           ]);
         },
         child: CustomScrollView(
@@ -101,7 +101,16 @@ class BerandaSiswa extends ConsumerWidget {
                     final isJoined =
                         pendaftaran != null ||
                         dashboardEkskul != null ||
-                        sessionEkskul != null;
+                        sessionEkskul != null ||
+                        listOf(data, 'active_ekskuls').isNotEmpty;
+                    final activeEkskuls = listOf(
+                      data,
+                      'active_ekskuls',
+                    ).toList();
+                    if (activeEkskuls.isEmpty && isJoined) {
+                      activeEkskuls.add(ekskul);
+                    }
+                    final activeSummaries = listOf(data, 'active_summaries');
                     final hadir = (data['total_hadir'] as num?)?.toInt() ?? 0;
                     final upcoming = listOf(data, 'kegiatan_mendatang');
                     final latestRegistration = data['status_terakhir'] is Map
@@ -178,7 +187,9 @@ class BerandaSiswa extends ConsumerWidget {
                                 Expanded(
                                   child: StatCard(
                                     label: 'Status Ekskul',
-                                    value: isJoined ? 'Aktif' : 'Belum',
+                                    value: isJoined
+                                        ? '${activeEkskuls.length} Aktif'
+                                        : 'Belum',
                                     icon: Icons.groups_2_outlined,
                                     color: isJoined
                                         ? const Color(0xFF15803D)
@@ -211,9 +222,8 @@ class BerandaSiswa extends ConsumerWidget {
                                 Expanded(
                                   child: StatCard(
                                     label: 'Peringatan',
-                                    value: data['is_warned'] == true
-                                        ? '1'
-                                        : '0',
+                                    value:
+                                        '${(data['warning_count'] as num?)?.toInt() ?? (data['is_warned'] == true ? 1 : 0)}',
                                     icon: Icons.warning_amber_rounded,
                                     color: const Color(0xFFE11D48),
                                   ),
@@ -236,18 +246,23 @@ class BerandaSiswa extends ConsumerWidget {
                                 ref.read(shellTabProvider.notifier).set(1),
                           )
                         else
-                          _JoinedEkskulCard(
-                            ekskul: ekskul,
-                            onTap: ekskul['id'] != null
-                                ? () => Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => EkskulDetailScreen(
-                                        ekskulId: (ekskul['id'] as num).toInt(),
+                          ...activeEkskuls.map((activeEkskul) {
+                            final id = (activeEkskul['id'] as num?)?.toInt();
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _JoinedEkskulCard(
+                                ekskul: activeEkskul,
+                                onTap: id == null
+                                    ? null
+                                    : () => Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              EkskulDetailScreen(ekskulId: id),
+                                        ),
                                       ),
-                                    ),
-                                  )
-                                : null,
-                          ),
+                              ),
+                            );
+                          }),
                         if (isJoined) ...[
                           const SizedBox(height: 8),
                           _MemberActions(
@@ -276,17 +291,48 @@ class BerandaSiswa extends ConsumerWidget {
                         const SizedBox(height: 8),
                         _KegiatanMendatang(data: data),
                         const SizedBox(height: 18),
-                        _AttendanceTrend(totalHadir: hadir),
-                        if (ekskul['id'] is num) ...[
-                          const SizedBox(height: 18),
-                          _StudentFeedback(
-                            ekskulId: (ekskul['id'] as num).toInt(),
-                            ekskulName:
-                                ekskul['nama_ekskul'] as String? ?? 'ekskul',
-                            hasSubmittedTestimoni:
-                                data['has_submitted_testimoni'] == true,
-                          ),
-                        ],
+                        _AttendanceTrend(
+                          totalHadir:
+                              (data['total_hadir_selected'] as num?)?.toInt() ??
+                              hadir,
+                        ),
+                        if (activeSummaries.isNotEmpty)
+                          for (final summary in activeSummaries)
+                            if (summary['ekskul'] is Map)
+                              Builder(
+                                builder: (context) {
+                                  final club = Map<String, dynamic>.from(
+                                    summary['ekskul'] as Map,
+                                  );
+                                  final id = (club['id'] as num?)?.toInt();
+                                  if (id == null) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 18),
+                                    child: _StudentFeedback(
+                                      ekskulId: id,
+                                      ekskulName:
+                                          club['nama_ekskul']?.toString() ??
+                                          'ekskul',
+                                      hasSubmittedTestimoni:
+                                          summary['has_submitted_testimoni'] ==
+                                          true,
+                                    ),
+                                  );
+                                },
+                              )
+                            else if (ekskul['id'] is num) ...[
+                              const SizedBox(height: 18),
+                              _StudentFeedback(
+                                ekskulId: (ekskul['id'] as num).toInt(),
+                                ekskulName:
+                                    ekskul['nama_ekskul'] as String? ??
+                                    'ekskul',
+                                hasSubmittedTestimoni:
+                                    data['has_submitted_testimoni'] == true,
+                              ),
+                            ],
                         const SizedBox(height: 18),
                         _QuickAccess(
                           onPresensi: () => Navigator.of(context).push(
@@ -345,12 +391,8 @@ class _Hero extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppTheme.sky, Color(0xFF60A5FA), AppTheme.blue],
-        ),
+      decoration: BoxDecoration(
+        gradient: AppTheme.brandHeroGradient(context),
         borderRadius: BorderRadius.all(Radius.circular(24)),
       ),
       child: Stack(
@@ -547,7 +589,9 @@ class _MemberNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = warning ? const Color(0xFFB45309) : const Color(0xFFB91C1C);
+    final accent = warning
+        ? AppTheme.warningText(context)
+        : AppTheme.dangerText(context);
     final title = warning
         ? 'Kamu mendapatkan peringatan'
         : inactiveStatus == 'keluar'
@@ -563,10 +607,14 @@ class _MemberNotice extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: warning ? const Color(0xFFFFFBEB) : const Color(0xFFFEF2F2),
+        color: warning
+            ? AppTheme.warningSurface(context)
+            : AppTheme.dangerSurface(context),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: warning ? const Color(0xFFFDE68A) : const Color(0xFFFECACA),
+          color: warning
+              ? AppTheme.warningBorder(context)
+              : AppTheme.dangerBorder(context),
         ),
       ),
       child: Row(
@@ -623,15 +671,21 @@ class _RegistrationNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pending = status == 'pending';
-    final color = pending ? const Color(0xFF92400E) : const Color(0xFF9F1239);
+    final color = pending
+        ? AppTheme.warningText(context)
+        : AppTheme.dangerText(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: pending ? const Color(0xFFFFFBEB) : const Color(0xFFFFF1F2),
+        color: pending
+            ? AppTheme.warningSurface(context)
+            : AppTheme.dangerSurface(context),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: pending ? const Color(0xFFFDE68A) : const Color(0xFFFECDD3),
+          color: pending
+              ? AppTheme.warningBorder(context)
+              : AppTheme.dangerBorder(context),
         ),
       ),
       child: Row(
@@ -682,8 +736,8 @@ class _MemberActions extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: onLeave,
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFB45309),
-              side: const BorderSide(color: Color(0xFFFDE68A)),
+              foregroundColor: AppTheme.warningText(context),
+              side: BorderSide(color: AppTheme.warningBorder(context)),
             ),
             icon: const Icon(Icons.logout_outlined, size: 18),
             label: const Text('Ajukan Keluar'),
@@ -849,16 +903,21 @@ class _KegiatanMendatang extends StatelessWidget {
     }
     return Column(
       children: [
-        for (final raw in list) _KegiatanCard(kegiatan: Kegiatan.fromJson(raw)),
+        for (final raw in list)
+          _KegiatanCard(
+            kegiatan: Kegiatan.fromJson(raw),
+            ekskulName: raw['ekskul_nama']?.toString(),
+          ),
       ],
     );
   }
 }
 
 class _KegiatanCard extends StatelessWidget {
-  const _KegiatanCard({required this.kegiatan});
+  const _KegiatanCard({required this.kegiatan, this.ekskulName});
 
   final Kegiatan kegiatan;
+  final String? ekskulName;
 
   @override
   Widget build(BuildContext context) {
@@ -877,11 +936,7 @@ class _KegiatanCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppTheme.sky, AppTheme.blue],
-              ),
+              gradient: AppTheme.brandHeroGradient(context),
               borderRadius: BorderRadius.circular(12),
             ),
             child: date == null
@@ -924,7 +979,10 @@ class _KegiatanCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  kegiatan.tanggalText,
+                  [
+                    if (ekskulName?.isNotEmpty == true) ekskulName!,
+                    kegiatan.tanggalText,
+                  ].join(' · '),
                   style: GoogleFonts.plusJakartaSans(
                     color: AppTheme.mutedText(context),
                     fontSize: 12,
@@ -951,7 +1009,7 @@ class _AttendanceTrend extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final attendance = ref.watch(siswaPresensiProvider);
+    final attendance = ref.watch(siswaPresensiProvider(null));
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -965,9 +1023,7 @@ class _AttendanceTrend extends ConsumerWidget {
                   width: 38,
                   height: 38,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [AppTheme.sky, AppTheme.blue],
-                    ),
+                    gradient: AppTheme.brandHeroGradient(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -1434,16 +1490,16 @@ class _OnboardingBanner extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF3C7),
+        color: AppTheme.warningSurface(context),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFDE68A)),
+        border: Border.all(color: AppTheme.warningBorder(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.stars, color: Color(0xFFB45309), size: 22),
+              Icon(Icons.stars, color: AppTheme.warningText(context), size: 22),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -1451,7 +1507,7 @@ class _OnboardingBanner extends StatelessWidget {
                       ? 'Lengkapi Data Diri Kamu'
                       : 'Selamat Datang di SOUL!',
                   style: GoogleFonts.plusJakartaSans(
-                    color: const Color(0xFF92400E),
+                    color: AppTheme.warningText(context),
                     fontWeight: FontWeight.w800,
                     fontSize: 14.5,
                   ),
@@ -1465,7 +1521,7 @@ class _OnboardingBanner extends StatelessWidget {
                 ? 'Data profil (jenis kelamin & kontak) diperlukan agar pendaftaran ekskul dapat diproses.'
                 : 'Jelajahi berbagai pilihan ekskul menarik dan ikuti kegiatan seru di sekolah.',
             style: GoogleFonts.plusJakartaSans(
-              color: const Color(0xFF78350F),
+              color: AppTheme.warningText(context),
               fontSize: 12.5,
               height: 1.4,
             ),
@@ -1475,7 +1531,7 @@ class _OnboardingBanner extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFB45309),
+                backgroundColor: AppTheme.warningText(context),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,

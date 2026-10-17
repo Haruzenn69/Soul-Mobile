@@ -35,15 +35,11 @@ class ProfilScreen extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppTheme.sky, Color(0xFF60A5FA), AppTheme.blue],
-              ),
+              gradient: AppTheme.brandHeroGradient(context),
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.blue.withValues(alpha: 0.18),
+                  color: AppTheme.brandHeroShadow(context),
                   blurRadius: 18,
                   offset: const Offset(0, 8),
                 ),
@@ -171,7 +167,7 @@ class ProfilScreen extends ConsumerWidget {
                   label: 'Pengajuan Keluar',
                   subtitle: 'Ajukan pengunduran diri dari ekskul aktif.',
                   color: const Color(0xFFB45309),
-                  iconBackground: const Color(0xFFFFFBEB),
+                  iconBackground: AppTheme.warningSurface(context),
                   onTap: () => Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -213,31 +209,75 @@ class ProfilScreen extends ConsumerWidget {
                 _divider(context),
                 Material(
                   color: Colors.transparent,
-                  child: SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    secondary: Icon(
-                      darkMode
-                          ? Icons.dark_mode_rounded
-                          : Icons.light_mode_rounded,
-                      color: AppTheme.blue,
-                    ),
-                    title: const Text('Mode gelap'),
-                    subtitle: const Text('Gunakan tampilan gelap aplikasi.'),
-                    value: darkMode,
-                    onChanged: (enabled) async {
-                      try {
-                        await ref
-                            .read(themeModeProvider.notifier)
-                            .setDarkMode(enabled);
-                      } catch (_) {
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Preferensi tema gagal disimpan.'),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: AppTheme.accentSurface(context),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                        );
-                      }
-                    },
+                          child: Icon(
+                            darkMode
+                                ? Icons.dark_mode_rounded
+                                : Icons.light_mode_rounded,
+                            color: AppTheme.blue,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 11),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Mode gelap',
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Gunakan tampilan gelap aplikasi.',
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                  fontSize: 11,
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: darkMode,
+                          onChanged: (enabled) async {
+                            try {
+                              await ref
+                                  .read(themeModeProvider.notifier)
+                                  .setDarkMode(enabled);
+                            } catch (_) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Preferensi tema gagal disimpan.',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 _divider(context),
@@ -247,7 +287,7 @@ class ProfilScreen extends ConsumerWidget {
                   label: 'Logout',
                   subtitle: 'Keluar dari aplikasi.',
                   color: const Color(0xFFE11D48),
-                  iconBackground: const Color(0xFFFFF1F2),
+                  iconBackground: AppTheme.dangerSurface(context),
                   onTap: () =>
                       ref.read(authControllerProvider.notifier).logout(),
                 ),

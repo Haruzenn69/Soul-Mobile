@@ -7,6 +7,94 @@ import '../core/api_client.dart';
 import '../core/providers.dart';
 import '../theme/app_theme.dart';
 
+class ActiveEkskulSelector extends StatelessWidget {
+  const ActiveEkskulSelector({
+    super.key,
+    required this.ekskuls,
+    required this.selectedId,
+    required this.onChanged,
+  });
+
+  final List<Map<String, dynamic>> ekskuls;
+  final int? selectedId;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final available = ekskuls
+        .where((item) => item['id'] is num)
+        .toList(growable: false);
+    if (available.length < 2) return const SizedBox.shrink();
+
+    final selected =
+        available.any((item) => (item['id'] as num).toInt() == selectedId)
+        ? selectedId
+        : (available.first['id'] as num).toInt();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.surface(context),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppTheme.outline(context)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'PILIH EKSKUL',
+              style: GoogleFonts.plusJakartaSans(
+                color: AppTheme.mutedText(context),
+                fontSize: 9,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final ekskul in available)
+                  Builder(
+                    builder: (context) {
+                      final id = (ekskul['id'] as num).toInt();
+                      final isSelected = id == selected;
+                      return ChoiceChip(
+                        label: Text(
+                          ekskul['nama_ekskul']?.toString() ?? 'Ekskul',
+                        ),
+                        selected: isSelected,
+                        showCheckmark: false,
+                        onSelected: (_) => onChanged(id),
+                        selectedColor: AppTheme.blue,
+                        backgroundColor: AppTheme.surfaceVariant(context),
+                        side: BorderSide(
+                          color: isSelected
+                              ? AppTheme.blue
+                              : AppTheme.outline(context),
+                        ),
+                        labelStyle: GoogleFonts.plusJakartaSans(
+                          color: isSelected
+                              ? Colors.white
+                              : AppTheme.text(context),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      );
+                    },
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class PersonAvatar extends StatelessWidget {
   const PersonAvatar({
     super.key,
@@ -230,12 +318,12 @@ class BuildErrorCard extends StatelessWidget {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF1F2),
+                color: AppTheme.dangerSurface(context),
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.cloud_off_outlined,
-                color: Color(0xFFE11D48),
+                color: AppTheme.dangerText(context),
                 size: 28,
               ),
             ),

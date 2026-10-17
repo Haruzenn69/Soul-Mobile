@@ -117,15 +117,11 @@ class _IdentityCard extends StatelessWidget {
       key: const ValueKey('ketua-menu-identity-card'),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppTheme.sky, Color(0xFF60A5FA), AppTheme.blue],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: AppTheme.brandHeroGradient(context),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.blue.withValues(alpha: 0.18),
+            color: AppTheme.brandHeroShadow(context),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
