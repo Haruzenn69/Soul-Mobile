@@ -153,31 +153,33 @@ class ProfilScreen extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 14),
-          _contentCard(
-            context: context,
-            icon: Icons.exit_to_app_outlined,
-            title: 'Ekskul',
-            subtitle: 'Keanggotaan ekskul aktifmu.',
-            child: Column(
-              children: [
-                _actionRow(
-                  context: context,
-                  icon: Icons.logout_rounded,
-                  label: 'Pengajuan Keluar',
-                  subtitle: 'Ajukan pengunduran diri dari ekskul aktif.',
-                  color: const Color(0xFFB45309),
-                  iconBackground: AppTheme.warningSurface(context),
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const PengajuanKeluarScreen(),
+          if (!user.isKetua) ...[
+            const SizedBox(height: 14),
+            _contentCard(
+              context: context,
+              icon: Icons.exit_to_app_outlined,
+              title: 'Ekskul',
+              subtitle: 'Keanggotaan ekskul aktifmu.',
+              child: Column(
+                children: [
+                  _actionRow(
+                    context: context,
+                    icon: Icons.logout_rounded,
+                    label: 'Pengajuan Keluar',
+                    subtitle: 'Ajukan pengunduran diri dari ekskul aktif.',
+                    color: const Color(0xFFB45309),
+                    iconBackground: AppTheme.warningSurface(context),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const PengajuanKeluarScreen(),
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ],
           const SizedBox(height: 14),
           _contentCard(
             context: context,

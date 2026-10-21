@@ -130,7 +130,7 @@ class AppTheme {
         shadowColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           side: const BorderSide(color: line),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(20),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -141,7 +141,7 @@ class AppTheme {
           elevation: 0,
           minimumSize: const Size(48, 48),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
           textStyle: GoogleFonts.plusJakartaSans(
@@ -156,7 +156,7 @@ class AppTheme {
           side: const BorderSide(color: line),
           minimumSize: const Size(48, 46),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
           textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
@@ -173,7 +173,7 @@ class AppTheme {
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(22),
           side: const BorderSide(color: line),
         ),
         titleTextStyle: GoogleFonts.plusJakartaSans(
@@ -204,23 +204,23 @@ class AppTheme {
           vertical: 14,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: line),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: line),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: blue, width: 1.4),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Color(0xFFE11D48)),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Color(0xFFE11D48), width: 1.4),
         ),
       ),
@@ -228,7 +228,7 @@ class AppTheme {
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         indicatorColor: lightAccentSurface,
-        height: 74,
+        height: 78,
         elevation: 0,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         indicatorShape: RoundedRectangleBorder(
@@ -319,7 +319,7 @@ class AppTheme {
         shadowColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           side: const BorderSide(color: darkLine),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(20),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -330,7 +330,7 @@ class AppTheme {
           elevation: 0,
           minimumSize: const Size(48, 48),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
           textStyle: GoogleFonts.plusJakartaSans(
@@ -345,7 +345,7 @@ class AppTheme {
           side: const BorderSide(color: darkLine),
           minimumSize: const Size(48, 46),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
           textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
@@ -362,7 +362,7 @@ class AppTheme {
         backgroundColor: darkSurface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(22),
           side: const BorderSide(color: darkLine),
         ),
         titleTextStyle: GoogleFonts.plusJakartaSans(
@@ -393,23 +393,23 @@ class AppTheme {
           vertical: 14,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: darkLine),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: darkLine),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Color(0xFF60A5FA), width: 1.4),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Color(0xFFFB7185)),
         ),
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           borderSide: const BorderSide(color: Color(0xFFFB7185), width: 1.4),
         ),
       ),
@@ -417,7 +417,7 @@ class AppTheme {
         backgroundColor: darkSurface,
         surfaceTintColor: Colors.transparent,
         indicatorColor: const Color(0xFF26374D),
-        height: 74,
+        height: 78,
         elevation: 0,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         indicatorShape: RoundedRectangleBorder(

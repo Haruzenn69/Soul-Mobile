@@ -418,7 +418,7 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
                 _activityHero(keg),
                 if (keg.dokumentasi?.isNotEmpty == true) ...[
                   const SizedBox(height: 14),
-                  _activityContentCard(
+                  ContentCard(
                     title: 'Dokumentasi Kegiatan',
                     subtitle: 'Ketuk foto untuk memperbesar.',
                     icon: Icons.photo_library_outlined,
@@ -430,7 +430,7 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
                 ],
                 if (keg.deskripsi?.trim().isNotEmpty == true) ...[
                   const SizedBox(height: 14),
-                  _activityContentCard(
+                  ContentCard(
                     title: 'Tentang Kegiatan',
                     subtitle: 'Informasi tambahan kegiatan ini.',
                     icon: Icons.subject_outlined,
@@ -445,7 +445,7 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
                   ),
                 ],
                 const SizedBox(height: 20),
-                _activityContentCard(
+                ContentCard(
                   title: 'Ringkasan Kehadiran',
                   subtitle: 'Rekap status kehadiran peserta kegiatan.',
                   icon: Icons.fact_check_outlined,
@@ -512,7 +512,7 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                _activityContentCard(
+                ContentCard(
                   title: 'Rekap Presensi',
                   subtitle: presensi.isEmpty
                       ? 'Belum ada peserta yang mengisi presensi.'
@@ -697,75 +697,6 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
     );
   }
 
-  Widget _activityContentCard({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Widget child,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.outline(context)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.035),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: AppTheme.blue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: AppTheme.blue, size: 20),
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.text(context),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.mutedText(context),
-                        fontSize: 11,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          child,
-        ],
-      ),
-    );
-  }
-
   Widget _activityPhoto(String imageUrl, {VoidCallback? onReplace}) {
     return Semantics(
       button: true,
@@ -839,13 +770,13 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
   Color _colorFor(String key) {
     switch (key) {
       case 'hadir':
-        return const Color(0xFF15803D);
+        return AppTheme.successText(context);
       case 'izin':
-        return const Color(0xFF1E5AA8);
+        return AppTheme.infoText(context);
       case 'sakit':
         return const Color(0xFFC77700);
       default:
-        return const Color(0xFFE11D48);
+        return AppTheme.dangerText(context);
     }
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../core/app_config.dart';
 import '../../core/providers.dart';
 import '../../data/providers.dart';
 import '../../models/models.dart';
@@ -41,14 +42,13 @@ class BerandaKetua extends ConsumerWidget {
                         (data['total_anggota'] as num?)?.toInt() ?? 0;
                     final pendingCount =
                         (data['pending_count'] as num?)?.toInt() ?? 0;
-                    final pengajuanCount =
-                        (data['pengajuan_count'] as num?)?.toInt() ?? 0;
                     final kegiatanBulanIni =
                         (data['kegiatan_bulan_ini'] as num?)?.toInt() ?? 0;
                     final testimoniPending =
                         (data['testimoni_pending_count'] as num?)?.toInt() ?? 0;
                     final faqPending =
                         (data['faq_pending_count'] as num?)?.toInt() ?? 0;
+                    final moderasiPending = testimoniPending + faqPending;
                     final ekskul = data['ekskul'] is Map
                         ? Map<String, dynamic>.from(data['ekskul'] as Map)
                         : <String, dynamic>{};
@@ -58,6 +58,7 @@ class BerandaKetua extends ConsumerWidget {
                       children: [
                         _Header(
                           user: user,
+                          ekskul: ekskul,
                           ekskulName:
                               ekskul['nama_ekskul'] as String? ??
                               user.aktivEkskul?.namaEkskul ??
@@ -83,7 +84,7 @@ class BerandaKetua extends ConsumerWidget {
                           totalAnggota: totalAnggota,
                           pendingCount: pendingCount,
                           kegiatanBulanIni: kegiatanBulanIni,
-                          pengajuanCount: pengajuanCount,
+                          moderasiPending: moderasiPending,
                         ),
                         const SizedBox(height: 20),
                         _AttendanceChart(data: data),
@@ -107,11 +108,8 @@ class BerandaKetua extends ConsumerWidget {
                         const SizedBox(height: 18),
                         _PriorityActions(
                           pendingCount: pendingCount,
-                          pengajuanCount: pengajuanCount,
                           onApplications: () =>
                               _openKetuaMembers(context, user, 1),
-                          onLeaveRequests: () =>
-                              _openKetuaMembers(context, user, 2),
                         ),
                         const SizedBox(height: 18),
                         _QuickActions(
@@ -136,13 +134,16 @@ class BerandaKetua extends ConsumerWidget {
 }
 
 void _openKetuaMembers(BuildContext context, AuthUser user, int initialTab) {
-  final titles = ['Anggota', 'Pendaftaran', 'Pengajuan Keluar'];
+  final titles = ['Anggota', 'Pendaftaran'];
   Navigator.of(context).push(
     MaterialPageRoute<void>(
-      builder: (_) => Scaffold(
-        appBar: AppBar(title: Text(titles[initialTab.clamp(0, 2)])),
-        body: AnggotaScreen(user: user, initialTab: initialTab),
-      ),
+      builder: (_) {
+        final tab = initialTab.clamp(0, titles.length - 1);
+        return Scaffold(
+          appBar: AppBar(title: Text(titles[tab])),
+          body: AnggotaScreen(user: user, initialTab: tab),
+        );
+      },
     ),
   );
 }
@@ -150,35 +151,84 @@ void _openKetuaMembers(BuildContext context, AuthUser user, int initialTab) {
 class _Header extends StatelessWidget {
   const _Header({
     required this.user,
+    required this.ekskul,
     required this.ekskulName,
     required this.onCreateActivity,
     required this.onReviewApplications,
   });
 
   final AuthUser user;
+  final Map<String, dynamic> ekskul;
   final String ekskulName;
   final VoidCallback onCreateActivity;
   final VoidCallback onReviewApplications;
 
   @override
   Widget build(BuildContext context) {
+    final logo = ekskul['logo']?.toString().trim();
+    final hasLogo = logo != null && logo.isNotEmpty;
     return Container(
+      key: const ValueKey('ketua-dashboard-hero'),
+      clipBehavior: Clip.antiAlias,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: AppTheme.brandHeroGradient(context),
         borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.brandHeroShadow(context),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Stack(
         children: [
           Positioned(
-            right: -25,
-            top: -30,
+            right: 0,
+            top: 0,
             child: Container(
-              width: 120,
-              height: 120,
+              key: const ValueKey('ketua-dashboard-hero-ring'),
+              width: 100,
+              height: 100,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.1),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.13),
+                  width: 16,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 14,
+            top: 8,
+            child: Container(
+              width: 62,
+              height: 62,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(19),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(15),
+                child: hasLogo
+                    ? Image.network(
+                        AppConfig.imageUrl(logo),
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => const Icon(
+                          Icons.groups_2_rounded,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.groups_2_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      ),
               ),
             ),
           ),
@@ -200,7 +250,19 @@ class _Header extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
+                          'DASHBOARD KETUA',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.white.withValues(alpha: 0.75),
+                            fontSize: 8,
+                            letterSpacing: 1,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
                           'Halo, ${user.namaTampilan}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.plusJakartaSans(
                             color: Colors.white,
                             fontSize: 16,
@@ -228,16 +290,34 @@ class _Header extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  ekskulName.isEmpty
-                      ? 'Ekskul belum dipilih'
-                      : 'Memimpin $ekskulName',
-                  style: GoogleFonts.plusJakartaSans(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.16),
                   ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.verified_rounded,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        ekskulName.isEmpty
+                            ? 'Ekskul belum dipilih'
+                            : 'Memimpin $ekskulName',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 12),
@@ -476,13 +556,13 @@ class _StatsGrid extends StatelessWidget {
     required this.totalAnggota,
     required this.pendingCount,
     required this.kegiatanBulanIni,
-    required this.pengajuanCount,
+    required this.moderasiPending,
   });
 
   final int totalAnggota;
   final int pendingCount;
   final int kegiatanBulanIni;
-  final int pengajuanCount;
+  final int moderasiPending;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -491,7 +571,7 @@ class _StatsGrid extends StatelessWidget {
         children: [
           Expanded(
             child: StatCard(
-              label: 'Anggota Aktif',
+              label: 'Anggota',
               value: '$totalAnggota',
               icon: Icons.groups_outlined,
               color: AppTheme.blue,
@@ -503,7 +583,7 @@ class _StatsGrid extends StatelessWidget {
               label: 'Pendaftaran',
               value: '$pendingCount',
               icon: Icons.how_to_reg_outlined,
-              color: const Color(0xFFB45309),
+              color: AppTheme.warningText(context),
             ),
           ),
         ],
@@ -516,16 +596,16 @@ class _StatsGrid extends StatelessWidget {
               label: 'Kegiatan Bulan Ini',
               value: '$kegiatanBulanIni',
               icon: Icons.event_available_outlined,
-              color: const Color(0xFF15803D),
+              color: AppTheme.successText(context),
             ),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: StatCard(
-              label: 'Pengajuan Keluar',
-              value: '$pengajuanCount',
-              icon: Icons.logout_outlined,
-              color: const Color(0xFFE11D48),
+              label: 'Moderasi',
+              value: '$moderasiPending',
+              icon: Icons.rate_review_outlined,
+              color: AppTheme.infoText(context),
             ),
           ),
         ],
@@ -757,15 +837,11 @@ class _ModerationTile extends StatelessWidget {
 class _PriorityActions extends StatelessWidget {
   const _PriorityActions({
     required this.pendingCount,
-    required this.pengajuanCount,
     required this.onApplications,
-    required this.onLeaveRequests,
   });
 
   final int pendingCount;
-  final int pengajuanCount;
   final VoidCallback onApplications;
-  final VoidCallback onLeaveRequests;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -776,8 +852,8 @@ class _PriorityActions extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(child: SectionTitle('Yang Perlu Kamu Cek')),
-              StatusChip('${pendingCount + pengajuanCount} Tertunda'),
+              const Expanded(child: SectionTitle('Yang Perlu Ditinjau')),
+              StatusChip('$pendingCount menunggu'),
             ],
           ),
           const SizedBox(height: 3),
@@ -789,23 +865,24 @@ class _PriorityActions extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          _PriorityTile(
-            icon: Icons.assignment_outlined,
-            title: 'Pendaftaran baru',
-            subtitle: '$pendingCount menunggu tinjauan',
-            color: AppTheme.warningText(context),
-            tint: AppTheme.warningSurface(context),
-            onTap: onApplications,
-          ),
-          const SizedBox(height: 8),
-          _PriorityTile(
-            icon: Icons.logout_outlined,
-            title: 'Pengajuan keluar',
-            subtitle: '$pengajuanCount menunggu keputusan',
-            color: AppTheme.dangerText(context),
-            tint: AppTheme.dangerSurface(context),
-            onTap: onLeaveRequests,
-          ),
+          if (pendingCount > 0)
+            _PriorityTile(
+              icon: Icons.assignment_outlined,
+              title: 'Pendaftaran baru',
+              subtitle: '$pendingCount menunggu tinjauan',
+              color: AppTheme.warningText(context),
+              tint: AppTheme.warningSurface(context),
+              onTap: onApplications,
+            )
+          else
+            _PriorityTile(
+              icon: Icons.check_circle_outline_rounded,
+              title: 'Semua sudah ditinjau',
+              subtitle: 'Belum ada pendaftaran yang menunggu.',
+              color: AppTheme.successText(context),
+              tint: AppTheme.successSurface(context),
+              onTap: onApplications,
+            ),
         ],
       ),
     ),

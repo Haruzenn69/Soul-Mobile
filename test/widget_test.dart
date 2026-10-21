@@ -12,6 +12,7 @@ import 'package:soul/screens/kegiatan/presensi_input_screen.dart';
 import 'package:soul/screens/anggota/anggota_screen.dart';
 import 'package:soul/screens/aktivitas/siswa_aktivitas_screen.dart';
 import 'package:soul/screens/auth_gate.dart';
+import 'package:soul/screens/beranda/ketua_beranda.dart';
 import 'package:soul/screens/laporan/laporan_create_screen.dart';
 import 'package:soul/screens/laporan/laporan_detail_screen.dart';
 import 'package:soul/screens/laporan/laporan_screen.dart';
@@ -79,6 +80,8 @@ class _MemoryThemeController extends ThemeModeController {
 
 void _ignoreFilter(String _) {}
 
+void _ignoreInt(int _) {}
+
 void main() {
   test('app themes use the shared Laravel palette', () {
     expect(AppTheme.blue, const Color(0xFF2563EB));
@@ -113,6 +116,14 @@ void main() {
         home: Scaffold(
           body: Column(
             children: [
+              ActiveEkskulSelector(
+                ekskuls: const [
+                  {'id': 11, 'nama_ekskul': 'Basket'},
+                  {'id': 12, 'nama_ekskul': 'Futsal'},
+                ],
+                selectedId: 11,
+                onChanged: _ignoreInt,
+              ),
               const PageHeader(title: 'Dark dashboard'),
               const StatCard(label: 'Hadir', value: '8'),
               const StatusFilterChips(
@@ -155,6 +166,8 @@ void main() {
       (filterContainer.decoration! as BoxDecoration).color,
       AppTheme.darkSurface,
     );
+    expect(find.text('Pilih ekskul'), findsOneWidget);
+    expect(find.text('Menampilkan data Basket'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -239,6 +252,75 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(container.read(themeModeProvider), ThemeMode.dark);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('exit request action is only shown to regular students', (
+    tester,
+  ) async {
+    const studentRecord = Siswa(
+      id: 7,
+      nama: 'Ketua Uji',
+      nis: '123',
+      jenisKelamin: 'laki-laki',
+      jabatan: 'ketua',
+      isKetua: true,
+      isProfileComplete: true,
+    );
+    const ketua = AuthUser(
+      id: 7,
+      username: 'ketua',
+      email: 'ketua@example.test',
+      role: 'siswa',
+      needsOnboarding: false,
+      needsProfileCompletion: false,
+      siswa: studentRecord,
+    );
+    const student = AuthUser(
+      id: 8,
+      username: 'siswa',
+      email: 'siswa@example.test',
+      role: 'siswa',
+      needsOnboarding: false,
+      needsProfileCompletion: false,
+      siswa: Siswa(
+        id: 8,
+        nama: 'Siswa Uji',
+        nis: '456',
+        jenisKelamin: 'perempuan',
+        jabatan: 'siswa',
+        isKetua: false,
+        isProfileComplete: true,
+      ),
+    );
+    final container = ProviderContainer(
+      overrides: [themeModeProvider.overrideWith(_MemoryThemeController.new)],
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(body: ProfilScreen(user: ketua)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Pengajuan Keluar'), findsNothing);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(body: ProfilScreen(user: student)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, -700));
+    await tester.pumpAndSettle();
+    expect(find.text('Pengajuan Keluar'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -752,7 +834,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Latihan Basket'), findsOneWidget);
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Futsal'));
+    await tester.tap(find.byKey(const ValueKey('active-ekskul-12')));
     await tester.pumpAndSettle();
     expect(find.text('Latihan Futsal'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -866,7 +948,9 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('member management tabs search by student name', (tester) async {
+  testWidgets('ketua member management only shows members and applications', (
+    tester,
+  ) async {
     const ketua = AuthUser(
       id: 1,
       username: 'ketua',
@@ -921,19 +1005,6 @@ void main() {
               ],
             },
           ),
-          ketuaPengajuanProvider.overrideWith(
-            (ref, status) async => {
-              'pengajuans': [
-                {
-                  'id': 4,
-                  'status': 'pending',
-                  'nama': 'Danu Pengaju',
-                  'foto': 'storage/profile-photos/danu.jpg',
-                  'alasan': 'Alasan',
-                },
-              ],
-            },
-          ),
         ],
         child: const MaterialApp(
           home: Scaffold(body: AnggotaScreen(user: ketua)),
@@ -957,8 +1028,9 @@ void main() {
     expect(tabs.labelPadding, EdgeInsets.zero);
     expect(
       find.byWidgetPredicate((widget) => widget is Tab && widget.height == 30),
-      findsNWidgets(3),
+      findsNWidgets(2),
     );
+    expect(find.text('Pengajuan'), findsNothing);
 
     expect(find.text('Alya Anggota'), findsOneWidget);
     expect(
@@ -998,19 +1070,73 @@ void main() {
       findsWidgets,
     );
 
-    await tester.tap(find.text('Pengajuan'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).first, 'Danu');
-    await tester.pumpAndSettle();
-    expect(find.text('Danu Pengaju'), findsOneWidget);
-    expect(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is PersonAvatar &&
-            widget.photoUrl == 'storage/profile-photos/danu.jpg',
-      ),
-      findsWidgets,
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('leader dashboard shows four cards and complete hero', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    const ketua = AuthUser(
+      id: 1,
+      username: 'ketua',
+      email: 'ketua@example.test',
+      role: 'siswa',
+      needsOnboarding: false,
+      needsProfileCompletion: false,
     );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ketuaDashboardProvider.overrideWith(
+            (ref) async => {
+              'total_anggota': 4,
+              'pending_count': 0,
+              'kegiatan_bulan_ini': 2,
+              'testimoni_pending_count': 1,
+              'faq_pending_count': 2,
+              'ekskul': {'nama_ekskul': 'Karate'},
+              'chart_kegiatan': {
+                'labels': [],
+                'hadir': [],
+                'izin': [],
+                'sakit': [],
+                'alpha': [],
+              },
+              'chart_kelas': {'labels': [], 'data': []},
+            },
+          ),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(body: BerandaKetua(user: ketua)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Anggota'), findsWidgets);
+    expect(find.text('Pendaftaran'), findsWidgets);
+    expect(find.text('Kegiatan Bulan Ini'), findsOneWidget);
+    expect(find.text('Moderasi'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
+    expect(find.text('DASHBOARD KETUA'), findsOneWidget);
+    expect(find.text('Memimpin Karate'), findsOneWidget);
+    expect(find.text('Pengajuan Keluar'), findsNothing);
+    final heroRect = tester.getRect(
+      find.byKey(const ValueKey('ketua-dashboard-hero')),
+    );
+    final ringRect = tester.getRect(
+      find.byKey(const ValueKey('ketua-dashboard-hero-ring')),
+    );
+    expect(ringRect.left, greaterThanOrEqualTo(heroRect.left));
+    expect(ringRect.top, greaterThanOrEqualTo(heroRect.top));
+    expect(ringRect.right, lessThanOrEqualTo(heroRect.right));
+    expect(ringRect.bottom, lessThanOrEqualTo(heroRect.bottom));
     expect(tester.takeException(), isNull);
   });
 

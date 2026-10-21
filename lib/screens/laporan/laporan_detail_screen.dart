@@ -197,7 +197,7 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
                 ),
               ],
               const SizedBox(height: 22),
-              _contentCard(
+              ContentCard(
                 title: 'Materi Kegiatan',
                 subtitle: 'Kegiatan yang tercatat selama periode ini.',
                 icon: Icons.event_note_outlined,
@@ -207,7 +207,7 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              _contentCard(
+              ContentCard(
                 title: 'Rekap Kehadiran',
                 subtitle: 'Ringkasan presensi kegiatan ekskul.',
                 icon: Icons.fact_check_outlined,
@@ -218,7 +218,7 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
               ),
               if (dokumentasi.isNotEmpty) ...[
                 const SizedBox(height: 14),
-                _contentCard(
+                ContentCard(
                   title: 'Dokumentasi',
                   subtitle:
                       '${dokumentasi.length} foto kegiatan · Ketuk foto untuk memperbesar.',
@@ -264,7 +264,7 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-              _contentCard(
+              ContentCard(
                 title: 'Tujuan Kegiatan',
                 subtitle: 'Target ekskul untuk periode ini.',
                 icon: Icons.flag_outlined,
@@ -274,7 +274,7 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              _contentCard(
+              ContentCard(
                 title: 'Evaluasi Keberhasilan',
                 subtitle: 'Capaian positif yang berhasil diraih.',
                 icon: Icons.emoji_events_outlined,
@@ -284,7 +284,7 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              _contentCard(
+              ContentCard(
                 title: 'Kendala yang Dihadapi',
                 subtitle: 'Hambatan selama kegiatan.',
                 icon: Icons.warning_amber_rounded,
@@ -294,7 +294,7 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              _contentCard(
+              ContentCard(
                 title: 'Solusi & Tindak Lanjut',
                 subtitle: 'Rencana perbaikan berikutnya.',
                 icon: Icons.lightbulb_outline_rounded,
@@ -365,10 +365,10 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
         ? '${monthNames[month - 1]} ${monthParts[0]}'
         : bulan;
     final statusColor = switch (status) {
-      'disetujui' => const Color(0xFF15803D),
-      'ditolak' => const Color(0xFFBE123C),
-      'draft' => const Color(0xFF475569),
-      _ => const Color(0xFF1D4ED8),
+      'disetujui' => AppTheme.successText(context),
+      'ditolak' => AppTheme.dangerText(context),
+      'draft' => AppTheme.mutedText(context),
+      _ => AppTheme.infoText(context),
     };
 
     return Container(
@@ -525,75 +525,6 @@ class _LaporanDetailScreenState extends ConsumerState<LaporanDetailScreen> {
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _contentCard({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Widget child,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.outline(context)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.035),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: AppTheme.blue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: AppTheme.blue, size: 20),
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.text(context),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.mutedText(context),
-                        fontSize: 11,
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          child,
         ],
       ),
     );

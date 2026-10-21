@@ -30,62 +30,204 @@ class ActiveEkskulSelector extends StatelessWidget {
         available.any((item) => (item['id'] as num).toInt() == selectedId)
         ? selectedId
         : (available.first['id'] as num).toInt();
+    final selectedEkskul = available.firstWhere(
+      (item) => (item['id'] as num).toInt() == selected,
+    );
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.fromLTRB(14, 13, 14, 14),
         decoration: BoxDecoration(
           color: AppTheme.surface(context),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppTheme.outline(context)),
+          boxShadow: [
+            BoxShadow(
+              color: AppTheme.blue.withValues(
+                alpha: AppTheme.isDark(context) ? 0.08 : 0.035,
+              ),
+              blurRadius: 16,
+              offset: const Offset(0, 5),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'PILIH EKSKUL',
-              style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.mutedText(context),
-                fontSize: 9,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.8,
+            Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: AppTheme.accentSurface(context),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Icon(
+                    Icons.swap_horiz_rounded,
+                    color: AppTheme.accent(context),
+                    size: 19,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Pilih ekskul',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: AppTheme.text(context),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        'Lihat aktivitas dari ekskul yang kamu ikuti',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          color: AppTheme.mutedText(context),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 9,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceVariant(context),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: AppTheme.outline(context)),
+                  ),
+                  child: Text(
+                    '${available.length} ekskul',
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.mutedText(context),
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 42,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: available.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final ekskul = available[index];
+                  final id = (ekskul['id'] as num).toInt();
+                  final isSelected = id == selected;
+                  final name = ekskul['nama_ekskul']?.toString() ?? 'Ekskul';
+                  return Semantics(
+                    button: true,
+                    selected: isSelected,
+                    label: '$name${isSelected ? ', dipilih' : ''}',
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        key: ValueKey('active-ekskul-$id'),
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () => onChanged(id),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          constraints: const BoxConstraints(maxWidth: 190),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? AppTheme.accentSurface(context)
+                                : AppTheme.surfaceVariant(context),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppTheme.blue.withValues(alpha: 0.55)
+                                  : AppTheme.outline(context),
+                              width: isSelected ? 1.3 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.groups_2_outlined,
+                                color: isSelected
+                                    ? AppTheme.accent(context)
+                                    : AppTheme.mutedText(context),
+                                size: 16,
+                              ),
+                              const SizedBox(width: 7),
+                              ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 125,
+                                ),
+                                child: Text(
+                                  name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: isSelected
+                                        ? AppTheme.accent(context)
+                                        : AppTheme.text(context),
+                                    fontSize: 10.5,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w800
+                                        : FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected) ...[
+                                const SizedBox(width: 6),
+                                Icon(
+                                  Icons.check_circle_rounded,
+                                  color: AppTheme.accent(context),
+                                  size: 15,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            Row(
               children: [
-                for (final ekskul in available)
-                  Builder(
-                    builder: (context) {
-                      final id = (ekskul['id'] as num).toInt();
-                      final isSelected = id == selected;
-                      return ChoiceChip(
-                        label: Text(
-                          ekskul['nama_ekskul']?.toString() ?? 'Ekskul',
-                        ),
-                        selected: isSelected,
-                        showCheckmark: false,
-                        onSelected: (_) => onChanged(id),
-                        selectedColor: AppTheme.blue,
-                        backgroundColor: AppTheme.surfaceVariant(context),
-                        side: BorderSide(
-                          color: isSelected
-                              ? AppTheme.blue
-                              : AppTheme.outline(context),
-                        ),
-                        labelStyle: GoogleFonts.plusJakartaSans(
-                          color: isSelected
-                              ? Colors.white
-                              : AppTheme.text(context),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      );
-                    },
+                Icon(
+                  Icons.check_circle_outline_rounded,
+                  size: 13,
+                  color: AppTheme.accent(context),
+                ),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    'Menampilkan data ${selectedEkskul['nama_ekskul']?.toString() ?? 'ekskul'}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.mutedText(context),
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
+                ),
               ],
             ),
           ],
@@ -256,26 +398,36 @@ class PageHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (eyebrow != null) ...[
-                Text(
-                  eyebrow!.toUpperCase(),
-                  style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.accent(context),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accentSurface(context),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    eyebrow!.toUpperCase(),
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.accent(context),
+                      fontSize: 8.5,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.85,
+                    ),
                   ),
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 7),
               ],
               Text(
                 title,
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.plusJakartaSans(
                   color: AppTheme.text(context),
-                  fontSize: 22,
+                  fontSize: 23,
                   fontWeight: FontWeight.w900,
-                  height: 1.15,
+                  height: 1.12,
                 ),
               ),
               if (subtitle != null) ...[
@@ -381,14 +533,36 @@ class SectionTitle extends StatelessWidget {
           ),
         ),
         if (action != null)
-          TextButton(
-            onPressed: action,
-            child: Text(
-              actionText ?? 'Lihat semua',
-              style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.accent(context),
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
+          Material(
+            color: AppTheme.accentSurface(context),
+            borderRadius: BorderRadius.circular(999),
+            child: InkWell(
+              onTap: action,
+              borderRadius: BorderRadius.circular(999),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 11,
+                  vertical: 7,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      actionText ?? 'Lihat semua',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppTheme.accent(context),
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                    Icon(
+                      Icons.arrow_forward_rounded,
+                      color: AppTheme.accent(context),
+                      size: 14,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -424,13 +598,19 @@ class StatCard extends StatelessWidget {
       padding: EdgeInsets.all(compact ? 12 : 16),
       decoration: BoxDecoration(
         color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.outline(context)),
-        boxShadow: const [
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppTheme.isDark(context)
+              ? AppTheme.outline(context)
+              : AppTheme.outline(context).withValues(alpha: 0.82),
+        ),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x080F172A),
-            blurRadius: 8,
-            offset: Offset(0, 3),
+            color: AppTheme.blue.withValues(
+              alpha: AppTheme.isDark(context) ? 0.035 : 0.045,
+            ),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -438,8 +618,18 @@ class StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (icon != null) ...[
-            Icon(icon, color: valueColor, size: 22),
-            SizedBox(height: compact ? 1 : 10),
+            Container(
+              width: compact ? 32 : 38,
+              height: compact ? 32 : 38,
+              decoration: BoxDecoration(
+                color: valueColor.withValues(
+                  alpha: AppTheme.isDark(context) ? 0.14 : 0.1,
+                ),
+                borderRadius: BorderRadius.circular(compact ? 11 : 13),
+              ),
+              child: Icon(icon, color: valueColor, size: compact ? 18 : 21),
+            ),
+            SizedBox(height: compact ? 8 : 12),
           ],
           Text(
             value,
@@ -501,32 +691,32 @@ class StatusChip extends StatelessWidget {
         s.contains('ditolak') ||
         s.contains('alpha') ||
         s.contains('belum aktif')) {
-      return const Color(0xFFE11D48);
+      return AppTheme.dangerText(context);
     }
     if (s == 'izin') {
-      return AppTheme.accent(context);
+      return AppTheme.infoText(context);
     }
     if (s == 'sakit') {
-      return const Color(0xFFC77700);
+      return AppTheme.warningText(context);
     }
     if (s == 'aktif' ||
         s.contains('aktif') ||
         s == 'hadir' ||
         s.contains('diterima')) {
-      return const Color(0xFF16803C);
+      return AppTheme.successText(context);
     }
     if (s.contains('pending') || s.contains('menunggu')) {
-      return const Color(0xFFB45309);
+      return AppTheme.warningText(context);
     }
     if (s.contains('peringatan')) {
-      return const Color(0xFFC77700);
+      return AppTheme.warningText(context);
     }
     if (s.contains('terkirim') ||
         s.contains('diserahkan') ||
         s.contains('keluar')) {
-      return const Color(0xFF64748B);
+      return AppTheme.mutedText(context);
     }
-    return AppTheme.accent(context);
+    return AppTheme.infoText(context);
   }
 }
 
@@ -564,9 +754,9 @@ class EmptyState extends StatelessWidget {
               title,
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
-                color: AppTheme.mutedText(context),
+                color: AppTheme.text(context),
                 fontSize: 14,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
               ),
             ),
             if (subtitle != null) ...[
@@ -649,10 +839,14 @@ class StatusFilterChips extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.blue : AppTheme.surface(context),
+          color: isSelected
+              ? AppTheme.accent(context)
+              : AppTheme.surface(context),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: isSelected ? AppTheme.blue : AppTheme.outline(context),
+            color: isSelected
+                ? AppTheme.accent(context)
+                : AppTheme.outline(context),
           ),
         ),
         child: Row(
@@ -776,4 +970,84 @@ class ListCountLabel extends StatelessWidget {
       ],
     ),
   );
+}
+
+class ContentCard extends StatelessWidget {
+  const ContentCard({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.child,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surface(context),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppTheme.outline(context)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.035),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppTheme.blue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: AppTheme.blue, size: 20),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppTheme.text(context),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppTheme.mutedText(context),
+                        fontSize: 11,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          child,
+        ],
+      ),
+    );
+  }
 }

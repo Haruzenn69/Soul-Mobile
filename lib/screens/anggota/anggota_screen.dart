@@ -22,16 +22,17 @@ class AnggotaScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tabCount = isKetua ? 2 : 3;
     return DefaultTabController(
-      length: 3,
-      initialIndex: initialTab.clamp(0, 2),
+      length: tabCount,
+      initialIndex: initialTab.clamp(0, tabCount - 1),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const PageHeader(
               title: 'Anggota',
-              subtitle: 'Kelola keanggotaan dan permohonan siswa.',
+              subtitle: 'Kelola anggota dan tinjau pendaftaran siswa.',
               eyebrow: 'PENGELOLAAN EKSKUL',
               topPadding: 25,
             ),
@@ -70,7 +71,7 @@ class AnggotaScreen extends ConsumerWidget {
                   tabs: [
                     Tab(height: 30, text: 'Anggota'),
                     Tab(height: 30, text: 'Pendaftaran'),
-                    Tab(height: 30, text: 'Pengajuan'),
+                    if (!isKetua) Tab(height: 30, text: 'Pengajuan'),
                   ],
                 ),
               ),
@@ -80,7 +81,7 @@ class AnggotaScreen extends ConsumerWidget {
                 children: [
                   _AnggotaList(user: user),
                   _PendaftaranList(),
-                  _PengajuanList(),
+                  if (!isKetua) _PengajuanList(),
                 ],
               ),
             ),
