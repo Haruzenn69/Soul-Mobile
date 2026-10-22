@@ -185,35 +185,20 @@ class _Header extends StatelessWidget {
       child: Stack(
         children: [
           Positioned(
-            right: 0,
-            top: 0,
+            right: 12,
+            top: 10,
             child: Container(
-              key: const ValueKey('ketua-dashboard-hero-ring'),
-              width: 100,
-              height: 100,
+              key: const ValueKey('ketua-dashboard-hero-mark'),
+              width: 50,
+              height: 50,
+              padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.13),
-                  width: 16,
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            right: 14,
-            top: 8,
-            child: Container(
-              width: 62,
-              height: 62,
-              padding: const EdgeInsets.all(3),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.16),
-                borderRadius: BorderRadius.circular(19),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(15),
+                borderRadius: BorderRadius.circular(13),
                 child: hasLogo
                     ? Image.network(
                         AppConfig.imageUrl(logo),
@@ -221,13 +206,13 @@ class _Header extends StatelessWidget {
                         errorBuilder: (_, _, _) => const Icon(
                           Icons.groups_2_rounded,
                           color: Colors.white,
-                          size: 28,
+                          size: 24,
                         ),
                       )
                     : const Icon(
                         Icons.groups_2_rounded,
                         color: Colors.white,
-                        size: 28,
+                        size: 24,
                       ),
               ),
             ),
@@ -244,7 +229,7 @@ class _Header extends StatelessWidget {
                     backgroundColor: Colors.white.withValues(alpha: 0.18),
                     foregroundColor: Colors.white,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,17 +256,20 @@ class _Header extends StatelessWidget {
                         ),
                         Text(
                           'Ketua ekstrakurikuler · ${_todayLabel()}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.plusJakartaSans(
                             color: Colors.white.withValues(alpha: 0.85),
-                            fontSize: 12.5,
+                            fontSize: 11.5,
                           ),
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(width: 62),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 11,
@@ -320,43 +308,49 @@ class _Header extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Text(
                 'Kelola keanggotaan, tinjau pendaftaran, dan pantau kehadiran ekskulmu.',
                 style: GoogleFonts.plusJakartaSans(
                   color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 12,
-                  height: 1.4,
+                  fontSize: 11.5,
+                  height: 1.35,
                 ),
               ),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilledButton.icon(
+              const SizedBox(height: 12),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final createAction = _HeroActionButton(
+                    key: const ValueKey('ketua-hero-create-action'),
+                    label: 'Buat kegiatan',
+                    icon: Icons.add_rounded,
                     onPressed: onCreateActivity,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppTheme.blue,
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    icon: const Icon(Icons.add, size: 17),
-                    label: const Text('Buat kegiatan'),
-                  ),
-                  OutlinedButton.icon(
+                  );
+                  final reviewAction = _HeroActionButton(
+                    key: const ValueKey('ketua-hero-review-action'),
+                    label: 'Tinjau pendaftar',
+                    icon: Icons.assignment_outlined,
+                    secondary: true,
                     onPressed: onReviewApplications,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.65),
-                      ),
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    icon: const Icon(Icons.assignment_outlined, size: 17),
-                    label: const Text('Tinjau pendaftar'),
-                  ),
-                ],
+                  );
+                  if (constraints.maxWidth < 300) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        createAction,
+                        const SizedBox(height: 8),
+                        reviewAction,
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(child: createAction),
+                      const SizedBox(width: 8),
+                      Expanded(child: reviewAction),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -383,6 +377,45 @@ class _Header extends StatelessWidget {
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
+}
+
+class _HeroActionButton extends StatelessWidget {
+  const _HeroActionButton({
+    super.key,
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+    this.secondary = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onPressed;
+  final bool secondary;
+
+  @override
+  Widget build(BuildContext context) => FilledButton.icon(
+    onPressed: onPressed,
+    style: FilledButton.styleFrom(
+      backgroundColor: secondary
+          ? Colors.white.withValues(alpha: 0.14)
+          : Colors.white,
+      foregroundColor: secondary ? Colors.white : AppTheme.blue,
+      side: secondary
+          ? BorderSide(color: Colors.white.withValues(alpha: 0.38))
+          : BorderSide.none,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      minimumSize: const Size(0, 42),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      textStyle: GoogleFonts.plusJakartaSans(
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+      ),
+    ),
+    icon: Icon(icon, size: 16),
+    label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+  );
 }
 
 class _AttendanceChart extends StatelessWidget {
@@ -725,12 +758,12 @@ class _ModerationSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Card(
     child: Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SectionTitle('Testimoni & FAQ'),
-          const SizedBox(height: 3),
+          const SizedBox(height: 2),
           Text(
             'Moderasi kontribusi siswa untuk katalog ekskul.',
             style: GoogleFonts.plusJakartaSans(
@@ -738,7 +771,7 @@ class _ModerationSummary extends StatelessWidget {
               fontSize: 11,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -751,7 +784,7 @@ class _ModerationSummary extends StatelessWidget {
                   onTap: onOpenTestimoni,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: _ModerationTile(
                   icon: Icons.help_outline,
@@ -788,50 +821,80 @@ class _ModerationTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: tint,
-    borderRadius: BorderRadius.circular(12),
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$count',
-                    style: GoogleFonts.plusJakartaSans(
-                      color: color,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '$title · ${count > 0 ? 'pending' : 'antrian kosong'}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.mutedText(context),
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+  Widget build(BuildContext context) {
+    final status = count > 0 ? 'Perlu ditinjau' : 'Antrian kosong';
+    return Material(
+      color: tint,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        key: ValueKey('moderation-tile-${title.toLowerCase()}'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Icon(icon, color: color, size: 18),
               ),
-            ),
-          ],
+              const SizedBox(width: 9),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          '$count',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: color,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            height: 1,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: AppTheme.text(context),
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      status,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppTheme.mutedText(context),
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _PriorityActions extends StatelessWidget {
@@ -846,7 +909,7 @@ class _PriorityActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Card(
     child: Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -856,7 +919,7 @@ class _PriorityActions extends StatelessWidget {
               StatusChip('$pendingCount menunggu'),
             ],
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 2),
           Text(
             'Aksi cepat untuk tugas yang menunggu.',
             style: GoogleFonts.plusJakartaSans(
@@ -864,7 +927,7 @@ class _PriorityActions extends StatelessWidget {
               fontSize: 11,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           if (pendingCount > 0)
             _PriorityTile(
               icon: Icons.assignment_outlined,
@@ -909,26 +972,57 @@ class _PriorityTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Material(
     color: tint,
-    borderRadius: BorderRadius.circular(12),
+    borderRadius: BorderRadius.circular(14),
     child: InkWell(
+      key: const ValueKey('priority-review-tile'),
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: ListTile(
-        dense: true,
-        leading: CircleAvatar(
-          backgroundColor: color.withValues(alpha: 0.12),
-          foregroundColor: color,
-          child: Icon(icon, size: 18),
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 19),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.text(context),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.mutedText(context),
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(Icons.chevron_right_rounded, color: color, size: 20),
+          ],
         ),
-        title: Text(
-          title,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        subtitle: Text(subtitle),
-        trailing: Icon(Icons.chevron_right, color: color),
       ),
     ),
   );
@@ -960,14 +1054,14 @@ class _QuickActions extends StatelessWidget {
               subtitle: 'Kelola anggota aktif',
               onTap: onMembers,
             ),
-            const Divider(height: 1, indent: 56),
+            const Divider(height: 1, indent: 60),
             _QuickActionTile(
               icon: Icons.assignment_outlined,
               title: 'Pendaftaran',
               subtitle: 'Tinjau pendaftar baru',
               onTap: onApplications,
             ),
-            const Divider(height: 1, indent: 56),
+            const Divider(height: 1, indent: 60),
             _QuickActionTile(
               icon: Icons.event_outlined,
               title: 'Kegiatan',
@@ -995,14 +1089,57 @@ class _QuickActionTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => ListTile(
-    leading: Icon(icon, color: AppTheme.blue),
-    title: Text(
-      title,
-      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+  Widget build(BuildContext context) => Material(
+    color: Colors.transparent,
+    child: InkWell(
+      key: ValueKey('quick-action-${title.toLowerCase()}'),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppTheme.accentSurface(context),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: AppTheme.accent(context), size: 19),
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.text(context),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.mutedText(context),
+                      fontSize: 10.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppTheme.mutedText(context),
+              size: 20,
+            ),
+          ],
+        ),
+      ),
     ),
-    subtitle: Text(subtitle),
-    trailing: Icon(Icons.chevron_right, color: AppTheme.mutedText(context)),
-    onTap: onTap,
   );
 }

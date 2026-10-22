@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/providers.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
+import '../widgets/floating_pill_nav.dart';
 import 'anggota/anggota_screen.dart';
 import 'aktivitas/siswa_aktivitas_screen.dart';
 import 'beranda/ketua_beranda.dart';
@@ -69,6 +70,8 @@ class _ShellScaffoldState extends ConsumerState<_ShellScaffold> {
       return tab;
     });
     return Scaffold(
+      extendBody: true,
+      extendBodyBehindAppBar: true,
       body: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -86,37 +89,28 @@ class _ShellScaffoldState extends ConsumerState<_ShellScaffold> {
         ),
         child: IndexedStack(index: safeIndex, children: tabChildren),
       ),
-      bottomNavigationBar: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border(
-            top: BorderSide(
-              color: Theme.of(context).colorScheme.outlineVariant,
+      bottomNavigationBar: SizedBox(
+        // Reserve space so scrollable content doesn't hide behind navbar
+        height: 100 + MediaQuery.of(context).padding.bottom,
+        child: const ColoredBox(color: Colors.transparent),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingPillNav(
+        items: [
+          for (final tab in widget.tabs)
+            FloatingPillNavItem(
+              label: tab.label,
+              icon: tab.icon,
+              selectedIcon: tab.icon,
             ),
-          ),
-        ),
-        child: NavigationBar(
-          selectedIndex: safeIndex,
-          onDestinationSelected: (i) =>
-              ref.read(shellTabProvider.notifier).set(i),
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          indicatorColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          destinations: [
-            for (final tab in widget.tabs)
-              NavigationDestination(
-                icon: Icon(
-                  tab.icon,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                selectedIcon: Icon(
-                  tab.icon,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                label: tab.label,
-              ),
-          ],
-        ),
+        ],
+        currentIndex: safeIndex,
+        onTap: (i) => ref.read(shellTabProvider.notifier).set(i),
+        centerIndex: 2,
+        centerIcon: widget.user.isKetua
+            ? Icons.calendar_month_outlined
+            : Icons.fact_check_outlined,
+        centerBackgroundColor: AppTheme.blue,
       ),
     );
   }

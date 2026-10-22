@@ -23,6 +23,7 @@ import 'package:soul/screens/notifikasi/notifikasi_screen.dart';
 import 'package:soul/screens/profil/profil_screen.dart';
 import 'package:soul/theme/app_theme.dart';
 import 'package:soul/theme/theme_controller.dart';
+import 'package:soul/widgets/floating_pill_nav.dart';
 import 'package:soul/widgets/common.dart';
 
 class _TestAuthController extends AuthController {
@@ -428,7 +429,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('Lengkapi data diri'), findsNothing);
-    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.byType(FloatingPillNav), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -484,12 +485,7 @@ void main() {
     await tester.pump();
 
     expect(find.byType(KatalogScreen), findsNothing);
-    await tester.tap(
-      find.descendant(
-        of: find.byType(NavigationBar),
-        matching: find.text('Ekskul'),
-      ),
-    );
+    await tester.tap(find.text('Ekskul').last);
     await tester.pumpAndSettle();
 
     expect(find.byType(KatalogScreen), findsOneWidget);
@@ -920,7 +916,26 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Latihan Rutin'), findsOneWidget);
+    await tester.drag(find.byType(ListView), const Offset(0, -400));
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('Edit Kegiatan'), findsOneWidget);
+    expect(
+      tester
+          .widget<Icon>(
+            find.descendant(
+              of: find.byTooltip('Edit Kegiatan'),
+              matching: find.byIcon(Icons.edit_outlined),
+            ),
+          )
+          .icon,
+      Icons.edit_outlined,
+    );
+    await tester.tap(find.byTooltip('Edit Kegiatan'));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit Kegiatan'), findsOneWidget);
+    await tester.tap(find.text('Batal'));
+    await tester.pumpAndSettle();
     expect(find.text('Ringkasan Kehadiran'), findsOneWidget);
     expect(find.text('Hadir'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
@@ -1130,13 +1145,35 @@ void main() {
     final heroRect = tester.getRect(
       find.byKey(const ValueKey('ketua-dashboard-hero')),
     );
-    final ringRect = tester.getRect(
-      find.byKey(const ValueKey('ketua-dashboard-hero-ring')),
+    final markRect = tester.getRect(
+      find.byKey(const ValueKey('ketua-dashboard-hero-mark')),
     );
-    expect(ringRect.left, greaterThanOrEqualTo(heroRect.left));
-    expect(ringRect.top, greaterThanOrEqualTo(heroRect.top));
-    expect(ringRect.right, lessThanOrEqualTo(heroRect.right));
-    expect(ringRect.bottom, lessThanOrEqualTo(heroRect.bottom));
+    expect(markRect.left, greaterThanOrEqualTo(heroRect.left));
+    expect(markRect.top, greaterThanOrEqualTo(heroRect.top));
+    expect(markRect.right, lessThanOrEqualTo(heroRect.right));
+    expect(markRect.bottom, lessThanOrEqualTo(heroRect.bottom));
+    final createActionRect = tester.getRect(
+      find.byKey(const ValueKey('ketua-hero-create-action')),
+    );
+    final reviewActionRect = tester.getRect(
+      find.byKey(const ValueKey('ketua-hero-review-action')),
+    );
+    expect(createActionRect.height, 42);
+    expect(reviewActionRect.height, 42);
+    expect(createActionRect.width, reviewActionRect.width);
+    await tester.drag(find.byType(CustomScrollView), const Offset(0, -2400));
+    await tester.pumpAndSettle();
+    for (final key in const [
+      ValueKey('moderation-tile-testimoni'),
+      ValueKey('moderation-tile-faq'),
+      ValueKey('priority-review-tile'),
+      ValueKey('quick-action-anggota'),
+      ValueKey('quick-action-pendaftaran'),
+      ValueKey('quick-action-kegiatan'),
+    ]) {
+      final height = tester.getSize(find.byKey(key)).height;
+      expect(height, inInclusiveRange(44, 64), reason: '$key height: $height');
+    }
     expect(tester.takeException(), isNull);
   });
 
@@ -1166,7 +1203,8 @@ void main() {
                 },
                 {
                   'id': 2,
-                  'materi': 'Persiapan Lomba',
+                  'materi':
+                      'Persiapan Lomba Karate Tingkat Nasional Antar Sekolah',
                   'tanggal_text': '8 Oktober 2026',
                   'is_event': true,
                 },
@@ -1199,6 +1237,18 @@ void main() {
       find.byKey(const ValueKey('activity-documentation-fallback')),
       findsOneWidget,
     );
+    final eventBadgeRect = tester.getRect(
+      find.byKey(const ValueKey('activity-event-badge-2')),
+    );
+    final eventTitleRect = tester.getRect(
+      find.byKey(const ValueKey('activity-title-2')),
+    );
+    final eventChevronRect = tester.getRect(
+      find.byKey(const ValueKey('activity-chevron-2')),
+    );
+    expect(eventBadgeRect.left - eventTitleRect.right, lessThanOrEqualTo(8));
+    expect(eventBadgeRect.right, lessThan(eventChevronRect.left));
+    expect(tester.takeException(), isNull);
     await tester.enterText(find.byType(TextField), 'tidak ada');
     await tester.pumpAndSettle();
     expect(find.text('0 hasil pencarian'), findsOneWidget);

@@ -614,16 +614,32 @@ class _KegiatanCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      kegiatan.materi,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.text(context),
-                        fontSize: 14,
-                        height: 1.3,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            key: ValueKey('activity-title-${kegiatan.id}'),
+                            kegiatan.materi,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: AppTheme.text(context),
+                              fontSize: 14,
+                              height: 1.3,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        if (kegiatan.isEvent) ...[
+                          const SizedBox(width: 7),
+                          StatusChip(
+                            'Event',
+                            key: ValueKey(
+                              'activity-event-badge-${kegiatan.id}',
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 3),
                     Row(
@@ -668,14 +684,12 @@ class _KegiatanCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              if (kegiatan.isEvent)
-                const StatusChip('Event')
-              else
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppTheme.mutedText(context),
-                  size: 22,
-                ),
+              Icon(
+                key: ValueKey('activity-chevron-${kegiatan.id}'),
+                Icons.chevron_right_rounded,
+                color: AppTheme.mutedText(context),
+                size: 22,
+              ),
             ],
           ),
         ),

@@ -333,58 +333,54 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
       appBar: AppBar(
         title: const Text('Detail Kegiatan'),
         actions: [
-          detail.maybeWhen(
-            data: (data) {
-              final keg = Kegiatan.fromJson(
-                data['kegiatan'] is Map
-                    ? Map<String, dynamic>.from(data['kegiatan'] as Map)
-                    : null,
-              );
-              return PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert),
-                onSelected: (value) {
-                  if (value == 'edit') {
-                    _editKegiatan(keg);
-                  } else if (value == 'hapus') {
-                    _hapusKegiatan();
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit_outlined, size: 18),
-                        SizedBox(width: 8),
-                        Text('Edit Kegiatan'),
-                      ],
-                    ),
-                  ),
-                  PopupMenuItem(
-                    value: 'hapus',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.delete_outline,
-                          size: 18,
-                          color: Color(0xFFE11D48),
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Hapus Kegiatan',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Color(0xFFE11D48),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              if (value == 'hapus') {
+                _hapusKegiatan();
+              }
             },
-            orElse: () => const SizedBox.shrink(),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'hapus',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.delete_outline,
+                      size: 18,
+                      color: Color(0xFFE11D48),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'Hapus Kegiatan',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: Color(0xFFE11D48),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
+      ),
+      floatingActionButton: detail.maybeWhen(
+        data: (data) {
+          final keg = Kegiatan.fromJson(
+            data['kegiatan'] is Map
+                ? Map<String, dynamic>.from(data['kegiatan'] as Map)
+                : null,
+          );
+          return FloatingActionButton(
+            onPressed: () => _editKegiatan(keg),
+            backgroundColor: AppTheme.blue,
+            foregroundColor: Colors.white,
+            shape: const CircleBorder(),
+            tooltip: 'Edit Kegiatan',
+            child: const Icon(Icons.edit_outlined),
+          );
+        },
+        orElse: () => null,
       ),
       body: ApiAsyncView(
         value: detail,
@@ -413,9 +409,11 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
               } catch (_) {}
             },
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
               children: [
                 _activityHero(keg),
+                const SizedBox(height: 14),
+                const SizedBox(height: 14),
                 if (keg.dokumentasi?.isNotEmpty == true) ...[
                   const SizedBox(height: 14),
                   ContentCard(

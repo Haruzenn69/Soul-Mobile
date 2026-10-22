@@ -59,8 +59,9 @@ class ApiClient {
     RequestInterceptorHandler handler,
   ) async {
     _token ??= await _tokenStorage.read();
-    if (_token != null) {
-      options.headers['Authorization'] = 'Bearer $_token';
+    final token = _token;
+    if (token != null) {
+      options.headers['Authorization'] = 'Bearer $token';
     }
     handler.next(options);
   }
