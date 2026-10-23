@@ -60,8 +60,7 @@ class FloatingPillNav extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final notchRadius = centerButtonSize / 2 + 8;
-    final totalHeight =
-        (barHeight / 2) + centerButtonSize / 2 + verticalMargin + bottomPadding;
+    final totalHeight = barHeight + verticalMargin + bottomPadding;
 
     // Frosted glass colors
     final barColor = isDark
@@ -129,12 +128,11 @@ class FloatingPillNav extends StatelessWidget {
               ),
             ),
           ),
-          // --- Center button (positioned within bounds for hit test) ---
+          // --- Center button (positioned overlapping the top of the bar) ---
           Positioned(
             left: 0,
             right: 0,
-            top: 0,
-            height: centerButtonSize,
+            bottom: verticalMargin + bottomPadding + barHeight - (centerButtonSize / 2) - 1,
             child: Center(
               child: GestureDetector(
                 onTap: () {

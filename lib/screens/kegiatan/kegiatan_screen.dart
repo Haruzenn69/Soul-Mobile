@@ -335,25 +335,29 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
     final list = ref.watch(ketuaKegiatanProvider);
 
     return Scaffold(
-      floatingActionButton: switch (_tabController.index) {
-        0 => FloatingActionButton(
-          onPressed: _buatKegiatan,
-          backgroundColor: AppTheme.blue,
-          foregroundColor: Colors.white,
-          shape: const CircleBorder(),
-          tooltip: 'Buat kegiatan',
-          child: const Icon(Icons.add_rounded),
-        ),
-        2 => FloatingActionButton(
-          onPressed: _buatLaporan,
-          backgroundColor: AppTheme.blue,
-          foregroundColor: Colors.white,
-          shape: const CircleBorder(),
-          tooltip: 'Buat laporan bulanan',
-          child: const Icon(Icons.add_rounded),
-        ),
-        _ => null,
-      },
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 70),
+        child: switch (_tabController.index) {
+          0 => FloatingActionButton(
+            onPressed: _buatKegiatan,
+            backgroundColor: AppTheme.blue,
+            foregroundColor: Colors.white,
+            shape: const CircleBorder(),
+            tooltip: 'Buat kegiatan',
+            child: const Icon(Icons.add_rounded),
+          ),
+          2 => FloatingActionButton(
+            onPressed: _buatLaporan,
+            backgroundColor: AppTheme.blue,
+            foregroundColor: Colors.white,
+            shape: const CircleBorder(),
+            tooltip: 'Buat laporan bulanan',
+            child: const Icon(Icons.add_rounded),
+          ),
+          _ => null,
+        },
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -503,7 +507,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                                             16,
                                             4,
                                             16,
-                                            24,
+                                            100,
                                           ),
                                           itemCount: filtered.length,
                                           separatorBuilder: (_, _) =>

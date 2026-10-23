@@ -364,23 +364,27 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
           ),
         ],
       ),
-      floatingActionButton: detail.maybeWhen(
-        data: (data) {
-          final keg = Kegiatan.fromJson(
-            data['kegiatan'] is Map
-                ? Map<String, dynamic>.from(data['kegiatan'] as Map)
-                : null,
-          );
-          return FloatingActionButton(
-            onPressed: () => _editKegiatan(keg),
-            backgroundColor: AppTheme.blue,
-            foregroundColor: Colors.white,
-            shape: const CircleBorder(),
-            tooltip: 'Edit Kegiatan',
-            child: const Icon(Icons.edit_outlined),
-          );
-        },
-        orElse: () => null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 70),
+        child: detail.maybeWhen(
+          data: (data) {
+            final keg = Kegiatan.fromJson(
+              data['kegiatan'] is Map
+                  ? Map<String, dynamic>.from(data['kegiatan'] as Map)
+                  : null,
+            );
+            return FloatingActionButton(
+              onPressed: () => _editKegiatan(keg),
+              backgroundColor: AppTheme.blue,
+              foregroundColor: Colors.white,
+              shape: const CircleBorder(),
+              tooltip: 'Edit Kegiatan',
+              child: const Icon(Icons.edit_outlined),
+            );
+          },
+          orElse: () => const SizedBox.shrink(),
+        ),
       ),
       body: ApiAsyncView(
         value: detail,

@@ -28,32 +28,24 @@ class AppConfig {
 
   static String imageUrl(String? url) {
     if (url == null || url.isEmpty) return '';
-    if (!url.startsWith('http')) return '$apiBaseUrl$url';
-    final host = Uri.parse(apiBaseUrl).host;
-    final u = Uri.parse(url);
-    final normalized = u.host == 'localhost' || u.host == '127.0.0.1'
-        ? u
-              .replace(
-                scheme: Uri.parse(apiBaseUrl).scheme,
-                host: host,
-                port: Uri.parse(apiBaseUrl).port,
-              )
-              .toString()
-        : url;
-    final imageUri = Uri.tryParse(normalized);
-    if (imageUri == null || imageUri.host.isEmpty) {
-      throw StateError('Image URL must be an absolute URL with a host.');
-    }
-    if (imageUri.scheme != 'https' &&
-        !(kDebugMode &&
-            imageUri.scheme == 'http' &&
-            imageUri.host == host &&
-            _isLocalHost(imageUri.host))) {
-      throw StateError(
-        'Image URLs must use HTTPS; HTTP is allowed only for the local debug API.',
+    if (url.startsWith('http://localhost') ||
+        url.startsWith('http://127.0.0.1')) {
+      final u = Uri.parse(url);
+      final baseUri = Uri.parse(apiBaseUrl);
+      final replaced = u.replace(
+        scheme: baseUri.scheme,
+        host: baseUri.host,
+        port: baseUri.port,
       );
+      return replaced.toString();
     }
-    return normalized;
+    if (!url.startsWith('http')) {
+      final cleanBase = apiBaseUrl.endsWith('/api')
+          ? apiBaseUrl.substring(0, apiBaseUrl.length - 4)
+          : apiBaseUrl;
+      return url.startsWith('/') ? '$cleanBase$url' : '$cleanBase/$url';
+    }
+    return url;
   }
 
   static bool _isLocalHost(String host) {

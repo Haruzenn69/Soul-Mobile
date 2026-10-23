@@ -84,7 +84,7 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
                   : null;
 
               return ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                 children: [
                   _periodHero(
                     bulan: bulan,

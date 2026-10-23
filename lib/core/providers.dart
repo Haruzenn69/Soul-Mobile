@@ -61,14 +61,19 @@ class AuthController extends Notifier<AuthState> {
         state = const AuthState(status: AuthStatus.unauthenticated);
         return;
       }
-      final res = await api.get('/auth/me');
+      final res = await api.get('/auth/me').timeout(
+            const Duration(seconds: 8),
+            onTimeout: () => throw const ApiException(message: 'Timeout koneksi server.'),
+          );
       final user = AuthUser.fromJson(
         res['data'] is Map
             ? (res['data'] as Map)['user'] as Map<String, dynamic>?
             : null,
       );
       if (user.role != 'siswa') {
-        await api.post('/auth/logout');
+        try {
+          await api.post('/auth/logout');
+        } catch (_) {}
         await api.clearToken();
         state = const AuthState(status: AuthStatus.unauthenticated);
         return;

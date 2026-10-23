@@ -20,15 +20,19 @@ class LaporanScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(builder: (_) => const LaporanCreateScreen()),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 70),
+        child: FloatingActionButton(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const LaporanCreateScreen()),
+          ),
+          backgroundColor: AppTheme.blue,
+          foregroundColor: Colors.white,
+          shape: const CircleBorder(),
+          tooltip: 'Buat laporan baru',
+          child: const Icon(Icons.add_rounded),
         ),
-        backgroundColor: AppTheme.blue,
-        foregroundColor: Colors.white,
-        shape: const CircleBorder(),
-        tooltip: 'Buat laporan baru',
-        child: const Icon(Icons.add_rounded),
       ),
       body: const SafeArea(child: LaporanContent()),
     );
@@ -67,7 +71,7 @@ class LaporanContent extends ConsumerWidget {
                 },
                 child: ListView.separated(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
                   itemCount: items.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, i) {

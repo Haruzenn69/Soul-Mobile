@@ -390,22 +390,39 @@ class _Hero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      key: const ValueKey('siswa-dashboard-hero'),
+      clipBehavior: Clip.antiAlias,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: AppTheme.brandHeroGradient(context),
-        borderRadius: BorderRadius.all(Radius.circular(24)),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.brandHeroShadow(context),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Stack(
         children: [
           Positioned(
-            right: -26,
-            top: -32,
+            right: 12,
+            top: 10,
             child: Container(
-              width: 112,
-              height: 112,
+              key: const ValueKey('siswa-dashboard-hero-mark'),
+              width: 50,
+              height: 50,
+              padding: const EdgeInsets.all(2),
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.11),
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+              ),
+              child: const Icon(
+                Icons.school_rounded,
+                color: Colors.white,
+                size: 24,
               ),
             ),
           ),
@@ -417,17 +434,27 @@ class _Hero extends StatelessWidget {
                   PersonAvatar(
                     name: user.namaTampilan,
                     photoUrl: user.fotoUrl,
-                    radius: 22,
-                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                    radius: 24,
+                    backgroundColor: Colors.white.withValues(alpha: 0.18),
                     foregroundColor: Colors.white,
                   ),
-                  const SizedBox(width: 11),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Halo, ${user.namaTampilan}!',
+                          'DASHBOARD SISWA',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.white.withValues(alpha: 0.75),
+                            fontSize: 8,
+                            letterSpacing: 1,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Halo, ${user.namaTampilan}',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.plusJakartaSans(
@@ -436,81 +463,83 @@ class _Hero extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                           ),
                         ),
-                        const SizedBox(height: 2),
                         Text(
-                          _formatIndonesianDate(DateTime.now()),
+                          'Siswa aktif · ${_todayLabel()}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.plusJakartaSans(
-                            color: Colors.white.withValues(alpha: 0.86),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 11.5,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  if (unreadNotifications > 0)
-                    Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(20),
-                        onTap: onNotifications,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 9,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.18),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.22),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.notifications_none,
-                                color: Colors.white,
-                                size: 15,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '$unreadNotifications',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ],
-                          ),
+                  const SizedBox(width: 62),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 11,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.16),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.verified_rounded,
+                      color: Colors.white,
+                      size: 14,
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        isJoined ? 'Aktif dalam Ekstrakurikuler' : 'Belum Bergabung Ekskul',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               Text(
                 isJoined
-                    ? 'Pantau kegiatan dan kehadiran ekskulmu.'
-                    : 'Temukan kegiatan yang sesuai dengan minatmu.',
+                    ? 'Pantau kegiatan dan kehadiran ekskulmu secara berkala.'
+                    : 'Temukan kegiatan ekstrakurikuler yang sesuai dengan minatmu.',
                 style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white.withValues(alpha: 0.92),
-                  fontSize: 12,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: 11.5,
                   height: 1.35,
                 ),
               ),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppTheme.blue,
-                      visualDensity: VisualDensity.compact,
-                    ),
+              const SizedBox(height: 12),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final primaryAction = _HeroActionButton(
+                    label: !isJoined && registrationStatus != 'pending'
+                        ? 'Daftar ekskul'
+                        : registrationStatus == 'pending'
+                        ? 'Cek status'
+                        : 'Lihat presensi',
+                    icon: !isJoined && registrationStatus != 'pending'
+                        ? Icons.add_rounded
+                        : registrationStatus == 'pending'
+                        ? Icons.notifications_outlined
+                        : Icons.fact_check_outlined,
                     onPressed: () {
                       if (!isJoined && registrationStatus != 'pending') {
                         onCatalog();
@@ -520,34 +549,31 @@ class _Hero extends StatelessWidget {
                         onAttendance();
                       }
                     },
-                    icon: Icon(
-                      !isJoined && registrationStatus != 'pending'
-                          ? Icons.add
-                          : registrationStatus == 'pending'
-                          ? Icons.notifications_outlined
-                          : Icons.fact_check_outlined,
-                      size: 17,
-                    ),
-                    label: Text(
-                      !isJoined && registrationStatus != 'pending'
-                          ? 'Daftar Ekskul'
-                          : registrationStatus == 'pending'
-                          ? 'Cek Status'
-                          : 'Lihat Presensi',
-                    ),
-                  ),
-                  OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.6),
-                      ),
-                      visualDensity: VisualDensity.compact,
-                    ),
+                  );
+                  final secondaryAction = _HeroActionButton(
+                    label: 'Jelajahi katalog',
+                    icon: Icons.explore_outlined,
+                    secondary: true,
                     onPressed: onCatalog,
-                    child: const Text('Jelajahi Katalog'),
-                  ),
-                ],
+                  );
+                  if (constraints.maxWidth < 300) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        primaryAction,
+                        const SizedBox(height: 8),
+                        secondaryAction,
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(child: primaryAction),
+                      const SizedBox(width: 8),
+                      Expanded(child: secondaryAction),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -555,6 +581,63 @@ class _Hero extends StatelessWidget {
       ),
     );
   }
+
+  String _todayLabel() {
+    final date = DateTime.now();
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
+    return '${date.day} ${months[date.month - 1]} ${date.year}';
+  }
+}
+
+class _HeroActionButton extends StatelessWidget {
+  const _HeroActionButton({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+    this.secondary = false,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onPressed;
+  final bool secondary;
+
+  @override
+  Widget build(BuildContext context) => FilledButton.icon(
+    onPressed: onPressed,
+    style: FilledButton.styleFrom(
+      backgroundColor: secondary
+          ? Colors.white.withValues(alpha: 0.14)
+          : Colors.white,
+      foregroundColor: secondary ? Colors.white : AppTheme.blue,
+      side: secondary
+          ? BorderSide(color: Colors.white.withValues(alpha: 0.38))
+          : BorderSide.none,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      minimumSize: const Size(0, 42),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      textStyle: GoogleFonts.plusJakartaSans(
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+      ),
+    ),
+    icon: Icon(icon, size: 16),
+    label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
+  );
 }
 
 Future<void> _completeOnboarding(

@@ -331,18 +331,31 @@ class _ProfilEditScreenState extends ConsumerState<ProfilEditScreen> {
   );
 
   Widget _additionalInfoCard() => _formCard(
-    title: 'Data Diri',
-    subtitle: 'Lengkapi informasi tambahan agar data tetap akurat.',
+    title: 'Data Diri Siswa',
+    subtitle: 'Informasi biodata siswa (dikelola oleh kesiswaan).',
     child: Column(
       children: [
-        _field('tempat_lahir', 'Tempat lahir'),
-        _field('tanggal_lahir', 'Tanggal lahir (YYYY-MM-DD)'),
-        _field('agama', 'Agama'),
-        _field('angkatan', 'Angkatan'),
-        _field('no_telp', 'Nomor telepon', keyboardType: TextInputType.phone),
+        _readOnlyField('Tempat Lahir', _fields['tempat_lahir']?.text ?? '-'),
+        _readOnlyField('Tanggal Lahir', _fields['tanggal_lahir']?.text ?? '-'),
+        _readOnlyField('Agama', _fields['agama']?.text ?? '-'),
+        _readOnlyField('Angkatan', _fields['angkatan']?.text ?? '-'),
+        _field('no_telp', 'Nomor Telepon', keyboardType: TextInputType.phone),
         _field('alamat', 'Alamat', maxLines: 3),
-        _field('medsos', 'Media sosial'),
+        _field('medsos', 'Media Sosial'),
       ],
+    ),
+  );
+
+  Widget _readOnlyField(String label, String value) => Padding(
+    padding: const EdgeInsets.only(bottom: 14),
+    child: TextFormField(
+      initialValue: value.isEmpty ? '-' : value,
+      readOnly: true,
+      enabled: false,
+      decoration: InputDecoration(
+        labelText: label,
+        fillColor: AppTheme.surfaceVariant(context),
+      ),
     ),
   );
 

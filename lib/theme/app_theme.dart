@@ -225,18 +225,23 @@ class AppTheme {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.white.withValues(alpha: 0.88),
         surfaceTintColor: Colors.transparent,
-        indicatorColor: lightAccentSurface,
-        height: 78,
+        indicatorColor: blue.withValues(alpha: 0.12),
+        height: 74,
         elevation: 0,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         indicatorShape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
         ),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final isSelected = states.contains(WidgetState.selected);
+          return IconThemeData(color: isSelected ? blue : sub, size: 22);
+        }),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => GoogleFonts.plusJakartaSans(
-            fontSize: 10,
+            fontSize: 10.5,
+            color: states.contains(WidgetState.selected) ? blue : sub,
             fontWeight: states.contains(WidgetState.selected)
                 ? FontWeight.w800
                 : FontWeight.w600,
@@ -414,18 +419,28 @@ class AppTheme {
         ),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: darkSurface,
+        backgroundColor: darkSurface.withValues(alpha: 0.88),
         surfaceTintColor: Colors.transparent,
-        indicatorColor: const Color(0xFF26374D),
-        height: 78,
+        indicatorColor: const Color(0xFF60A5FA).withValues(alpha: 0.18),
+        height: 74,
         elevation: 0,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         indicatorShape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
         ),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final isSelected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            color: isSelected ? const Color(0xFF60A5FA) : darkSub,
+            size: 22,
+          );
+        }),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => GoogleFonts.plusJakartaSans(
-            fontSize: 10,
+            fontSize: 10.5,
+            color: states.contains(WidgetState.selected)
+                ? const Color(0xFF60A5FA)
+                : darkSub,
             fontWeight: states.contains(WidgetState.selected)
                 ? FontWeight.w800
                 : FontWeight.w600,

@@ -24,27 +24,81 @@ class NotifikasiScreen extends ConsumerWidget {
           PageHeader(
             title: 'Notifikasi',
             subtitle: 'Pembaruan penting seputar aktivitas ekskulmu.',
-            action: IconButton(
-              tooltip: 'Tandai semua dibaca',
-              style: IconButton.styleFrom(
-                backgroundColor: AppTheme.accentSurface(context),
-                foregroundColor: AppTheme.blue,
-              ),
-              onPressed: () async {
-                try {
-                  await ref
-                      .read(apiClientProvider)
-                      .post('/siswa/notifikasi/read-all');
-                  ref.invalidate(notifikasiProvider);
-                  ref.invalidate(siswaDashboardProvider);
-                  if (isKetua) ref.invalidate(ketuaDashboardProvider);
-                } catch (error) {
-                  if (context.mounted) {
-                    await showErrorDialog(context, ref, error);
-                  }
-                }
-              },
-              icon: const Icon(Icons.done_all_rounded),
+            action: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: 'Hapus semua notifikasi',
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppTheme.dangerSurface(context),
+                    foregroundColor: AppTheme.dangerText(context),
+                  ),
+                  onPressed: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (dialogContext) => AlertDialog(
+                        title: const Text('Hapus semua notifikasi?'),
+                        content: const Text(
+                          'Semua riwayat notifikasi akan dihapus secara permanen.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(false),
+                            child: const Text('Batal'),
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(true),
+                            child: const Text('Hapus Semua'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed != true || !context.mounted) return;
+                    try {
+                      await ref
+                          .read(apiClientProvider)
+                          .post(
+                            isKetua
+                                ? '/ketua/notifikasi/delete-all'
+                                : '/siswa/notifikasi/delete-all',
+                          );
+                      ref.invalidate(notifikasiProvider);
+                      ref.invalidate(siswaDashboardProvider);
+                      if (isKetua) ref.invalidate(ketuaDashboardProvider);
+                    } catch (error) {
+                      if (context.mounted) {
+                        await showErrorDialog(context, ref, error);
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.delete_sweep_rounded, size: 20),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  tooltip: 'Tandai semua dibaca',
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppTheme.accentSurface(context),
+                    foregroundColor: AppTheme.blue,
+                  ),
+                  onPressed: () async {
+                    try {
+                      await ref
+                          .read(apiClientProvider)
+                          .post('/siswa/notifikasi/read-all');
+                      ref.invalidate(notifikasiProvider);
+                      ref.invalidate(siswaDashboardProvider);
+                      if (isKetua) ref.invalidate(ketuaDashboardProvider);
+                    } catch (error) {
+                      if (context.mounted) {
+                        await showErrorDialog(context, ref, error);
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.done_all_rounded, size: 20),
+                ),
+              ],
             ),
           ),
           Expanded(
@@ -121,7 +175,11 @@ class NotifikasiScreen extends ConsumerWidget {
     try {
       await ref
           .read(apiClientProvider)
-          .delete('/siswa/notifikasi/${notification.id}');
+          .delete(
+            isKetua
+                ? '/ketua/notifikasi/${notification.id}'
+                : '/siswa/notifikasi/${notification.id}',
+          );
       ref.invalidate(notifikasiProvider);
       ref.invalidate(siswaDashboardProvider);
       if (isKetua) ref.invalidate(ketuaDashboardProvider);
