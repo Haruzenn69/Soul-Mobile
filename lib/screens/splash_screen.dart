@@ -19,20 +19,27 @@ class SplashScreen extends StatelessWidget {
               width: 88,
               height: 88,
               decoration: BoxDecoration(
-                color: AppTheme.blue,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.blue.withValues(alpha: 0.35),
+                    color: AppTheme.blue.withValues(alpha: 0.18),
                     blurRadius: 26,
                     offset: const Offset(0, 12),
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.shield_moon_rounded,
-                color: Colors.white,
-                size: 44,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Image.asset(
+                  'assets/images/logo-light.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const Icon(
+                    Icons.shield_moon_rounded,
+                    color: AppTheme.blue,
+                    size: 44,
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 20),

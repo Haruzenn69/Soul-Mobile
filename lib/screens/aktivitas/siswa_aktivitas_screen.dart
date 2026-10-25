@@ -7,6 +7,7 @@ import '../../data/providers.dart';
 import '../nilai/nilai_screen.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/paginated_list.dart';
 
 const _bulanNama = [
   'Januari',
@@ -183,33 +184,53 @@ class _PresensiTab extends ConsumerWidget {
               await ref.read(siswaPresensiProvider(selectedEkskulId).future);
             } catch (_) {}
           },
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+          child: Column(
             children: [
-              ActiveEkskulSelector(
-                ekskuls: activeEkskuls,
-                selectedId: currentEkskulId,
-                onChanged: (id) =>
-                    ref.read(selectedSiswaEkskulProvider.notifier).select(id),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: ActiveEkskulSelector(
+                  ekskuls: activeEkskuls,
+                  selectedId: currentEkskulId,
+                  onChanged: (id) =>
+                      ref.read(selectedSiswaEkskulProvider.notifier).select(id),
+                ),
               ),
-              SectionTitle('Riwayat Kegiatan (${rows.length})'),
-              const SizedBox(height: 10),
-              ...rows.map((row) {
-                final kegiatan = row['kegiatan'] is Map
-                    ? Map<String, dynamic>.from(row['kegiatan'] as Map)
-                    : <String, dynamic>{};
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 9),
-                  child: _AttendanceCard(
-                    title: kegiatan['materi'] as String? ?? 'Kegiatan',
-                    date:
-                        kegiatan['tanggal_text'] as String? ??
-                        kegiatan['tanggal_kegiatan'] as String? ??
-                        '-',
-                    status: row['status'] as String? ?? '-',
-                  ),
-                );
-              }),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                child: Row(
+                  children: [
+                    Text(
+                      'Riwayat Kegiatan (${rows.length})',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppTheme.mutedText(context),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: PaginatedList<Map<String, dynamic>>(
+                  items: rows,
+                  pageSize: 10,
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+                  separatorBuilder: (_, _) => const SizedBox(height: 9),
+                  itemBuilder: (context, row, index) {
+                    final kegiatan = row['kegiatan'] is Map
+                        ? Map<String, dynamic>.from(row['kegiatan'] as Map)
+                        : <String, dynamic>{};
+                    return _AttendanceCard(
+                      title: kegiatan['materi'] as String? ?? 'Kegiatan',
+                      date:
+                          kegiatan['tanggal_text'] as String? ??
+                          kegiatan['tanggal_kegiatan'] as String? ??
+                          '-',
+                      status: row['status'] as String? ?? '-',
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         );

@@ -86,6 +86,173 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
     if (_loading) return;
     final alasan = await _showAlasanDialog();
     if (alasan == null || !mounted) return;
+    if (alasan.trim().isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Alasan bergabung wajib diisi untuk mendaftar.'),
+            backgroundColor: Color(0xFFE11D48),
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      final katalog = await ref.read(katalogProvider.future);
+      final activeIds = listOf(katalog, 'active_pendaftarans')
+          .map((item) => item['ekskul'] is Map
+              ? (item['ekskul'] as Map)['id']
+              : null)
+          .whereType<num>()
+          .map((id) => id.toInt())
+          .toSet();
+      final pendingIds = listOf(katalog, 'pending_pendaftarans')
+          .map((item) => item['ekskul'] is Map
+              ? (item['ekskul'] as Map)['id']
+              : null)
+          .whereType<num>()
+          .map((id) => id.toInt())
+          .toSet();
+      if (activeIds.contains(ekskul.id)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Kamu sudah terdaftar di ekskul ini.'),
+            ),
+          );
+        }
+        return;
+      }
+      if (pendingIds.contains(ekskul.id)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Pendaftaran kamu sedang menunggu persetujuan ketua.'),
+            ),
+          );
+        }
+        return;
+      }
+
+      final rejectedList = listOf(katalog, 'rejected_pendaftarans');
+      final rejected = rejectedList.firstWhere(
+        (item) {
+          final e = item['ekskul'] is Map
+              ? (item['ekskul'] as Map)['id']
+              : null;
+          return e != null && (e as num).toInt() == ekskul.id;
+        },
+        orElse: () => <String, dynamic>{},
+      );
+      final rejectedId = rejected['id'];
+      if (rejectedId != null) {
+        setState(() => _loading = true);
+        final client = ref.read(apiClientProvider);
+        try {
+          try {
+            await client.put('/siswa/pendaftaran/$rejectedId',
+                data: {'alasan': alasan, 'status': 'pending'});
+          } catch (_) {
+            try {
+              await client.patch('/siswa/pendaftaran/$rejectedId',
+                  data: {'alasan': alasan, 'status': 'pending'});
+            } catch (_) {
+              try {
+                await client.post('/siswa/daftar-ekskul/$rejectedId/ulang',
+                    data: {'alasan': alasan});
+              } catch (_) {
+                try {
+                  await client.post('/siswa/pendaftaran/ulang',
+                      data: {'pendaftaran_id': rejectedId, 'alasan': alasan});
+                } catch (_) {
+                  await client.post('/siswa/pendaftaran/reapply',
+                      data: {'pendaftaran_id': rejectedId, 'alasan': alasan});
+                }
+              }
+            }
+          }
+          ref.invalidate(katalogProvider);
+          ref.invalidate(siswaDashboardProvider);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                    'Pendaftaran ulang terkirim. Menunggu konfirmasi ketua ekskul.'),
+              ),
+            );
+            Navigator.of(context).pop();
+          }
+          return;
+        } catch (e) {
+          if (mounted) setState(() => _loading = false);
+          rethrow;
+        }
+      }
+
+      final allPendaftarans = listOf(katalog, 'pendaftarans');
+      final existing = allPendaftarans.firstWhere(
+        (item) {
+          final e = item['ekskul'] is Map
+              ? (item['ekskul'] as Map)['id']
+              : null;
+          return e != null && (e as num).toInt() == ekskul.id;
+        },
+        orElse: () => <String, dynamic>{},
+      );
+      final existingId = existing['id'];
+      if (existingId != null) {
+        final st = (existing['status'] as String? ?? '').toLowerCase();
+        if (st == 'ditolak' || st == 'rejected') {
+          setState(() => _loading = true);
+          final client = ref.read(apiClientProvider);
+          try {
+            try {
+              await client.put('/siswa/pendaftaran/$existingId',
+                  data: {'alasan': alasan, 'status': 'pending'});
+            } catch (_) {
+              try {
+                await client.patch('/siswa/pendaftaran/$existingId',
+                    data: {'alasan': alasan, 'status': 'pending'});
+              } catch (_) {
+                try {
+                  await client.post('/siswa/pendaftaran/ulang',
+                      data: {'pendaftaran_id': existingId, 'alasan': alasan});
+                } catch (_) {
+                  await client.post('/siswa/pendaftaran/reapply',
+                      data: {'pendaftaran_id': existingId, 'alasan': alasan});
+                }
+              }
+            }
+            ref.invalidate(katalogProvider);
+            ref.invalidate(siswaDashboardProvider);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text(
+                      'Pendaftaran ulang terkirim. Menunggu konfirmasi ketua ekskul.'),
+                ),
+              );
+              Navigator.of(context).pop();
+            }
+            return;
+          } catch (e) {
+            if (mounted) setState(() => _loading = false);
+            rethrow;
+          }
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(st == 'pending'
+                  ? 'Pendaftaran kamu sedang menunggu persetujuan ketua.'
+                  : 'Kamu sudah terdaftar di ekskul ini.'),
+            ),
+          );
+        }
+        return;
+      }
+    } catch (_) {}
 
     setState(() => _loading = true);
     try {
@@ -110,6 +277,21 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _loading = false);
+        final msg = e.toString();
+        if (msg.contains('Duplicate entry') ||
+            msg.contains('1062') ||
+            msg.contains('pendaftarans_siswa_ekskul_unique')) {
+          ref.invalidate(katalogProvider);
+          ref.invalidate(siswaDashboardProvider);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Kamu sudah pernah mendaftar di ekskul ini. Silakan cek status pendaftaran di beranda/aktivitas.',
+              ),
+            ),
+          );
+          return;
+        }
         await showErrorDialog(context, ref, e);
       }
     }
@@ -117,35 +299,55 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
 
   Future<String?> _showAlasanDialog() {
     final controller = TextEditingController();
+    String? errorText;
     return showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Alasan Bergabung',
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(
+            'Alasan Bergabung',
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: controller,
+                maxLines: 3,
+                maxLength: 1000,
+                onChanged: (_) {
+                  if (errorText != null) {
+                    setDialogState(() => errorText = null);
+                  }
+                },
+                decoration: InputDecoration(
+                  hintText: 'Ceritakan alasanmu ingin bergabung...',
+                  errorText: errorText,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final text = controller.text.trim();
+                if (text.isEmpty) {
+                  setDialogState(() {
+                    errorText = 'Alasan bergabung wajib diisi.';
+                  });
+                  return;
+                }
+                Navigator.of(context).pop(text);
+              },
+              child: const Text('Daftar'),
+            ),
+          ],
         ),
-        content: TextField(
-          controller: controller,
-          maxLines: 3,
-          maxLength: 1000,
-          decoration: const InputDecoration(
-            hintText: 'Ceritakan alasanmu ingin bergabung...',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final text = controller.text.trim();
-              if (text.isEmpty) return;
-              Navigator.of(context).pop(text);
-            },
-            child: const Text('Daftar'),
-          ),
-        ],
       ),
     );
   }
@@ -403,6 +605,21 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
                         : null;
                     if (id != null) pendingIds.add(id.toInt());
                   }
+                  final allPendaftaransBottom = listOf(data, 'pendaftarans');
+                  for (final item in allPendaftaransBottom) {
+                    if (item['ekskul'] is Map) {
+                      final id = (item['ekskul'] as Map)['id'];
+                      if (id is num) {
+                        final st = (item['status'] as String? ?? '').toLowerCase();
+                        final iid = id.toInt();
+                        if (st == 'diterima' || st == 'aktif' || st == 'approved' || st == 'accept') {
+                          activeIds.add(iid);
+                        } else if (st == 'pending' || st == 'menunggu' || st == 'waiting') {
+                          pendingIds.add(iid);
+                        }
+                      }
+                    }
+                  }
                   final sudahAktif = activeIds.contains(ekskul.id);
                   final sudahPending = pendingIds.contains(ekskul.id);
                   final profilLengkap = data['profile_complete'] == true;
@@ -411,8 +628,23 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
                           data['alasan_per_ekskul'] as Map,
                         )
                       : const <String, dynamic>{};
-                  final registrationBlockReason = reasons[ekskul.id.toString()]
-                      ?.toString();
+                  final rejectedRegistrations = listOf(
+                    data,
+                    'rejected_pendaftarans',
+                  );
+                  final rejectedIds = rejectedRegistrations
+                      .map(
+                        (item) => item['ekskul'] is Map
+                            ? (item['ekskul'] as Map)['id']
+                            : null,
+                      )
+                      .whereType<num>()
+                      .map((id) => id.toInt())
+                      .toSet();
+                  final isRejected = rejectedIds.contains(ekskul.id);
+                  final registrationBlockReason = isRejected
+                      ? null
+                      : reasons[ekskul.id.toString()]?.toString();
                   if (sudahAktif || sudahPending) {
                     return SizedBox(
                       width: double.infinity,

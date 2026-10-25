@@ -57,13 +57,39 @@ class NotifikasiScreen extends ConsumerWidget {
                     );
                     if (confirmed != true || !context.mounted) return;
                     try {
-                      await ref
-                          .read(apiClientProvider)
-                          .post(
-                            isKetua
-                                ? '/ketua/notifikasi/delete-all'
-                                : '/siswa/notifikasi/delete-all',
-                          );
+                      final client = ref.read(apiClientProvider);
+                      if (isKetua) {
+                        try {
+                          await client.delete('/ketua/notifikasi');
+                        } catch (_) {
+                          try {
+                            await client.delete('/ketua/notifikasi/all');
+                          } catch (_) {
+                            try {
+                              await client.delete('/ketua/notifikasi/delete-all');
+                            } catch (_) {
+                              await client.post('/ketua/notifikasi/delete-all');
+                            }
+                          }
+                        }
+                      } else {
+                        try {
+                          await client.delete('/siswa/notifikasi');
+                        } catch (_) {
+                          try {
+                            await client.delete('/siswa/notifikasi/all');
+                          } catch (_) {
+                            try {
+                              await client.delete('/siswa/notifikasi/delete-all');
+                            } catch (e) {
+                              if (context.mounted) {
+                                await showErrorDialog(context, ref, e);
+                              }
+                              return;
+                            }
+                          }
+                        }
+                      }
                       ref.invalidate(notifikasiProvider);
                       ref.invalidate(siswaDashboardProvider);
                       if (isKetua) ref.invalidate(ketuaDashboardProvider);
@@ -84,9 +110,32 @@ class NotifikasiScreen extends ConsumerWidget {
                   ),
                   onPressed: () async {
                     try {
-                      await ref
-                          .read(apiClientProvider)
-                          .post('/siswa/notifikasi/read-all');
+                      final client = ref.read(apiClientProvider);
+                      if (isKetua) {
+                        try {
+                          await client.post('/ketua/notifikasi/read-all');
+                        } catch (_) {
+                          try {
+                            await client.put('/ketua/notifikasi/read-all');
+                          } catch (_) {
+                            await client.patch('/ketua/notifikasi/read-all');
+                          }
+                        }
+                      } else {
+                        try {
+                          await client.post('/siswa/notifikasi/read-all');
+                        } catch (_) {
+                          try {
+                            await client.put('/siswa/notifikasi/read-all');
+                          } catch (_) {
+                            try {
+                              await client.patch('/siswa/notifikasi/read-all');
+                            } catch (_) {
+                              await client.post('/siswa/notifikasi/read');
+                            }
+                          }
+                        }
+                      }
                       ref.invalidate(notifikasiProvider);
                       ref.invalidate(siswaDashboardProvider);
                       if (isKetua) ref.invalidate(ketuaDashboardProvider);
@@ -173,13 +222,20 @@ class NotifikasiScreen extends ConsumerWidget {
     if (confirmed != true || !context.mounted) return;
 
     try {
-      await ref
-          .read(apiClientProvider)
-          .delete(
-            isKetua
-                ? '/ketua/notifikasi/${notification.id}'
-                : '/siswa/notifikasi/${notification.id}',
-          );
+      final client = ref.read(apiClientProvider);
+      if (isKetua) {
+        try {
+          await client.delete('/ketua/notifikasi/${notification.id}');
+        } catch (_) {
+          await client.post('/ketua/notifikasi/${notification.id}/delete');
+        }
+      } else {
+        try {
+          await client.delete('/siswa/notifikasi/${notification.id}');
+        } catch (_) {
+          await client.post('/siswa/notifikasi/${notification.id}/delete');
+        }
+      }
       ref.invalidate(notifikasiProvider);
       ref.invalidate(siswaDashboardProvider);
       if (isKetua) ref.invalidate(ketuaDashboardProvider);

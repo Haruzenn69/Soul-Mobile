@@ -74,20 +74,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: compact
                               ? Row(
                                   children: [
-                                    Container(
-                                      width: 42,
-                                      height: 42,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withValues(
-                                          alpha: 0.14,
+                                        Container(
+                                          width: 42,
+                                          height: 42,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(12),
+                                            child: Image.asset(
+                                              'assets/images/logo-light.png',
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, _, _) => const Icon(
+                                                Icons.shield_moon_rounded,
+                                                color: AppTheme.blue,
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Icon(
-                                        Icons.shield_moon_rounded,
-                                        color: Colors.white,
-                                      ),
-                                    ),
                                     const SizedBox(width: 10),
                                     Text(
                                       AppConfig.appName,
@@ -123,16 +128,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                           width: 46,
                                           height: 46,
                                           decoration: BoxDecoration(
-                                            color: Colors.white.withValues(
-                                              alpha: 0.14,
-                                            ),
+                                            color: Colors.white,
                                             borderRadius: BorderRadius.circular(
                                               12,
                                             ),
                                           ),
-                                          child: const Icon(
-                                            Icons.shield_moon_rounded,
-                                            color: Colors.white,
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(12),
+                                            child: Image.asset(
+                                              'assets/images/logo-light.png',
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, _, _) => const Icon(
+                                                Icons.shield_moon_rounded,
+                                                color: AppTheme.blue,
+                                              ),
+                                            ),
                                           ),
                                         ),
                                         const SizedBox(width: 12),

@@ -187,9 +187,7 @@ class BerandaSiswa extends ConsumerWidget {
                                 Expanded(
                                   child: StatCard(
                                     label: 'Status Ekskul',
-                                    value: isJoined
-                                        ? '${activeEkskuls.length} Aktif'
-                                        : 'Belum',
+                                    value: isJoined ? 'Aktif' : 'Belum',
                                     icon: Icons.groups_2_outlined,
                                     color: isJoined
                                         ? const Color(0xFF15803D)
@@ -199,10 +197,11 @@ class BerandaSiswa extends ConsumerWidget {
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: StatCard(
-                                    label: 'Kehadiran',
-                                    value: '$hadir',
-                                    icon: Icons.fact_check_outlined,
-                                    color: const Color(0xFFB45309),
+                                    label: 'Persentase Kehadiran',
+                                    value:
+                                        '${(data['persentase_kehadiran'] as num?)?.toStringAsFixed(0) ?? '0'}%',
+                                    icon: Icons.pie_chart_outline_rounded,
+                                    color: AppTheme.blue,
                                   ),
                                 ),
                               ],
@@ -212,20 +211,19 @@ class BerandaSiswa extends ConsumerWidget {
                               children: [
                                 Expanded(
                                   child: StatCard(
-                                    label: 'Kegiatan',
-                                    value: '${upcoming.length}',
-                                    icon: Icons.event_available_outlined,
-                                    color: AppTheme.blue,
+                                    label: 'Kehadiran',
+                                    value: '$hadir',
+                                    icon: Icons.fact_check_outlined,
+                                    color: const Color(0xFF15803D),
                                   ),
                                 ),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: StatCard(
-                                    label: 'Peringatan',
-                                    value:
-                                        '${(data['warning_count'] as num?)?.toInt() ?? (data['is_warned'] == true ? 1 : 0)}',
-                                    icon: Icons.warning_amber_rounded,
-                                    color: const Color(0xFFE11D48),
+                                    label: 'Kegiatan',
+                                    value: '${upcoming.length}',
+                                    icon: Icons.event_available_outlined,
+                                    color: const Color(0xFF1E5AA8),
                                   ),
                                 ),
                               ],
@@ -502,7 +500,9 @@ class _Hero extends StatelessWidget {
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
-                        isJoined ? 'Aktif dalam Ekstrakurikuler' : 'Belum Bergabung Ekskul',
+                        isJoined
+                            ? 'Aktif dalam Ekstrakurikuler'
+                            : 'Belum Bergabung Ekskul',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.plusJakartaSans(

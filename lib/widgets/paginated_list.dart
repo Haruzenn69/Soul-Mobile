@@ -46,20 +46,22 @@ class _PaginatedListState<T> extends State<PaginatedList<T>> {
 
   void _reset() {
     if (widget.items.isEmpty) {
-      setState(() => _visible = 0);
+      _visible = 0;
       return;
     }
-    setState(() {
-      _visible = widget.pageSize;
-      if (_visible > widget.items.length) _visible = widget.items.length;
-    });
+    _visible = widget.pageSize;
+    if (_visible > widget.items.length) {
+      _visible = widget.items.length;
+    }
   }
 
   void _loadMore() {
     if (_visible >= widget.items.length) return;
     setState(() {
       _visible += widget.pageSize;
-      if (_visible > widget.items.length) _visible = widget.items.length;
+      if (_visible > widget.items.length) {
+        _visible = widget.items.length;
+      }
     });
   }
 
@@ -73,21 +75,20 @@ class _PaginatedListState<T> extends State<PaginatedList<T>> {
     final hasMore = _visible < widget.items.length;
 
     if (widget.separatorBuilder != null) {
-      return Column(
-        children: [
-          Expanded(
-            child: ListView.separated(
-              physics: widget.physics,
-              padding: widget.padding,
-              itemCount: data.length,
-              separatorBuilder: widget.separatorBuilder!,
-              itemBuilder: (context, index) =>
-                  widget.itemBuilder(context, data[index], index),
-            ),
-          ),
-          if (hasMore)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      return ListView.separated(
+        physics: widget.physics ?? const AlwaysScrollableScrollPhysics(),
+        padding: widget.padding,
+        itemCount: data.length + (hasMore ? 1 : 0),
+        separatorBuilder: (context, index) {
+          if (hasMore && index >= data.length - 1) {
+            return const SizedBox.shrink();
+          }
+          return widget.separatorBuilder!(context, index);
+        },
+        itemBuilder: (context, index) {
+          if (hasMore && index == data.length) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: Center(
                 child: OutlinedButton.icon(
                   onPressed: _loadMore,
@@ -95,25 +96,21 @@ class _PaginatedListState<T> extends State<PaginatedList<T>> {
                   label: Text(widget.loadMoreLabel),
                 ),
               ),
-            ),
-        ],
+            );
+          }
+          return widget.itemBuilder(context, data[index], index);
+        },
       );
     }
 
-    return Column(
-      children: [
-        Expanded(
-          child: ListView.builder(
-            physics: widget.physics,
-            padding: widget.padding,
-            itemCount: data.length,
-            itemBuilder: (context, index) =>
-                widget.itemBuilder(context, data[index], index),
-          ),
-        ),
-        if (hasMore)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+    return ListView.builder(
+      physics: widget.physics ?? const AlwaysScrollableScrollPhysics(),
+      padding: widget.padding,
+      itemCount: data.length + (hasMore ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (hasMore && index == data.length) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
             child: Center(
               child: OutlinedButton.icon(
                 onPressed: _loadMore,
@@ -121,8 +118,10 @@ class _PaginatedListState<T> extends State<PaginatedList<T>> {
                 label: Text(widget.loadMoreLabel),
               ),
             ),
-          ),
-      ],
+          );
+        }
+        return widget.itemBuilder(context, data[index], index);
+      },
     );
   }
 }

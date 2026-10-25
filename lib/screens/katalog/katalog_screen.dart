@@ -7,6 +7,7 @@ import '../../data/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/paginated_list.dart';
 import 'ekskul_detail_screen.dart';
 
 const _kategoriEkskul = [
@@ -168,15 +169,23 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
       );
     }
 
-    return ListView.builder(
+    return PaginatedList<Map<String, dynamic>>(
+      items: [
+        ...pending.map((e) => {'_type': 'pending', 'data': e}),
+        ...pendaftaran.map((e) => {'_type': 'pendaftaran', 'data': e}),
+        ...filteredByCategory.map((e) => {'_type': 'ekskul', 'data': e}),
+      ],
+      pageSize: 10,
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-      itemCount: itemCount,
-      itemBuilder: (context, index) {
-        var i = index;
-        if (i < pending.length) {
-          final item = pending[i];
-          final club = item['ekskul'] is Map
-              ? (item['ekskul'] as Map)['nama_ekskul']?.toString()
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (context, item, index) {
+        final type = item['_type']?.toString();
+        final raw = item['data'] is Map
+            ? Map<String, dynamic>.from(item['data'] as Map)
+            : <String, dynamic>{};
+        if (type == 'pending') {
+          final club = raw['ekskul'] is Map
+              ? (raw['ekskul'] as Map)['nama_ekskul']?.toString()
               : null;
           return _InfoBanner(
             color: AppTheme.warningSurface(context),
@@ -189,14 +198,12 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
             text:
                 'Pendaftaran kamu ke ${club ?? 'ekskul'} masih menunggu persetujuan ketua.',
             textColor: AppTheme.warningText(context),
-            onTap: () => _openDetail(context, item),
+            onTap: () => _openDetail(context, raw),
           );
         }
-        i -= pending.length;
-        if (i < pendaftaran.length) {
-          final item = pendaftaran[i];
-          final club = item['ekskul'] is Map
-              ? (item['ekskul'] as Map)['nama_ekskul']?.toString()
+        if (type == 'pendaftaran') {
+          final club = raw['ekskul'] is Map
+              ? (raw['ekskul'] as Map)['nama_ekskul']?.toString()
               : null;
           return _InfoBanner(
             color: AppTheme.successSurface(context),
@@ -208,21 +215,13 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
             ),
             text: 'Kamu sudah aktif di ${club ?? 'ekskul'}.',
             textColor: AppTheme.successText(context),
-            onTap: () => _openDetail(context, item),
+            onTap: () => _openDetail(context, raw),
           );
         }
-        i -= pendaftaran.length;
-        if (i < filteredByCategory.length) {
-          final raw = filteredByCategory[i];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: _EkskulCard(
-              ekskul: Ekskul.fromJson(raw),
-              onTap: () => _openDetail(context, raw),
-            ),
-          );
-        }
-        return const SizedBox.shrink();
+        return _EkskulCard(
+          ekskul: Ekskul.fromJson(raw),
+          onTap: () => _openDetail(context, raw),
+        );
       },
     );
   }

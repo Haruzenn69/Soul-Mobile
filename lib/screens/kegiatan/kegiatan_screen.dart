@@ -14,7 +14,7 @@ import '../../data/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
-import '../../widgets/paginated_list.dart';
+
 import '../laporan/laporan_create_screen.dart';
 import '../laporan/laporan_screen.dart';
 import 'kegiatan_detail_screen.dart';
@@ -503,18 +503,18 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                                               ? Icons.event_note_outlined
                                               : Icons.search_off_rounded,
                                         )
-                                      : PaginatedList<Map<String, dynamic>>(
-                                          items: filtered,
-                                          pageSize: 10,
+                                      : ListView.separated(
                                           padding: const EdgeInsets.fromLTRB(
                                             16,
                                             4,
                                             16,
                                             16,
                                           ),
+                                          itemCount: filtered.length,
                                           separatorBuilder: (_, _) =>
                                               const SizedBox(height: 10),
-                                          itemBuilder: (context, raw, i) {
+                                          itemBuilder: (context, i) {
+                                            final raw = filtered[i];
                                             final k = Kegiatan.fromJson(raw);
                                             return _KegiatanCard(
                                               kegiatan: k,

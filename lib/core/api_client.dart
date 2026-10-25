@@ -167,8 +167,42 @@ class ApiClient {
     return _unwrap(await _guard(() => _dio.post(path, data: form)));
   }
 
-  Future<Map<String, dynamic>> delete(String path) async {
-    return _unwrap(await _guard(() => _dio.delete(path)));
+  Future<Map<String, dynamic>> put(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? query,
+  }) async {
+    return _unwrap(
+      await _guard(
+        () => _dio.put(
+          path,
+          data: data,
+          queryParameters: query,
+          options: _noContentAsNullOptions,
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> patch(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? query,
+  }) async {
+    return _unwrap(
+      await _guard(
+        () => _dio.patch(
+          path,
+          data: data,
+          queryParameters: query,
+          options: _noContentAsNullOptions,
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> delete(String path, {Object? data}) async {
+    return _unwrap(await _guard(() => _dio.delete(path, data: data)));
   }
 
   Future<Response<dynamic>> _guard(
