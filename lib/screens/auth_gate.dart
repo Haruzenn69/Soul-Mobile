@@ -18,8 +18,12 @@ class AuthGate extends ConsumerWidget {
 
     if (state.status == AuthStatus.unauthenticated) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) return;
         final navigator = Navigator.of(context);
-        if (navigator.mounted) navigator.popUntil((route) => route.isFirst);
+        if (!navigator.mounted) return;
+        try {
+          navigator.popUntil((route) => route.isFirst);
+        } catch (_) {}
       });
     }
 
@@ -85,7 +89,8 @@ class _ProfileCompletionPromptState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_promptShown || !widget.user.needsProfileCompletion) return;
+    if (_promptShown) return;
+    if (!widget.user.needsProfileCompletion) return;
     _promptShown = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _showProfilePrompt();
@@ -93,6 +98,7 @@ class _ProfileCompletionPromptState
   }
 
   Future<void> _showProfilePrompt() async {
+    if (!widget.user.needsProfileCompletion) return;
     final completeProfile = await showDialog<bool>(
       context: context,
       barrierDismissible: true,

@@ -29,7 +29,8 @@ class AppConfig {
   static String imageUrl(String? url) {
     if (url == null || url.isEmpty) return '';
     if (url.startsWith('http://localhost') ||
-        url.startsWith('http://127.0.0.1')) {
+        url.startsWith('http://127.0.0.1') ||
+        url.startsWith('http://10.0.2.2')) {
       final u = Uri.parse(url);
       final baseUri = Uri.parse(apiBaseUrl);
       final replaced = u.replace(
@@ -44,6 +45,19 @@ class AppConfig {
           ? apiBaseUrl.substring(0, apiBaseUrl.length - 4)
           : apiBaseUrl;
       return url.startsWith('/') ? '$cleanBase$url' : '$cleanBase/$url';
+    }
+    final uri = Uri.tryParse(url);
+    if (uri != null && uri.scheme == 'http') {
+      if (_isLocalHost(uri.host)) {
+        final baseUri = Uri.parse(apiBaseUrl);
+        final replaced = uri.replace(
+          scheme: baseUri.scheme,
+          host: baseUri.host,
+          port: baseUri.port,
+        );
+        return replaced.toString();
+      }
+      throw StateError('Remote HTTP image URLs are not allowed.');
     }
     return url;
   }

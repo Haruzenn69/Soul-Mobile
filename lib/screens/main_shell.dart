@@ -69,8 +69,6 @@ class _ShellScaffoldState extends ConsumerState<_ShellScaffold> {
       return tab;
     });
     return Scaffold(
-      extendBody: true,
-      extendBodyBehindAppBar: true,
       body: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -88,16 +86,38 @@ class _ShellScaffoldState extends ConsumerState<_ShellScaffold> {
         ),
         child: IndexedStack(index: safeIndex, children: tabChildren),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: safeIndex,
-        onDestinationSelected: (i) =>
-            ref.read(shellTabProvider.notifier).set(i),
-        destinations: [
-          for (final tab in widget.tabs)
-            NavigationDestination(icon: Icon(tab.icon), label: tab.label),
-        ],
+      bottomNavigationBar: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          border: Border(
+            top: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+        ),
+        child: NavigationBar(
+          selectedIndex: safeIndex,
+          onDestinationSelected: (i) =>
+              ref.read(shellTabProvider.notifier).set(i),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          indicatorColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          destinations: [
+            for (final tab in widget.tabs)
+              NavigationDestination(
+                icon: Icon(
+                  tab.icon,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                selectedIcon: Icon(
+                  tab.icon,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                label: tab.label,
+              ),
+          ],
+        ),
       ),
-      floatingActionButton: null,
     );
   }
 }

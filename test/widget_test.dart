@@ -23,7 +23,6 @@ import 'package:soul/screens/notifikasi/notifikasi_screen.dart';
 import 'package:soul/screens/profil/profil_screen.dart';
 import 'package:soul/theme/app_theme.dart';
 import 'package:soul/theme/theme_controller.dart';
-import 'package:soul/widgets/floating_pill_nav.dart';
 import 'package:soul/widgets/common.dart';
 
 class _TestAuthController extends AuthController {
@@ -427,9 +426,10 @@ void main() {
     await tester.tap(find.text('Nanti saja'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
+    await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.text('Lengkapi data diri'), findsNothing);
-    expect(find.byType(FloatingPillNav), findsOneWidget);
+    expect(tester.widgetList(find.byType(NavigationBar)).isNotEmpty, true);
     expect(tester.takeException(), isNull);
   });
 

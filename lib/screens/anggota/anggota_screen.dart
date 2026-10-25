@@ -7,6 +7,7 @@ import '../../data/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
+import '../../widgets/paginated_list.dart';
 
 class AnggotaScreen extends ConsumerWidget {
   const AnggotaScreen({
@@ -150,13 +151,14 @@ class _AnggotaListState extends ConsumerState<_AnggotaList> {
                           ),
                         ],
                       )
-                    : ListView.separated(
+                    : PaginatedList<Map<String, dynamic>>(
+                        items: filtered,
+                        pageSize: 25,
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        itemCount: filtered.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 8),
-                        itemBuilder: (context, i) {
-                          final p = Pendaftaran.fromJson(filtered[i]);
+                        itemBuilder: (context, raw, i) {
+                          final p = Pendaftaran.fromJson(raw);
                           return _AnggotaTile(
                             pendaftaran: p,
                             isSelf: p.siswaRaw?['id'] == widget.user.siswa?.id,
@@ -266,29 +268,21 @@ class _AnggotaTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    pendaftaran.siswaNama ?? 'Anggota',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.text(context),
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    pendaftaran.tanggalDaftar ?? 'Tanggal tidak tersedia',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.mutedText(context),
-                      fontSize: 10.5,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
                   Row(
                     children: [
+                      Flexible(
+                        child: Text(
+                          pendaftaran.siswaNama ?? 'Anggota',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.plusJakartaSans(
+                            color: AppTheme.text(context),
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
                       StatusChip(pendaftaran.statusLabel),
                       if (isSelf) ...[
                         const SizedBox(width: 6),
@@ -312,6 +306,16 @@ class _AnggotaTile extends StatelessWidget {
                         ),
                       ],
                     ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    pendaftaran.tanggalDaftar ?? 'Tanggal tidak tersedia',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.mutedText(context),
+                      fontSize: 10.5,
+                    ),
                   ),
                 ],
               ),
@@ -410,13 +414,13 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                           ),
                         ],
                       )
-                    : ListView.separated(
+                    : PaginatedList<Map<String, dynamic>>(
+                        items: filtered,
+                        pageSize: 25,
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        itemCount: filtered.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 8),
-                        itemBuilder: (context, i) {
-                          final raw = filtered[i];
+                        itemBuilder: (context, raw, i) {
                           final p = Pendaftaran.fromJson(raw);
                           final status = raw['status']?.toString() ?? 'pending';
                           return Container(
@@ -443,13 +447,26 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            p.siswaNama ?? 'Pendaftar Baru',
-                                            style: GoogleFonts.plusJakartaSans(
-                                              color: AppTheme.text(context),
-                                              fontSize: 13.5,
-                                              fontWeight: FontWeight.w800,
-                                            ),
+                                          Row(
+                                            children: [
+                                              Flexible(
+                                                child: Text(
+                                                  p.siswaNama ??
+                                                      'Pendaftar Baru',
+                                                  style:
+                                                      GoogleFonts.plusJakartaSans(
+                                                        color: AppTheme.text(
+                                                          context,
+                                                        ),
+                                                        fontSize: 13.5,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                      ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              StatusChip(_statusLabel(status)),
+                                            ],
                                           ),
                                           const SizedBox(height: 2),
                                           Text(
@@ -635,13 +652,13 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
                           ),
                         ],
                       )
-                    : ListView.separated(
+                    : PaginatedList<Map<String, dynamic>>(
+                        items: filtered,
+                        pageSize: 25,
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        itemCount: filtered.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 8),
-                        itemBuilder: (context, i) {
-                          final p = filtered[i];
+                        itemBuilder: (context, p, i) {
                           return Container(
                             padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
@@ -666,13 +683,29 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            _studentName(p) ?? '-',
-                                            style: GoogleFonts.plusJakartaSans(
-                                              color: AppTheme.text(context),
-                                              fontSize: 13.5,
-                                              fontWeight: FontWeight.w800,
-                                            ),
+                                          Row(
+                                            children: [
+                                              Flexible(
+                                                child: Text(
+                                                  _studentName(p) ?? '-',
+                                                  style:
+                                                      GoogleFonts.plusJakartaSans(
+                                                        color: AppTheme.text(
+                                                          context,
+                                                        ),
+                                                        fontSize: 13.5,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                      ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              StatusChip(
+                                                _statusLabel(
+                                                  p['status']?.toString(),
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                           const SizedBox(height: 2),
                                           Text(

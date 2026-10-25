@@ -24,9 +24,10 @@ class KetuaMenuScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final profileData = ref.watch(ketuaProfilEkskulProvider).asData?.value;
     final rawEkskul = profileData?['ekskul'];
-    final ekskul = rawEkskul is Map
+    final apiEkskul = rawEkskul is Map
         ? Ekskul.fromJson(Map<String, dynamic>.from(rawEkskul))
-        : user.aktivEkskul;
+        : null;
+    final ekskul = user.aktivEkskul ?? apiEkskul;
 
     return SafeArea(
       child: ListView(
@@ -103,16 +104,19 @@ class KetuaMenuScreen extends ConsumerWidget {
   }
 }
 
-class _IdentityCard extends StatelessWidget {
+class _IdentityCard extends ConsumerWidget {
   const _IdentityCard({required this.user, required this.ekskul});
 
   final AuthUser user;
   final Ekskul? ekskul;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileData = ref.watch(ketuaProfilEkskulProvider).asData?.value;
     final ekskulName = ekskul?.namaEkskul ?? 'Ekstrakurikuler';
     final cover = ekskul?.cover?.trim();
+    final apiCover = (profileData?['ekskul'] as Map?)?['cover']?.toString().trim();
+    final effectiveCover = (cover?.isNotEmpty == true) ? cover : apiCover;
     return Container(
       key: const ValueKey('ketua-menu-identity-card'),
       clipBehavior: Clip.antiAlias,
@@ -130,12 +134,12 @@ class _IdentityCard extends StatelessWidget {
       child: Stack(
         key: const ValueKey('ketua-menu-identity-background'),
         children: [
-          if (cover?.isNotEmpty == true)
+          if (effectiveCover?.isNotEmpty == true)
             Positioned.fill(
               child: ImageFiltered(
                 imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                 child: Image.network(
-                  AppConfig.imageUrl(cover),
+                  AppConfig.imageUrl(effectiveCover),
                   fit: BoxFit.cover,
                   errorBuilder: (_, _, _) => const SizedBox.shrink(),
                 ),

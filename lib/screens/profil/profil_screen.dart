@@ -290,8 +290,29 @@ class ProfilScreen extends ConsumerWidget {
                   subtitle: 'Keluar dari aplikasi.',
                   color: const Color(0xFFE11D48),
                   iconBackground: AppTheme.dangerSurface(context),
-                  onTap: () =>
-                      ref.read(authControllerProvider.notifier).logout(),
+                  onTap: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Keluar?'),
+                        content: const Text(
+                          'Kamu akan keluar dari aplikasi dan kembali ke halaman login.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(false),
+                            child: const Text('Batal'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.of(ctx).pop(true),
+                            child: const Text('Keluar'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed != true || !context.mounted) return;
+                    await ref.read(authControllerProvider.notifier).logout();
+                  },
                 ),
               ],
             ),
