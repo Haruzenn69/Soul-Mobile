@@ -39,22 +39,75 @@ class LaporanScreen extends ConsumerWidget {
   }
 }
 
-class LaporanContent extends ConsumerWidget {
+class LaporanContent extends ConsumerStatefulWidget {
   const LaporanContent({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<LaporanContent> createState() => _LaporanContentState();
+}
+
+class _LaporanContentState extends ConsumerState<LaporanContent> {
+  String _statusFilter = 'semua';
+
+  @override
+  Widget build(BuildContext context) {
     final laporan = ref.watch(ketuaLaporanProvider);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Row(
+            children: [
+              ChoiceChip(
+                label: const Text('Semua'),
+                selected: _statusFilter == 'semua',
+                onSelected: (_) => setState(() => _statusFilter = 'semua'),
+              ),
+              const SizedBox(width: 6),
+              ChoiceChip(
+                label: const Text('Pending'),
+                selected: _statusFilter == 'pending',
+                onSelected: (_) => setState(() => _statusFilter = 'pending'),
+              ),
+              const SizedBox(width: 6),
+              ChoiceChip(
+                label: const Text('Diterima'),
+                selected: _statusFilter == 'diterima',
+                onSelected: (_) => setState(() => _statusFilter = 'diterima'),
+              ),
+              const SizedBox(width: 6),
+              ChoiceChip(
+                label: const Text('Draft'),
+                selected: _statusFilter == 'draft',
+                onSelected: (_) => setState(() => _statusFilter = 'draft'),
+              ),
+              const SizedBox(width: 6),
+              ChoiceChip(
+                label: const Text('Ditolak'),
+                selected: _statusFilter == 'ditolak',
+                onSelected: (_) => setState(() => _statusFilter = 'ditolak'),
+              ),
+            ],
+          ),
+        ),
         Expanded(
           child: ApiAsyncView(
             value: laporan,
             onRetry: () => ref.invalidate(ketuaLaporanProvider),
             builder: (context, data) {
-              final items = listOf(data, 'laporans');
+              final allItems = listOf(data, 'laporans');
+              final items = allItems.where((item) {
+                final st = (item['status'] ?? '').toString().toLowerCase();
+                if (_statusFilter == 'semua') return true;
+                if (_statusFilter == 'pending') return st == 'pending' || st == 'menunggu' || st == 'diserahkan';
+                if (_statusFilter == 'diterima') return st == 'diterima' || st == 'disetujui';
+                if (_statusFilter == 'draft') return st == 'draft';
+                if (_statusFilter == 'ditolak') return st == 'ditolak';
+                return true;
+              }).toList();
+
               if (items.isEmpty) {
                 return const EmptyState(
                   title: 'Belum ada laporan',

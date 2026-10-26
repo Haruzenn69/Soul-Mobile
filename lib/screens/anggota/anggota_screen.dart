@@ -23,7 +23,7 @@ class AnggotaScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tabCount = isKetua ? 2 : 3;
+    const tabCount = 3;
     return DefaultTabController(
       length: tabCount,
       initialIndex: initialTab.clamp(0, tabCount - 1),
@@ -33,7 +33,7 @@ class AnggotaScreen extends ConsumerWidget {
           children: [
             const PageHeader(
               title: 'Anggota',
-              subtitle: 'Kelola anggota dan tinjau pendaftaran siswa.',
+              subtitle: 'Kelola anggota, pendaftaran, dan pengajuan keluar siswa.',
               eyebrow: 'PENGELOLAAN EKSKUL',
               topPadding: 25,
             ),
@@ -69,10 +69,10 @@ class AnggotaScreen extends ConsumerWidget {
                     fontWeight: FontWeight.w600,
                     fontSize: 11,
                   ),
-                  tabs: [
+                  tabs: const [
                     Tab(height: 30, text: 'Anggota'),
                     Tab(height: 30, text: 'Pendaftaran'),
-                    if (!isKetua) Tab(height: 30, text: 'Pengajuan'),
+                    Tab(height: 30, text: 'Pengajuan'),
                   ],
                 ),
               ),
@@ -81,8 +81,8 @@ class AnggotaScreen extends ConsumerWidget {
               child: TabBarView(
                 children: [
                   _AnggotaList(user: user),
-                  _PendaftaranList(),
-                  if (!isKetua) _PengajuanList(),
+                  const _PendaftaranList(),
+                  const _PengajuanList(),
                 ],
               ),
             ),
@@ -104,6 +104,8 @@ class _AnggotaList extends ConsumerStatefulWidget {
 
 class _AnggotaListState extends ConsumerState<_AnggotaList> {
   String _query = '';
+  String _status = 'aktif';
+  String _arsip = 'tanpa';
 
   @override
   Widget build(BuildContext context) {
@@ -114,15 +116,131 @@ class _AnggotaListState extends ConsumerState<_AnggotaList> {
       onRetry: () => ref.invalidate(ketuaAnggotaProvider),
       builder: (context, d) {
         final items = listOf(d, 'anggotas');
-        final filtered = _filterByStudentName(items, _query, (item) {
+        final filteredByStatus = items.where((item) {
+          final p = Pendaftaran.fromJson(item);
+          final st = p.status.toLowerCase();
+          if (_status == 'semua') return true;
+          if (_status == 'aktif') return st == 'diterima' || st == 'aktif';
+          if (_status == 'peringatan') return st == 'peringatan';
+          if (_status == 'nonaktif') return st == 'nonaktif';
+          if (_status == 'keluar') return st == 'keluar';
+          return true;
+        }).toList();
+
+        final filteredByArsip = filteredByStatus.where((item) {
+          final p = Pendaftaran.fromJson(item);
+          final isArsip = p.status == 'keluar' || p.status == 'nonaktif' || (p.siswaRaw != null && p.siswaRaw!['is_arsip'] == true);
+          if (_arsip == 'arsip') return isArsip;
+          return !isArsip;
+        }).toList();
+
+        final filtered = _filterByStudentName(filteredByArsip, _query, (item) {
           final p = Pendaftaran.fromJson(item);
           return p.siswaNama;
         });
+
         return Column(
           children: [
             NameSearchField(
               hint: 'Cari nama anggota...',
               onChanged: (value) => setState(() => _query = value),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    PopupMenuButton<String>(
+                      initialValue: _status,
+                      onSelected: (val) => setState(() => _status = val),
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(value: 'aktif', child: Text('Aktif')),
+                        const PopupMenuItem(value: 'peringatan', child: Text('Peringatan')),
+                        const PopupMenuItem(value: 'nonaktif', child: Text('Nonaktif')),
+                        const PopupMenuItem(value: 'keluar', child: Text('Keluar')),
+                        const PopupMenuItem(value: 'semua', child: Text('Semua Status')),
+                      ],
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface(context),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: AppTheme.outline(context)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.filter_list_rounded, size: 16, color: AppTheme.blue),
+                            const SizedBox(width: 6),
+                            Text('Status: ${_status[0].toUpperCase()}${_status.substring(1)}',
+                                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.arrow_drop_down, size: 18),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    PopupMenuButton<String>(
+                      initialValue: _arsip,
+                      onSelected: (val) => setState(() => _arsip = val),
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(value: 'tanpa', child: Text('Tanpa Arsip')),
+                        const PopupMenuItem(value: 'arsip', child: Text('Arsip')),
+                      ],
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface(context),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: AppTheme.outline(context)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.archive_outlined, size: 16, color: AppTheme.blue),
+                            const SizedBox(width: 6),
+                            Text('Arsip: ${_arsip == 'tanpa' ? 'Tanpa Arsip' : 'Arsip'}',
+                                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.arrow_drop_down, size: 18),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (_status != 'semua' && _status != 'aktif') ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: AppTheme.blue,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          'Status: ${_status[0].toUpperCase()}${_status.substring(1)}',
+                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ],
+                    if (_arsip == 'arsip') ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: AppTheme.blue,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          'Arsip',
+                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
             ListCountLabel(count: filtered.length, label: 'anggota'),
             Expanded(

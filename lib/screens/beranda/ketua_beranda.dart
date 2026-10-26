@@ -10,6 +10,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
 import '../anggota/anggota_screen.dart';
 import '../faq/ketua_faq_screen.dart';
+import '../laporan/laporan_screen.dart';
 import '../kegiatan/kegiatan_screen.dart';
 import '../testimoni/testimoni_manage_screen.dart';
 
@@ -115,10 +116,13 @@ class BerandaKetua extends ConsumerWidget {
                         _QuickActions(
                           onMembers: () =>
                               ref.read(shellTabProvider.notifier).set(1),
-                          onApplications: () =>
-                              _openKetuaMembers(context, user, 1),
                           onActivities: () =>
                               ref.read(shellTabProvider.notifier).set(2),
+                          onLaporan: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => LaporanScreen(user: user),
+                            ),
+                          ),
                         ),
                       ],
                     );
@@ -1031,13 +1035,13 @@ class _PriorityTile extends StatelessWidget {
 class _QuickActions extends StatelessWidget {
   const _QuickActions({
     required this.onMembers,
-    required this.onApplications,
     required this.onActivities,
+    required this.onLaporan,
   });
 
   final VoidCallback onMembers;
-  final VoidCallback onApplications;
   final VoidCallback onActivities;
+  final VoidCallback onLaporan;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -1056,17 +1060,17 @@ class _QuickActions extends StatelessWidget {
             ),
             const Divider(height: 1, indent: 60),
             _QuickActionTile(
-              icon: Icons.assignment_outlined,
-              title: 'Pendaftaran',
-              subtitle: 'Tinjau pendaftar baru',
-              onTap: onApplications,
-            ),
-            const Divider(height: 1, indent: 60),
-            _QuickActionTile(
               icon: Icons.event_outlined,
               title: 'Kegiatan',
               subtitle: 'Kelola agenda ekskul',
               onTap: onActivities,
+            ),
+            const Divider(height: 1, indent: 60),
+            _QuickActionTile(
+              icon: Icons.description_outlined,
+              title: 'Laporan Bulanan',
+              subtitle: 'Kelola laporan kegiatan',
+              onTap: onLaporan,
             ),
           ],
         ),

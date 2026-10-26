@@ -73,27 +73,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                           child: compact
                               ? Row(
-                                  children: [
-                                        Container(
-                                          width: 42,
-                                          height: 42,
-                                          decoration: BoxDecoration(
+                                    children: [
+                                      SizedBox(
+                                        width: 38,
+                                        height: 38,
+                                        child: Image.asset(
+                                          'assets/images/logo-light.png',
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (_, _, _) => const Icon(
+                                            Icons.shield_moon_rounded,
                                             color: Colors.white,
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(12),
-                                            child: Image.asset(
-                                              'assets/images/logo-light.png',
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (_, _, _) => const Icon(
-                                                Icons.shield_moon_rounded,
-                                                color: AppTheme.blue,
-                                              ),
-                                            ),
                                           ),
                                         ),
-                                    const SizedBox(width: 10),
+                                      ),
+                                      const SizedBox(width: 10),
                                     Text(
                                       AppConfig.appName,
                                       style: GoogleFonts.plusJakartaSans(
@@ -122,30 +115,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               : Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      children: [
-                                        Container(
-                                          width: 46,
-                                          height: 46,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(12),
+                                      Row(
+                                        children: [
+                                          SizedBox(
+                                            width: 44,
+                                            height: 44,
                                             child: Image.asset(
                                               'assets/images/logo-light.png',
-                                              fit: BoxFit.cover,
+                                              fit: BoxFit.contain,
                                               errorBuilder: (_, _, _) => const Icon(
                                                 Icons.shield_moon_rounded,
-                                                color: AppTheme.blue,
+                                                color: Colors.white,
                                               ),
                                             ),
                                           ),
-                                        ),
-                                        const SizedBox(width: 12),
+                                          const SizedBox(width: 12),
                                         Text(
                                           AppConfig.appName,
                                           style: GoogleFonts.plusJakartaSans(

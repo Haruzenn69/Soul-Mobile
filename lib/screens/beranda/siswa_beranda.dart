@@ -557,22 +557,22 @@ class _Hero extends StatelessWidget {
                     onPressed: onCatalog,
                   );
                   if (constraints.maxWidth < 300) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        primaryAction,
-                        const SizedBox(height: 8),
-                        secondaryAction,
-                      ],
-                    );
-                  }
-                  return Row(
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(child: primaryAction),
-                      const SizedBox(width: 8),
-                      Expanded(child: secondaryAction),
+                      primaryAction,
+                      const SizedBox(height: 10),
+                      secondaryAction,
                     ],
                   );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: primaryAction),
+                    const SizedBox(width: 10),
+                    Expanded(child: secondaryAction),
+                  ],
+                );
                 },
               ),
             ],
@@ -1417,12 +1417,15 @@ class _StudentFeedbackState extends ConsumerState<_StudentFeedback> {
             ],
             const SizedBox(height: 12),
             if (!widget.hasSubmittedTestimoni)
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: _sending ? null : () => _send(question: false),
-                  icon: const Icon(Icons.rate_review_outlined, size: 18),
-                  label: const Text('Kirim testimoni'),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _sending ? null : () => _send(question: false),
+                    icon: const Icon(Icons.rate_review_outlined, size: 18),
+                    label: const Text('Kirim testimoni'),
+                  ),
                 ),
               ),
             SizedBox(
@@ -1459,37 +1462,52 @@ class _QuickAccess extends StatelessWidget {
     children: [
       const SectionTitle('Akses Cepat'),
       const SizedBox(height: 8),
-      Card(
-        child: Column(
-          children: [
-            _QuickAccessTile(
-              icon: Icons.fact_check_outlined,
-              title: 'Presensi',
-              subtitle: 'Lihat riwayat kehadiran',
-              onTap: onPresensi,
-            ),
-            const Divider(height: 1, indent: 56),
-            _QuickAccessTile(
-              icon: Icons.analytics_outlined,
-              title: 'Rekap Kehadiran',
-              subtitle: 'Ringkasan per bulan',
-              onTap: onRekap,
-            ),
-            const Divider(height: 1, indent: 56),
-            _QuickAccessTile(
-              icon: Icons.workspace_premium_outlined,
-              title: 'Nilai',
-              subtitle: 'Hasil penilaian periodik',
-              onTap: onNilai,
-            ),
-            const Divider(height: 1, indent: 56),
-            _QuickAccessTile(
-              icon: Icons.explore_outlined,
-              title: 'Ekskul',
-              subtitle: 'Jelajahi katalog ekskul',
-              onTap: onEkskul,
-            ),
-          ],
+      Material(
+        color: AppTheme.surface(context),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.outline(context)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x060F172A),
+                blurRadius: 10,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              _QuickAccessTile(
+                icon: Icons.fact_check_outlined,
+                title: 'Presensi',
+                subtitle: 'Lihat riwayat kehadiran',
+                onTap: onPresensi,
+              ),
+              Divider(height: 1, color: AppTheme.outline(context), indent: 56),
+              _QuickAccessTile(
+                icon: Icons.analytics_outlined,
+                title: 'Rekap Kehadiran',
+                subtitle: 'Ringkasan per bulan',
+                onTap: onRekap,
+              ),
+              Divider(height: 1, color: AppTheme.outline(context), indent: 56),
+              _QuickAccessTile(
+                icon: Icons.workspace_premium_outlined,
+                title: 'Nilai',
+                subtitle: 'Hasil penilaian periodik',
+                onTap: onNilai,
+              ),
+              Divider(height: 1, color: AppTheme.outline(context), indent: 56),
+              _QuickAccessTile(
+                icon: Icons.explore_outlined,
+                title: 'Ekskul',
+                subtitle: 'Jelajahi katalog ekskul',
+                onTap: onEkskul,
+              ),
+            ],
+          ),
         ),
       ),
     ],

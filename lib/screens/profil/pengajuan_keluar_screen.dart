@@ -61,44 +61,7 @@ class _PengajuanKeluarScreenState extends ConsumerState<PengajuanKeluarScreen> {
                     ref.read(selectedSiswaEkskulProvider.notifier).select(id),
               ),
               if (ekskul != null) ...[
-                SectionTitle('Ekskul Aktif'),
                 const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surface(context),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppTheme.outline(context)),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppTheme.blue.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.explore_outlined,
-                          color: AppTheme.blue,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          ekskul['nama_ekskul'] as String? ?? '-',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: AppTheme.text(context),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 18),
                 SectionTitle('Form Pengajuan'),
                 const SizedBox(height: 8),
                 Container(

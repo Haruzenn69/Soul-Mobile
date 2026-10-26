@@ -65,11 +65,7 @@ class NotifikasiScreen extends ConsumerWidget {
                           try {
                             await client.delete('/ketua/notifikasi/all');
                           } catch (_) {
-                            try {
-                              await client.delete('/ketua/notifikasi/delete-all');
-                            } catch (_) {
-                              await client.post('/ketua/notifikasi/delete-all');
-                            }
+                            await client.delete('/ketua/notifikasi/delete-all');
                           }
                         }
                       } else {
@@ -79,14 +75,7 @@ class NotifikasiScreen extends ConsumerWidget {
                           try {
                             await client.delete('/siswa/notifikasi/all');
                           } catch (_) {
-                            try {
-                              await client.delete('/siswa/notifikasi/delete-all');
-                            } catch (e) {
-                              if (context.mounted) {
-                                await showErrorDialog(context, ref, e);
-                              }
-                              return;
-                            }
+                            await client.delete('/siswa/notifikasi/delete-all');
                           }
                         }
                       }

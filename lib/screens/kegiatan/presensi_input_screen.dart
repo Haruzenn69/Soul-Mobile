@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/providers.dart';
 import '../../data/providers.dart';
@@ -66,12 +67,88 @@ class _PresensiInputScreenState extends ConsumerState<PresensiInputScreen> {
       final a = _jsonMap(rawAnggota);
       final id = (a['id'] as num?)?.toInt();
       if (id != null && !_statuses.containsKey(id)) {
-        _statuses[id] = 'hadir';
+        _statuses[id] = 'alpha';
       }
     }
     _initialized = true;
   }
 
+  Future<void> _scanOrUploadQr() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+    );
+    if (picked == null) return;
+    try {
+      await picked.readAsBytes();
+      if (!mounted) return;
+      final nisInput = await showDialog<String>(
+        context: context,
+        builder: (context) {
+          final ctrl = TextEditingController();
+          return AlertDialog(
+            title: const Text('Scan/Input NIS Siswa'),
+            content: TextField(
+              controller: ctrl,
+              autofocus: true,
+              keyboardType: TextInputType.text,
+              decoration: const InputDecoration(
+                labelText: 'NIS / Kode Kartu Pelajar',
+                hintText: 'Contoh: 12345 atau NIS siswa',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Batal'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, ctrl.text.trim()),
+                child: const Text('Proses Hadir'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (nisInput == null || nisInput.isEmpty) return;
+
+      bool found = false;
+      for (final rawAnggota in _members) {
+        final a = _jsonMap(rawAnggota);
+        final p = Pendaftaran.fromJson(a);
+        final siswaNis = (p.siswaRaw?['nis'] ?? p.siswaRaw?['nisn'])?.toString() ?? '';
+        final pId = (a['id'] as num?)?.toInt();
+        if (pId != null && (siswaNis == nisInput || p.siswaNama?.toLowerCase().contains(nisInput.toLowerCase()) == true)) {
+          setState(() {
+            _statuses[pId] = 'hadir';
+          });
+          found = true;
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Siswa ${p.siswaNama} ($siswaNis) ditandai HADIR.')),
+            );
+          }
+          break;
+        }
+      }
+
+      if (!found && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Siswa dengan NIS/Identitas tersebut tidak ditemukan dalam anggota ekskul.'),
+            backgroundColor: Color(0xFFE11D48),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memproses QR: $e')),
+        );
+      }
+    }
+  }
   Future<void> _simpan() async {
     setState(() => _saving = true);
     try {
@@ -256,6 +333,23 @@ class _PresensiInputScreenState extends ConsumerState<PresensiInputScreen> {
                         ),
                         controller: _searchController,
                       ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _scanOrUploadQr,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppTheme.blue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          icon: const Icon(Icons.qr_code_scanner_rounded),
+                          label: const Text('Scan / Upload QR Kartu Pelajar (Hadir)'),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -354,7 +448,10 @@ class _AnggotaPresensiTileState extends State<_AnggotaPresensiTile> {
   void didUpdateWidget(covariant _AnggotaPresensiTile oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.markAllRevision != widget.markAllRevision) {
-      _selectedStatus = 'hadir';
+      _selectedStatus = widget.selectedStatus;
+    }
+    if (oldWidget.selectedStatus != widget.selectedStatus) {
+      _selectedStatus = widget.selectedStatus;
     }
   }
 

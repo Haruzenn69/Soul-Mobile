@@ -202,7 +202,27 @@ class ApiClient {
   }
 
   Future<Map<String, dynamic>> delete(String path, {Object? data}) async {
-    return _unwrap(await _guard(() => _dio.delete(path, data: data)));
+    try {
+      return _unwrap(await _guard(() => _dio.delete(path, data: data)));
+    } on ApiException catch (e) {
+      if (e.statusCode == 405 || e.message.contains('not supported') || e.message.contains('No query results')) {
+        final cleanPath = path.replaceAll('/delete-all', '').replaceAll('/all', '');
+        try {
+          return _unwrap(await _guard(() => _dio.delete('$cleanPath/clear')));
+        } catch (_) {
+          try {
+            return _unwrap(await _guard(() => _dio.post('$cleanPath/clear')));
+          } catch (_) {
+            try {
+              return _unwrap(await _guard(() => _dio.post(cleanPath, data: {'_method': 'DELETE'})));
+            } catch (_) {
+              rethrow;
+            }
+          }
+        }
+      }
+      rethrow;
+    }
   }
 
   Future<Response<dynamic>> _guard(

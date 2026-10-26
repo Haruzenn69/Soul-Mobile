@@ -37,6 +37,7 @@ class KegiatanScreen extends ConsumerStatefulWidget {
 class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
     with SingleTickerProviderStateMixin {
   String _cari = '';
+  String _jenisFilter = 'semua';
   final _searchController = TextEditingController();
   late final TabController _tabController;
 
@@ -417,8 +418,32 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                       Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+                        child: Row(
+                          children: [
+                            ChoiceChip(
+                              label: const Text('Semua'),
+                              selected: _jenisFilter == 'semua',
+                              onSelected: (_) => setState(() => _jenisFilter = 'semua'),
+                            ),
+                            const SizedBox(width: 8),
+                            ChoiceChip(
+                              label: const Text('Rutin'),
+                              selected: _jenisFilter == 'rutin',
+                              onSelected: (_) => setState(() => _jenisFilter = 'rutin'),
+                            ),
+                            const SizedBox(width: 8),
+                            ChoiceChip(
+                              label: const Text('Event'),
+                              selected: _jenisFilter == 'event',
+                              onSelected: (_) => setState(() => _jenisFilter = 'event'),
+                            ),
+                          ],
+                        ),
+                      ),
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+                        padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
                         child: TextField(
                           controller: _searchController,
                           onChanged: (v) =>
@@ -448,9 +473,17 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                           onRetry: () => ref.invalidate(ketuaKegiatanProvider),
                           builder: (context, data) {
                             final all = listOf(data, 'kegiatans');
+                            final filteredByType = all.where((k) {
+                              final jenis = (k['jenis_kegiatan'] ?? k['jenis'] ?? '').toString().toLowerCase();
+                              final isEvent = k['is_event'] == true || jenis == 'event' || jenis == 'lomba';
+                              if (_jenisFilter == 'event') return isEvent;
+                              if (_jenisFilter == 'rutin') return !isEvent;
+                              return true;
+                            }).toList();
+
                             final filtered = _cari.isEmpty
-                                ? all
-                                : all
+                                ? filteredByType
+                                : filteredByType
                                       .where(
                                         (k) => (k['materi'] as String? ?? '')
                                             .toLowerCase()
