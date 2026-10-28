@@ -106,6 +106,7 @@ class _AnggotaListState extends ConsumerState<_AnggotaList> {
   String _query = '';
   String _status = 'aktif';
   String _arsip = 'tanpa';
+  bool _isAscending = true;
 
   @override
   Widget build(BuildContext context) {
@@ -139,6 +140,13 @@ class _AnggotaListState extends ConsumerState<_AnggotaList> {
           return p.siswaNama;
         });
 
+        final sorted = [...filtered];
+        sorted.sort((a, b) {
+          final nameA = Pendaftaran.fromJson(a).siswaNama ?? '';
+          final nameB = Pendaftaran.fromJson(b).siswaNama ?? '';
+          return _isAscending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
+        });
+
         return Column(
           children: [
             NameSearchField(
@@ -146,103 +154,138 @@ class _AnggotaListState extends ConsumerState<_AnggotaList> {
               onChanged: (value) => setState(() => _query = value),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    PopupMenuButton<String>(
-                      initialValue: _status,
-                      onSelected: (val) => setState(() => _status = val),
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(value: 'aktif', child: Text('Aktif')),
-                        const PopupMenuItem(value: 'peringatan', child: Text('Peringatan')),
-                        const PopupMenuItem(value: 'nonaktif', child: Text('Nonaktif')),
-                        const PopupMenuItem(value: 'keluar', child: Text('Keluar')),
-                        const PopupMenuItem(value: 'semua', child: Text('Semua Status')),
-                      ],
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface(context),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: AppTheme.outline(context)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.filter_list_rounded, size: 16, color: AppTheme.blue),
-                            const SizedBox(width: 6),
-                            Text('Status: ${_status[0].toUpperCase()}${_status.substring(1)}',
-                                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
-                            const SizedBox(width: 4),
-                            const Icon(Icons.arrow_drop_down, size: 18),
-                          ],
-                        ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          PopupMenuButton<String>(
+                            onSelected: (val) => setState(() => _status = val),
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(value: 'aktif', child: Text('Aktif')),
+                              const PopupMenuItem(value: 'peringatan', child: Text('Peringatan')),
+                              const PopupMenuItem(value: 'nonaktif', child: Text('Nonaktif')),
+                              const PopupMenuItem(value: 'keluar', child: Text('Keluar')),
+                              const PopupMenuItem(value: 'semua', child: Text('Semua Status')),
+                            ],
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.surface(context),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: AppTheme.outline(context)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.filter_list_rounded, size: 16, color: AppTheme.blue),
+                                  const SizedBox(width: 6),
+                                  Text('Status',
+                                      style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.arrow_drop_down, size: 18),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          PopupMenuButton<String>(
+                            onSelected: (val) => setState(() => _arsip = val),
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(value: 'tanpa', child: Text('Tanpa Arsip')),
+                              const PopupMenuItem(value: 'arsip', child: Text('Arsip')),
+                            ],
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.surface(context),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: AppTheme.outline(context)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.archive_outlined, size: 16, color: AppTheme.blue),
+                                  const SizedBox(width: 6),
+                                  Text('Arsip',
+                                      style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.arrow_drop_down, size: 18),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: AppTheme.blue,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              _status[0].toUpperCase() + _status.substring(1),
+                              style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: AppTheme.blue,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              _arsip == 'tanpa' ? 'Tanpa Arsip' : 'Arsip',
+                              style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    PopupMenuButton<String>(
-                      initialValue: _arsip,
-                      onSelected: (val) => setState(() => _arsip = val),
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(value: 'tanpa', child: Text('Tanpa Arsip')),
-                        const PopupMenuItem(value: 'arsip', child: Text('Arsip')),
-                      ],
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface(context),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: AppTheme.outline(context)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.archive_outlined, size: 16, color: AppTheme.blue),
-                            const SizedBox(width: 6),
-                            Text('Arsip: ${_arsip == 'tanpa' ? 'Tanpa Arsip' : 'Arsip'}',
-                                style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
-                            const SizedBox(width: 4),
-                            const Icon(Icons.arrow_drop_down, size: 18),
-                          ],
+                  ),
+                  const SizedBox(width: 8),
+            Tooltip(
+              message: _isAscending ? 'Urutkan A-Z (Klik untuk Z-A)' : 'Urutkan Z-A (Klik untuk A-Z)',
+              child: InkWell(
+                onTap: () => setState(() => _isAscending = !_isAscending),
+                borderRadius: BorderRadius.circular(999),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surface(context),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: AppTheme.outline(context)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _isAscending ? 'A-Z' : 'Z-A',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: AppTheme.blue,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                    ),
-                    if (_status != 'semua' && _status != 'aktif') ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: AppTheme.blue,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          'Status: ${_status[0].toUpperCase()}${_status.substring(1)}',
-                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
-                        ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        _isAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                        size: 14,
+                        color: AppTheme.blue,
                       ),
                     ],
-                    if (_arsip == 'arsip') ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: AppTheme.blue,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          'Arsip',
-                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
               ),
             ),
-            ListCountLabel(count: filtered.length, label: 'anggota'),
+                ],
+              ),
+            ),
+            ListCountLabel(count: sorted.length, label: 'anggota'),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: () async {
@@ -251,7 +294,7 @@ class _AnggotaListState extends ConsumerState<_AnggotaList> {
                     await ref.read(ketuaAnggotaProvider.future);
                   } catch (_) {}
                 },
-                child: filtered.isEmpty
+                child: sorted.isEmpty
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.only(top: 24),
@@ -270,7 +313,7 @@ class _AnggotaListState extends ConsumerState<_AnggotaList> {
                         ],
                       )
                     : PaginatedList<Map<String, dynamic>>(
-                        items: filtered,
+                        items: sorted,
                         pageSize: 25,
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -467,6 +510,7 @@ class _PendaftaranList extends ConsumerStatefulWidget {
 class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
   String _query = '';
   String _status = 'semua';
+  bool _isAscending = true;
 
   @override
   Widget build(BuildContext context) {
@@ -480,28 +524,117 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
         final filtered = _filterByStudentName(items, _query, (item) {
           return Pendaftaran.fromJson(item).siswaNama;
         });
+        final sorted = [...filtered];
+        sorted.sort((a, b) {
+          final nameA = Pendaftaran.fromJson(a).siswaNama ?? '';
+          final nameB = Pendaftaran.fromJson(b).siswaNama ?? '';
+          return _isAscending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
+        });
         return Column(
           children: [
             NameSearchField(
               hint: 'Cari nama pendaftar...',
               onChanged: (value) => setState(() => _query = value),
             ),
-            StatusFilterChips(
-              items: [
-                StatusFilter('semua', 'Semua', _int(d['total'])),
-                StatusFilter('pending', 'Menunggu', _int(d['pending_count'])),
-                StatusFilter(
-                  'diterima',
-                  'Disetujui',
-                  _int(d['diterima_count']),
-                ),
-                StatusFilter('ditolak', 'Ditolak', _int(d['ditolak_count'])),
-              ],
-              selected: _status,
-              onSelected: (value) => setState(() => _status = value),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          PopupMenuButton<String>(
+                            onSelected: (value) => setState(() => _status = value),
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(value: 'semua', child: Text('Semua Status')),
+                              const PopupMenuItem(value: 'pending', child: Text('Menunggu')),
+                              const PopupMenuItem(value: 'diterima', child: Text('Disetujui')),
+                              const PopupMenuItem(value: 'ditolak', child: Text('Ditolak')),
+                            ],
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.surface(context),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: AppTheme.outline(context)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.filter_list_rounded, size: 16, color: AppTheme.blue),
+                                  const SizedBox(width: 6),
+                                  Text('Status',
+                                      style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.arrow_drop_down, size: 18),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: AppTheme.blue,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              switch (_status) {
+                                'pending' => 'Menunggu',
+                                'diterima' => 'Disetujui',
+                                'ditolak' => 'Ditolak',
+                                _ => 'Semua',
+                              },
+                              style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Tooltip(
+                    message: _isAscending ? 'Urutkan A-Z (Klik untuk Z-A)' : 'Urutkan Z-A (Klik untuk A-Z)',
+                    child: InkWell(
+                      onTap: () => setState(() => _isAscending = !_isAscending),
+                      borderRadius: BorderRadius.circular(999),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface(context),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: AppTheme.outline(context)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _isAscending ? 'A-Z' : 'Z-A',
+                              style: GoogleFonts.plusJakartaSans(
+                                color: AppTheme.blue,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              _isAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                              size: 14,
+                              color: AppTheme.blue,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             ListCountLabel(
-              count: filtered.length,
+              count: sorted.length,
               label: _pendaftaranLabel(_status),
             ),
             Expanded(
@@ -512,7 +645,7 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                     await ref.read(ketuaPendaftaranProvider(_status).future);
                   } catch (_) {}
                 },
-                child: filtered.isEmpty
+                child: sorted.isEmpty
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.only(top: 24),
@@ -533,7 +666,7 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                         ],
                       )
                     : PaginatedList<Map<String, dynamic>>(
-                        items: filtered,
+                        items: sorted,
                         pageSize: 25,
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -705,6 +838,7 @@ class _PengajuanList extends ConsumerStatefulWidget {
 class _PengajuanListState extends ConsumerState<_PengajuanList> {
   String _query = '';
   String _status = 'semua';
+  bool _isAscending = true;
 
   @override
   Widget build(BuildContext context) {
@@ -718,28 +852,117 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
         final filtered = _filterByStudentName(items, _query, (item) {
           return _studentName(item);
         });
+        final sorted = [...filtered];
+        sorted.sort((a, b) {
+          final nameA = _studentName(a) ?? '';
+          final nameB = _studentName(b) ?? '';
+          return _isAscending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
+        });
         return Column(
           children: [
             NameSearchField(
               hint: 'Cari nama siswa...',
               onChanged: (value) => setState(() => _query = value),
             ),
-            StatusFilterChips(
-              items: [
-                StatusFilter('semua', 'Semua', _int(d['total'])),
-                StatusFilter('pending', 'Menunggu', _int(d['pending_count'])),
-                StatusFilter(
-                  'diterima',
-                  'Disetujui',
-                  _int(d['diterima_count']),
-                ),
-                StatusFilter('ditolak', 'Ditolak', _int(d['ditolak_count'])),
-              ],
-              selected: _status,
-              onSelected: (value) => setState(() => _status = value),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          PopupMenuButton<String>(
+                            onSelected: (value) => setState(() => _status = value),
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(value: 'semua', child: Text('Semua Status')),
+                              const PopupMenuItem(value: 'pending', child: Text('Menunggu')),
+                              const PopupMenuItem(value: 'diterima', child: Text('Disetujui')),
+                              const PopupMenuItem(value: 'ditolak', child: Text('Ditolak')),
+                            ],
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: AppTheme.surface(context),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: AppTheme.outline(context)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.filter_list_rounded, size: 16, color: AppTheme.blue),
+                                  const SizedBox(width: 6),
+                                  Text('Status',
+                                      style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.arrow_drop_down, size: 18),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: AppTheme.blue,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              switch (_status) {
+                                'pending' => 'Menunggu',
+                                'diterima' => 'Disetujui',
+                                'ditolak' => 'Ditolak',
+                                _ => 'Semua',
+                              },
+                              style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Tooltip(
+                    message: _isAscending ? 'Urutkan A-Z (Klik untuk Z-A)' : 'Urutkan Z-A (Klik untuk A-Z)',
+                    child: InkWell(
+                      onTap: () => setState(() => _isAscending = !_isAscending),
+                      borderRadius: BorderRadius.circular(999),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface(context),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: AppTheme.outline(context)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _isAscending ? 'A-Z' : 'Z-A',
+                              style: GoogleFonts.plusJakartaSans(
+                                color: AppTheme.blue,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              _isAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                              size: 14,
+                              color: AppTheme.blue,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             ListCountLabel(
-              count: filtered.length,
+              count: sorted.length,
               label: _pengajuanLabel(_status),
             ),
             Expanded(
@@ -750,7 +973,7 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
                     await ref.read(ketuaPengajuanProvider(_status).future);
                   } catch (_) {}
                 },
-                child: filtered.isEmpty
+                child: sorted.isEmpty
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.only(top: 24),
@@ -771,7 +994,7 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
                         ],
                       )
                     : PaginatedList<Map<String, dynamic>>(
-                        items: filtered,
+                        items: sorted,
                         pageSize: 25,
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),

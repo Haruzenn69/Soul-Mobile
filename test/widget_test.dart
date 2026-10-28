@@ -1043,7 +1043,7 @@ void main() {
     expect(tabs.labelPadding, EdgeInsets.zero);
     expect(
       find.byWidgetPredicate((widget) => widget is Tab && widget.height == 30),
-      findsNWidgets(2),
+      findsNWidgets(3),
     );
     expect(find.text('Pengajuan'), findsNothing);
 

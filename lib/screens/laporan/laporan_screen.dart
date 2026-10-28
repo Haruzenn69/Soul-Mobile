@@ -48,6 +48,7 @@ class LaporanContent extends ConsumerStatefulWidget {
 
 class _LaporanContentState extends ConsumerState<LaporanContent> {
   String _statusFilter = 'semua';
+  bool _isAscending = true;
 
   @override
   Widget build(BuildContext context) {
@@ -57,37 +58,94 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           child: Row(
             children: [
-              ChoiceChip(
-                label: const Text('Semua'),
-                selected: _statusFilter == 'semua',
-                onSelected: (_) => setState(() => _statusFilter = 'semua'),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      PopupMenuButton<String>(
+                        onSelected: (val) => setState(() => _statusFilter = val),
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(value: 'semua', child: Text('Semua Status')),
+                          const PopupMenuItem(value: 'pending', child: Text('Pending')),
+                          const PopupMenuItem(value: 'diterima', child: Text('Diterima')),
+                          const PopupMenuItem(value: 'draft', child: Text('Draft')),
+                          const PopupMenuItem(value: 'ditolak', child: Text('Ditolak')),
+                        ],
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface(context),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: AppTheme.outline(context)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.filter_list_rounded, size: 16, color: AppTheme.blue),
+                              const SizedBox(width: 6),
+                              Text('Status',
+                                  style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.arrow_drop_down, size: 18),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: AppTheme.blue,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          _statusFilter[0].toUpperCase() + _statusFilter.substring(1),
+                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              const SizedBox(width: 6),
-              ChoiceChip(
-                label: const Text('Pending'),
-                selected: _statusFilter == 'pending',
-                onSelected: (_) => setState(() => _statusFilter = 'pending'),
-              ),
-              const SizedBox(width: 6),
-              ChoiceChip(
-                label: const Text('Diterima'),
-                selected: _statusFilter == 'diterima',
-                onSelected: (_) => setState(() => _statusFilter = 'diterima'),
-              ),
-              const SizedBox(width: 6),
-              ChoiceChip(
-                label: const Text('Draft'),
-                selected: _statusFilter == 'draft',
-                onSelected: (_) => setState(() => _statusFilter = 'draft'),
-              ),
-              const SizedBox(width: 6),
-              ChoiceChip(
-                label: const Text('Ditolak'),
-                selected: _statusFilter == 'ditolak',
-                onSelected: (_) => setState(() => _statusFilter = 'ditolak'),
+              const SizedBox(width: 8),
+              Tooltip(
+                message: _isAscending ? 'Urutkan A-Z (Klik untuk Z-A)' : 'Urutkan Z-A (Klik untuk A-Z)',
+                child: InkWell(
+                  onTap: () => setState(() => _isAscending = !_isAscending),
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface(context),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: AppTheme.outline(context)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _isAscending ? 'A-Z' : 'Z-A',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: AppTheme.blue,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          _isAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                          size: 14,
+                          color: AppTheme.blue,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -98,7 +156,7 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
             onRetry: () => ref.invalidate(ketuaLaporanProvider),
             builder: (context, data) {
               final allItems = listOf(data, 'laporans');
-              final items = allItems.where((item) {
+              final filtered = allItems.where((item) {
                 final st = (item['status'] ?? '').toString().toLowerCase();
                 if (_statusFilter == 'semua') return true;
                 if (_statusFilter == 'pending') return st == 'pending' || st == 'menunggu' || st == 'diserahkan';
@@ -107,6 +165,12 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
                 if (_statusFilter == 'ditolak') return st == 'ditolak';
                 return true;
               }).toList();
+              final items = [...filtered];
+              items.sort((a, b) {
+                final titleA = (a['judul'] ?? a['bulan'] ?? '').toString();
+                final titleB = (b['judul'] ?? b['bulan'] ?? '').toString();
+                return _isAscending ? titleA.compareTo(titleB) : titleB.compareTo(titleA);
+              });
 
               if (items.isEmpty) {
                 return const EmptyState(

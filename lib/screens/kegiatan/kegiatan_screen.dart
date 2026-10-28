@@ -38,6 +38,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
     with SingleTickerProviderStateMixin {
   String _cari = '';
   String _jenisFilter = 'semua';
+  bool _isAscending = true;
   final _searchController = TextEditingController();
   late final TabController _tabController;
 
@@ -419,29 +420,96 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                        Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
-                        child: Row(
-                          children: [
-                            ChoiceChip(
-                              label: const Text('Semua'),
-                              selected: _jenisFilter == 'semua',
-                              onSelected: (_) => setState(() => _jenisFilter = 'semua'),
-                            ),
-                            const SizedBox(width: 8),
-                            ChoiceChip(
-                              label: const Text('Rutin'),
-                              selected: _jenisFilter == 'rutin',
-                              onSelected: (_) => setState(() => _jenisFilter = 'rutin'),
-                            ),
-                            const SizedBox(width: 8),
-                            ChoiceChip(
-                              label: const Text('Event'),
-                              selected: _jenisFilter == 'event',
-                              onSelected: (_) => setState(() => _jenisFilter = 'event'),
-                            ),
-                          ],
-                        ),
-                      ),
+                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                         child: Row(
+                           children: [
+                             Expanded(
+                               child: SingleChildScrollView(
+                                 scrollDirection: Axis.horizontal,
+                                 child: Row(
+                                   mainAxisAlignment: MainAxisAlignment.start,
+                                   children: [
+                                     PopupMenuButton<String>(
+                                       onSelected: (val) => setState(() => _jenisFilter = val),
+                                       itemBuilder: (context) => [
+                                         const PopupMenuItem(value: 'semua', child: Text('Semua Tipe')),
+                                         const PopupMenuItem(value: 'rutin', child: Text('Rutin')),
+                                         const PopupMenuItem(value: 'event', child: Text('Event')),
+                                       ],
+                                       child: Container(
+                                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                         decoration: BoxDecoration(
+                                           color: AppTheme.surface(context),
+                                           borderRadius: BorderRadius.circular(999),
+                                           border: Border.all(color: AppTheme.outline(context)),
+                                         ),
+                                         child: Row(
+                                           mainAxisSize: MainAxisSize.min,
+                                           children: [
+                                             const Icon(Icons.filter_list_rounded, size: 16, color: AppTheme.blue),
+                                             const SizedBox(width: 6),
+                                             Text('Tipe',
+                                                 style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+                                             const SizedBox(width: 4),
+                                             const Icon(Icons.arrow_drop_down, size: 18),
+                                           ],
+                                         ),
+                                       ),
+                                     ),
+                                     const SizedBox(width: 8),
+                                     Container(
+                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                       decoration: BoxDecoration(
+                                         color: AppTheme.blue,
+                                         borderRadius: BorderRadius.circular(999),
+                                       ),
+                                       child: Text(
+                                         _jenisFilter[0].toUpperCase() + _jenisFilter.substring(1),
+                                         style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                                       ),
+                                     ),
+                                   ],
+                                 ),
+                               ),
+                             ),
+                             const SizedBox(width: 8),
+                             Tooltip(
+                               message: _isAscending ? 'Urutkan A-Z (Klik untuk Z-A)' : 'Urutkan Z-A (Klik untuk A-Z)',
+                               child: InkWell(
+                                 onTap: () => setState(() => _isAscending = !_isAscending),
+                                 borderRadius: BorderRadius.circular(999),
+                                 child: Container(
+                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                   decoration: BoxDecoration(
+                                     color: AppTheme.surface(context),
+                                     borderRadius: BorderRadius.circular(999),
+                                     border: Border.all(color: AppTheme.outline(context)),
+                                   ),
+                                   child: Row(
+                                     mainAxisSize: MainAxisSize.min,
+                                     children: [
+                                       Text(
+                                         _isAscending ? 'A-Z' : 'Z-A',
+                                         style: GoogleFonts.plusJakartaSans(
+                                           color: AppTheme.blue,
+                                           fontSize: 11,
+                                           fontWeight: FontWeight.w800,
+                                         ),
+                                       ),
+                                       const SizedBox(width: 4),
+                                       Icon(
+                                         _isAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                                         size: 14,
+                                         color: AppTheme.blue,
+                                       ),
+                                     ],
+                                   ),
+                                 ),
+                               ),
+                             ),
+                           ],
+                         ),
+                       ),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
                         child: TextField(
@@ -490,6 +558,12 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                                             .contains(_cari),
                                       )
                                       .toList();
+                            final sorted = [...filtered];
+                            sorted.sort((a, b) {
+                              final nameA = (a['materi'] ?? '').toString();
+                              final nameB = (b['materi'] ?? '').toString();
+                              return _isAscending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
+                            });
                             return Column(
                               children: [
                                 Padding(
@@ -503,8 +577,8 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                                     children: [
                                       Text(
                                         _cari.isEmpty
-                                            ? '${filtered.length} kegiatan'
-                                            : '${filtered.length} hasil pencarian',
+                                            ? '${sorted.length} kegiatan'
+                                            : '${sorted.length} hasil pencarian',
                                         style: GoogleFonts.plusJakartaSans(
                                           color: AppTheme.mutedText(context),
                                           fontSize: 11,
@@ -524,7 +598,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                                   ),
                                 ),
                                 Expanded(
-                                  child: filtered.isEmpty
+                                  child: sorted.isEmpty
                                       ? EmptyState(
                                           title: _cari.isEmpty
                                               ? 'Belum ada kegiatan'
@@ -543,11 +617,11 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                                             16,
                                             16,
                                           ),
-                                          itemCount: filtered.length,
+                                          itemCount: sorted.length,
                                           separatorBuilder: (_, _) =>
                                               const SizedBox(height: 10),
                                           itemBuilder: (context, i) {
-                                            final raw = filtered[i];
+                                            final raw = sorted[i];
                                             final k = Kegiatan.fromJson(raw);
                                             return _KegiatanCard(
                                               kegiatan: k,
