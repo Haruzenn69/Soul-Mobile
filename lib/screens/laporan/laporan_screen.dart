@@ -49,6 +49,7 @@ class LaporanContent extends ConsumerStatefulWidget {
 class _LaporanContentState extends ConsumerState<LaporanContent> {
   String _statusFilter = 'semua';
   bool _isAscending = true;
+  String _timeSort = 'terbaru';
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +107,39 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
                         child: Text(
                           _statusFilter[0].toUpperCase() + _statusFilter.substring(1),
                           style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      PopupMenuButton<String>(
+                        onSelected: (val) => setState(() => _timeSort = val),
+                        itemBuilder: (context) => const [
+                          PopupMenuItem(value: 'terbaru', child: Text('Terbaru')),
+                          PopupMenuItem(value: 'terlama', child: Text('Terlama')),
+                        ],
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface(context),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: AppTheme.outline(context)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.access_time_rounded, size: 16, color: AppTheme.blue),
+                              const SizedBox(width: 6),
+                              Text(
+                                _timeSort == 'terbaru' ? 'Terbaru' : 'Terlama',
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: AppTheme.blue,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(Icons.arrow_drop_down, size: 18, color: AppTheme.blue),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -167,6 +201,12 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
               }).toList();
               final items = [...filtered];
               items.sort((a, b) {
+                final da = DateTime.tryParse((a['created_at'] ?? a['tanggal'] ?? a['tanggal_buat'] ?? '').toString());
+                final db = DateTime.tryParse((b['created_at'] ?? b['tanggal'] ?? b['tanggal_buat'] ?? '').toString());
+                if (da != null && db != null) {
+                  final cmp = _timeSort == 'terbaru' ? db.compareTo(da) : da.compareTo(db);
+                  if (cmp != 0) return cmp;
+                }
                 final titleA = (a['judul'] ?? a['bulan'] ?? '').toString();
                 final titleB = (b['judul'] ?? b['bulan'] ?? '').toString();
                 return _isAscending ? titleA.compareTo(titleB) : titleB.compareTo(titleA);

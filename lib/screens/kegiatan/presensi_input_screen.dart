@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
+
 
 import '../../core/providers.dart';
 import '../../data/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
+import 'in_app_qr_scanner_screen.dart';
 
 class PresensiInputScreen extends ConsumerStatefulWidget {
   const PresensiInputScreen({
@@ -74,71 +75,84 @@ class _PresensiInputScreenState extends ConsumerState<PresensiInputScreen> {
   }
 
   Future<void> _scanOrUploadQr() async {
-    final picked = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 90,
+    final nisInput = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const InAppQrScannerScreen()),
     );
-    if (picked == null) return;
+    if (!mounted || nisInput == null || nisInput.trim().isEmpty) return;
+    final input = nisInput.trim();
     try {
-      await picked.readAsBytes();
-      if (!mounted) return;
-      final nisInput = await showDialog<String>(
-        context: context,
-        builder: (context) {
-          final ctrl = TextEditingController();
-          return AlertDialog(
-            title: const Text('Scan/Input NIS Siswa'),
-            content: TextField(
-              controller: ctrl,
-              autofocus: true,
-              keyboardType: TextInputType.text,
-              decoration: const InputDecoration(
-                labelText: 'NIS / Kode Kartu Pelajar',
-                hintText: 'Contoh: 12345 atau NIS siswa',
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Batal'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(context, ctrl.text.trim()),
-                child: const Text('Proses Hadir'),
-              ),
-            ],
-          );
-        },
-      );
-
-      if (nisInput == null || nisInput.isEmpty) return;
-
-      bool found = false;
+      Pendaftaran? matchedP;
+      int? matchedId;
+      String matchedNis = '';
       for (final rawAnggota in _members) {
         final a = _jsonMap(rawAnggota);
         final p = Pendaftaran.fromJson(a);
         final siswaNis = (p.siswaRaw?['nis'] ?? p.siswaRaw?['nisn'])?.toString() ?? '';
         final pId = (a['id'] as num?)?.toInt();
-        if (pId != null && (siswaNis == nisInput || p.siswaNama?.toLowerCase().contains(nisInput.toLowerCase()) == true)) {
-          setState(() {
-            _statuses[pId] = 'hadir';
-          });
-          found = true;
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Siswa ${p.siswaNama} ($siswaNis) ditandai HADIR.')),
-            );
-          }
+        if (pId != null && (siswaNis == input || p.siswaNama?.toLowerCase().contains(input.toLowerCase()) == true)) {
+          matchedP = p;
+          matchedId = pId;
+          matchedNis = siswaNis;
           break;
         }
       }
 
-      if (!found && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Siswa dengan NIS/Identitas tersebut tidak ditemukan dalam anggota ekskul.'),
-            backgroundColor: Color(0xFFE11D48),
+      if (matchedId == null || matchedP == null || !mounted) {
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('NIS Tidak Valid'),
+            content: Text('NIS "$input" tidak ditemukan dalam anggota ekskul ini.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Tutup'),
+              ),
+            ],
           ),
+        );
+        return;
+      }
+
+      final kelasRaw = matchedP.siswaRaw?['kelas'];
+      final kelasStr = kelasRaw is Map ? (kelasRaw['nama'] ?? kelasRaw['name'] ?? '-').toString() : (kelasRaw?.toString() ?? '-');
+
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Konfirmasi Kehadiran'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Nama : ${matchedP?.siswaNama ?? '-'}'),
+              const SizedBox(height: 4),
+              Text('NIS   : ${matchedNis.isNotEmpty ? matchedNis : '-'}'),
+              const SizedBox(height: 4),
+              Text('Kelas : $kelasStr'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Tandai Hadir'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm != true || !mounted) return;
+      setState(() {
+        _statuses[matchedId!] = 'hadir';
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${matchedP.siswaNama} ($matchedNis) ditandai HADIR.')),
         );
       }
     } catch (e) {

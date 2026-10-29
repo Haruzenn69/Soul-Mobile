@@ -39,6 +39,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
   String _cari = '';
   String _jenisFilter = 'semua';
   bool _isAscending = true;
+  String _timeSort = 'terbaru';
   final _searchController = TextEditingController();
   late final TabController _tabController;
 
@@ -419,97 +420,130 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                       Padding(
-                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                         child: Row(
-                           children: [
-                             Expanded(
-                               child: SingleChildScrollView(
-                                 scrollDirection: Axis.horizontal,
-                                 child: Row(
-                                   mainAxisAlignment: MainAxisAlignment.start,
-                                   children: [
-                                     PopupMenuButton<String>(
-                                       onSelected: (val) => setState(() => _jenisFilter = val),
-                                       itemBuilder: (context) => [
-                                         const PopupMenuItem(value: 'semua', child: Text('Semua Tipe')),
-                                         const PopupMenuItem(value: 'rutin', child: Text('Rutin')),
-                                         const PopupMenuItem(value: 'event', child: Text('Event')),
-                                       ],
-                                       child: Container(
-                                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                         decoration: BoxDecoration(
-                                           color: AppTheme.surface(context),
-                                           borderRadius: BorderRadius.circular(999),
-                                           border: Border.all(color: AppTheme.outline(context)),
-                                         ),
-                                         child: Row(
-                                           mainAxisSize: MainAxisSize.min,
-                                           children: [
-                                             const Icon(Icons.filter_list_rounded, size: 16, color: AppTheme.blue),
-                                             const SizedBox(width: 6),
-                                             Text('Tipe',
-                                                 style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
-                                             const SizedBox(width: 4),
-                                             const Icon(Icons.arrow_drop_down, size: 18),
-                                           ],
-                                         ),
-                                       ),
-                                     ),
-                                     const SizedBox(width: 8),
-                                     Container(
-                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                                       decoration: BoxDecoration(
-                                         color: AppTheme.blue,
-                                         borderRadius: BorderRadius.circular(999),
-                                       ),
-                                       child: Text(
-                                         _jenisFilter[0].toUpperCase() + _jenisFilter.substring(1),
-                                         style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
-                                       ),
-                                     ),
-                                   ],
-                                 ),
-                               ),
-                             ),
-                             const SizedBox(width: 8),
-                             Tooltip(
-                               message: _isAscending ? 'Urutkan A-Z (Klik untuk Z-A)' : 'Urutkan Z-A (Klik untuk A-Z)',
-                               child: InkWell(
-                                 onTap: () => setState(() => _isAscending = !_isAscending),
-                                 borderRadius: BorderRadius.circular(999),
-                                 child: Container(
-                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                   decoration: BoxDecoration(
-                                     color: AppTheme.surface(context),
-                                     borderRadius: BorderRadius.circular(999),
-                                     border: Border.all(color: AppTheme.outline(context)),
-                                   ),
-                                   child: Row(
-                                     mainAxisSize: MainAxisSize.min,
-                                     children: [
-                                       Text(
-                                         _isAscending ? 'A-Z' : 'Z-A',
-                                         style: GoogleFonts.plusJakartaSans(
-                                           color: AppTheme.blue,
-                                           fontSize: 11,
-                                           fontWeight: FontWeight.w800,
-                                         ),
-                                       ),
-                                       const SizedBox(width: 4),
-                                       Icon(
-                                         _isAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                                         size: 14,
-                                         color: AppTheme.blue,
-                                       ),
-                                     ],
-                                   ),
-                                 ),
-                               ),
-                             ),
-                           ],
-                         ),
-                       ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      PopupMenuButton<String>(
+                                        onSelected: (val) => setState(() => _jenisFilter = val),
+                                        itemBuilder: (context) => [
+                                          const PopupMenuItem(value: 'semua', child: Text('Semua Tipe')),
+                                          const PopupMenuItem(value: 'rutin', child: Text('Rutin')),
+                                          const PopupMenuItem(value: 'event', child: Text('Event')),
+                                        ],
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.surface(context),
+                                            borderRadius: BorderRadius.circular(999),
+                                            border: Border.all(color: AppTheme.outline(context)),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(Icons.filter_list_rounded, size: 16, color: AppTheme.blue),
+                                              const SizedBox(width: 6),
+                                              Text('Tipe',
+                                                  style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+                                              const SizedBox(width: 4),
+                                              const Icon(Icons.arrow_drop_down, size: 18),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.blue,
+                                          borderRadius: BorderRadius.circular(999),
+                                        ),
+                                        child: Text(
+                                          _jenisFilter[0].toUpperCase() + _jenisFilter.substring(1),
+                                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      PopupMenuButton<String>(
+                                        onSelected: (val) => setState(() => _timeSort = val),
+                                        itemBuilder: (context) => const [
+                                          PopupMenuItem(value: 'terbaru', child: Text('Terbaru')),
+                                          PopupMenuItem(value: 'terlama', child: Text('Terlama')),
+                                        ],
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.surface(context),
+                                            borderRadius: BorderRadius.circular(999),
+                                            border: Border.all(color: AppTheme.outline(context)),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(Icons.access_time_rounded, size: 16, color: AppTheme.blue),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                _timeSort == 'terbaru' ? 'Terbaru' : 'Terlama',
+                                                style: GoogleFonts.plusJakartaSans(
+                                                  color: AppTheme.blue,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w800,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              const Icon(Icons.arrow_drop_down, size: 18, color: AppTheme.blue),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Tooltip(
+                                message: _isAscending ? 'Urutkan A-Z (Klik untuk Z-A)' : 'Urutkan Z-A (Klik untuk A-Z)',
+                                child: InkWell(
+                                  onTap: () => setState(() => _isAscending = !_isAscending),
+                                  borderRadius: BorderRadius.circular(999),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.surface(context),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(color: AppTheme.outline(context)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          _isAscending ? 'A-Z' : 'Z-A',
+                                          style: GoogleFonts.plusJakartaSans(
+                                            color: AppTheme.blue,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Icon(
+                                          _isAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                                          size: 14,
+                                          color: AppTheme.blue,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
                         child: TextField(
@@ -560,6 +594,12 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                                       .toList();
                             final sorted = [...filtered];
                             sorted.sort((a, b) {
+                              final da = DateTime.tryParse((a['created_at'] ?? a['tanggal_kegiatan'] ?? a['tanggal'] ?? '').toString());
+                              final db = DateTime.tryParse((b['created_at'] ?? b['tanggal_kegiatan'] ?? b['tanggal'] ?? '').toString());
+                              if (da != null && db != null) {
+                                final cmp = _timeSort == 'terbaru' ? db.compareTo(da) : da.compareTo(db);
+                                if (cmp != 0) return cmp;
+                              }
                               final nameA = (a['materi'] ?? '').toString();
                               final nameB = (b['materi'] ?? '').toString();
                               return _isAscending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
