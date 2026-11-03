@@ -5,8 +5,13 @@ import 'package:flutter/services.dart';
 import 'screens/auth_gate.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
+import 'core/notification_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await NotificationService().init();
+  } catch (_) {}
   ErrorWidget.builder = (details) => Material(
     color: const Color(0xFF7F1D1D),
     child: Center(

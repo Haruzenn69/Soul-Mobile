@@ -28,8 +28,7 @@ const _bulanIndonesia = [
   'Desember',
 ];
 
-String _formatIndonesianDate(DateTime date) =>
-    '${date.day} ${_bulanIndonesia[date.month - 1]} ${date.year}';
+
 
 String _monthAbbreviation(int month) =>
     _bulanIndonesia[month - 1].substring(0, 3).toUpperCase();
@@ -409,18 +408,12 @@ class _Hero extends StatelessWidget {
             top: 10,
             child: Container(
               key: const ValueKey('siswa-dashboard-hero-mark'),
-              width: 50,
-              height: 50,
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
-              ),
-              child: const Icon(
-                Icons.school_rounded,
-                color: Colors.white,
-                size: 24,
+              width: 0,
+              height: 0,
+              padding: EdgeInsets.zero,
+              decoration: const BoxDecoration(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.zero,
               ),
             ),
           ),
@@ -1462,60 +1455,45 @@ class _QuickAccess extends StatelessWidget {
     children: [
       const SectionTitle('Akses Cepat'),
       const SizedBox(height: 8),
-      Material(
-        color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.outline(context)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x060F172A),
-                blurRadius: 10,
-                offset: Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              _QuickAccessTile(
-                icon: Icons.fact_check_outlined,
-                title: 'Presensi',
-                subtitle: 'Lihat riwayat kehadiran',
-                onTap: onPresensi,
-              ),
-              Divider(height: 1, color: AppTheme.outline(context), indent: 56),
-              _QuickAccessTile(
-                icon: Icons.analytics_outlined,
-                title: 'Rekap Kehadiran',
-                subtitle: 'Ringkasan per bulan',
-                onTap: onRekap,
-              ),
-              Divider(height: 1, color: AppTheme.outline(context), indent: 56),
-              _QuickAccessTile(
-                icon: Icons.workspace_premium_outlined,
-                title: 'Nilai',
-                subtitle: 'Hasil penilaian periodik',
-                onTap: onNilai,
-              ),
-              Divider(height: 1, color: AppTheme.outline(context), indent: 56),
-              _QuickAccessTile(
-                icon: Icons.explore_outlined,
-                title: 'Ekskul',
-                subtitle: 'Jelajahi katalog ekskul',
-                onTap: onEkskul,
-              ),
-            ],
-          ),
+      Card(
+        child: Column(
+          children: [
+            _QuickActionTile(
+              icon: Icons.fact_check_outlined,
+              title: 'Presensi',
+              subtitle: 'Lihat riwayat kehadiran',
+              onTap: onPresensi,
+            ),
+            const Divider(height: 1, indent: 60),
+            _QuickActionTile(
+              icon: Icons.analytics_outlined,
+              title: 'Rekap Kehadiran',
+              subtitle: 'Ringkasan per bulan',
+              onTap: onRekap,
+            ),
+            const Divider(height: 1, indent: 60),
+            _QuickActionTile(
+              icon: Icons.workspace_premium_outlined,
+              title: 'Nilai',
+              subtitle: 'Hasil penilaian periodik',
+              onTap: onNilai,
+            ),
+            const Divider(height: 1, indent: 60),
+            _QuickActionTile(
+              icon: Icons.explore_outlined,
+              title: 'Ekskul',
+              subtitle: 'Jelajahi katalog ekskul',
+              onTap: onEkskul,
+            ),
+          ],
         ),
       ),
     ],
   );
 }
 
-class _QuickAccessTile extends StatelessWidget {
-  const _QuickAccessTile({
+class _QuickActionTile extends StatelessWidget {
+  const _QuickActionTile({
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -1528,15 +1506,54 @@ class _QuickAccessTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => ListTile(
-    leading: Icon(icon, color: AppTheme.blue),
-    title: Text(
-      title,
-      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+  Widget build(BuildContext context) => Material(
+    color: Colors.transparent,
+    child: InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppTheme.accentSurface(context),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: AppTheme.accent(context), size: 19),
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.text(context),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.mutedText(context),
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(Icons.chevron_right_rounded, color: AppTheme.mutedText(context), size: 20),
+          ],
+        ),
+      ),
     ),
-    subtitle: Text(subtitle),
-    trailing: Icon(Icons.chevron_right, color: AppTheme.mutedText(context)),
-    onTap: onTap,
   );
 }
 

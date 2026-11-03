@@ -1,6 +1,8 @@
-import 'package:file_picker/file_picker.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 import 'api_client.dart';
+import 'notification_service.dart';
 
 Future<bool> saveApiFile({
   required ApiClient api,
@@ -8,17 +10,23 @@ Future<bool> saveApiFile({
   required String fileName,
   Map<String, dynamic>? query,
 }) async {
-  final extension = fileName.split('.').last;
-  final bytes = await api.getBytes(path, query: query);
-  final saved = await FilePicker.saveFile(
-    dialogTitle: 'Simpan file',
-    fileName: fileName,
-    type: FileType.custom,
-    allowedExtensions: [extension],
-    bytes: bytes,
-    mimeType: extension == 'pdf'
-        ? 'application/pdf'
-        : 'application/octet-stream',
-  );
-  return saved != null;
+  try {
+    final bytes = await api.getBytes(path, query: query);
+    Directory? dir;
+    if (Platform.isAndroid) {
+      dir = Directory('/storage/emulated/0/Download');
+      if (!await dir.exists()) {
+        dir = await getExternalStorageDirectory();
+      }
+    } else {
+      dir = await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
+    }
+    if (dir == null) return false;
+    final file = File('${dir.path}/$fileName');
+    await file.writeAsBytes(bytes);
+    await NotificationService().showDownloadNotification(fileName: fileName);
+    return true;
+  } catch (_) {
+    return false;
+  }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 
 import '../../core/providers.dart';
@@ -75,12 +77,91 @@ class _PresensiInputScreenState extends ConsumerState<PresensiInputScreen> {
   }
 
   Future<void> _scanOrUploadQr() async {
-    final nisInput = await Navigator.push<String>(
-      context,
-      MaterialPageRoute(builder: (_) => const InAppQrScannerScreen()),
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Scan QR Kehadiran',
+                style: GoogleFonts.plusJakartaSans(fontSize: 15, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const Icon(Icons.qr_code_scanner_rounded, color: AppTheme.blue),
+                title: const Text('Scan dengan Kamera'),
+                subtitle: const Text('Buka scanner built-in di aplikasi'),
+                onTap: () => Navigator.pop(context, 'camera'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              ListTile(
+                leading: const Icon(Icons.image_outlined, color: AppTheme.blue),
+                title: const Text('Pilih Gambar QR'),
+                subtitle: const Text('Pindai QR dari gambar di galeri'),
+                onTap: () => Navigator.pop(context, 'gallery'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              const SizedBox(height: 6),
+            ],
+          ),
+        ),
+      ),
     );
-    if (!mounted || nisInput == null || nisInput.trim().isEmpty) return;
-    final input = nisInput.trim();
+
+    if (!mounted || choice == null) return;
+
+    String? input;
+    if (choice == 'camera') {
+      input = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(builder: (_) => const InAppQrScannerScreen()),
+      );
+    } else if (choice == 'gallery') {
+      try {
+        final picked = await ImagePicker().pickImage(
+          source: ImageSource.gallery,
+          imageQuality: 100,
+        );
+        if (picked == null) return;
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Mencoba membaca QR dari gambar...')),
+        );
+        String? code;
+        try {
+          final controller = MobileScannerController();
+          try {
+            final result = await controller.analyzeImage(picked.path);
+            code = result?.barcodes.firstOrNull?.rawValue ?? result?.barcodes.firstOrNull?.displayValue;
+          } finally {
+            controller.dispose();
+          }
+        } catch (_) {}
+        input = code?.trim();
+        if (input == null || input.isEmpty) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Tidak ditemukan QR pada gambar. Coba gambar lain atau pakai scan kamera.')),
+          );
+          return;
+        }
+      } catch (_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal memindai QR dari gambar. Coba lagi.')),
+        );
+        return;
+      }
+    }
+
+    if (!mounted || input == null || input.trim().isEmpty) return;
     try {
       Pendaftaran? matchedP;
       int? matchedId;
@@ -120,29 +201,151 @@ class _PresensiInputScreenState extends ConsumerState<PresensiInputScreen> {
 
       final confirm = await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Konfirmasi Kehadiran'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Nama : ${matchedP?.siswaNama ?? '-'}'),
-              const SizedBox(height: 4),
-              Text('NIS   : ${matchedNis.isNotEmpty ? matchedNis : '-'}'),
-              const SizedBox(height: 4),
-              Text('Kelas : $kelasStr'),
-            ],
+        builder: (context) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: Colors.transparent,
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppTheme.surface(context),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 24,
+                  offset: const Offset(0, 12),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppTheme.blue, AppTheme.blue.withValues(alpha: 0.9)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.verified_rounded, color: Colors.white, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Konfirmasi Kehadiran', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900)),
+                            SizedBox(height: 2),
+                            Text('Pastikan data siswa sudah benar', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.blue.withValues(alpha: 0.04),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppTheme.blue.withValues(alpha: 0.14)),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Icons.person_rounded, size: 18, color: AppTheme.blue),
+                                const SizedBox(width: 10),
+                                const Text('Nama', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w600)),
+                                const Spacer(),
+                                Flexible(
+                                  child: Text(
+                                    matchedP?.siswaNama ?? '-',
+                                    textAlign: TextAlign.right,
+                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 18),
+                            Row(
+                              children: [
+                                const Icon(Icons.badge_outlined, size: 18, color: AppTheme.blue),
+                                const SizedBox(width: 10),
+                                const Text('NIS', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w600)),
+                                const Spacer(),
+                                Text(
+                                  matchedNis.isNotEmpty ? matchedNis : '-',
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                                ),
+                              ],
+                            ),
+                            const Divider(height: 18),
+                            Row(
+                              children: [
+                                const Icon(Icons.class_rounded, size: 18, color: AppTheme.blue),
+                                const SizedBox(width: 10),
+                                const Text('Kelas', style: TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.w600)),
+                                const Spacer(),
+                                Text(
+                                  kelasStr,
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              style: OutlinedButton.styleFrom(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: const Text('Batal'),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: FilledButton.icon(
+                              onPressed: () => Navigator.pop(context, true),
+                              icon: const Icon(Icons.check_rounded, size: 18),
+                              style: FilledButton.styleFrom(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              label: const Text('Tandai Hadir'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Batal'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Tandai Hadir'),
-            ),
-          ],
         ),
       );
 

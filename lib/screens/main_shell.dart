@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/providers.dart';
+import '../data/providers.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
 import 'anggota/anggota_screen.dart';
@@ -55,9 +56,15 @@ class _ShellScaffoldState extends ConsumerState<_ShellScaffold> {
   @override
   Widget build(BuildContext context) {
     final index = ref.watch(shellTabProvider);
-    // The tab provider is shared by both role shells. A user can therefore
-    // leave a higher tab index in the ketua shell and then return to the
-    // shorter siswa shell. NavigationBar requires the index to be valid.
+    final notifAsync = ref.watch(notifikasiProvider);
+    final unreadCount = notifAsync.maybeWhen(
+      data: (d) {
+        final list = listOf(d, 'notifikasis');
+        return list.where((item) => (item['dibaca'] == false || item['is_read'] == false)).length;
+      },
+      orElse: () => 0,
+    );
+
     final safeIndex = index >= 0 && index < widget.tabs.length ? index : 0;
     final tabChildren = List<Widget>.generate(widget.tabs.length, (i) {
       final cachedTab = _tabCache[i];
@@ -103,18 +110,38 @@ class _ShellScaffoldState extends ConsumerState<_ShellScaffold> {
           indicatorColor: Theme.of(context).colorScheme.surfaceContainerHighest,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           destinations: [
-            for (final tab in widget.tabs)
-              NavigationDestination(
-                icon: Icon(
+            for (var i = 0; i < widget.tabs.length; i++) ...[
+              () {
+                final tab = widget.tabs[i];
+                final isNotif = tab.label == 'Notifikasi';
+                final count = isNotif ? unreadCount : 0;
+                final badgeText = count > 9 ? '9+' : '$count';
+                final iconWidget = Icon(
                   tab.icon,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                selectedIcon: Icon(
+                );
+                final selectedIconWidget = Icon(
                   tab.icon,
                   color: Theme.of(context).colorScheme.primary,
-                ),
-                label: tab.label,
-              ),
+                );
+
+                return NavigationDestination(
+                  icon: count > 0
+                      ? Badge(
+                          label: Text(badgeText),
+                          child: iconWidget,
+                        )
+                      : iconWidget,
+                  selectedIcon: count > 0
+                      ? Badge(
+                          label: Text(badgeText),
+                          child: selectedIconWidget,
+                        )
+                      : selectedIconWidget,
+                  label: tab.label,
+                );
+              }(),
+            ],
           ],
         ),
       ),

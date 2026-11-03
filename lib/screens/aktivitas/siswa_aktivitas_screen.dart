@@ -126,11 +126,20 @@ class _SiswaAktivitasScreenState extends ConsumerState<SiswaAktivitasScreen>
   }
 }
 
-class _PresensiTab extends ConsumerWidget {
+class _PresensiTab extends ConsumerStatefulWidget {
   const _PresensiTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_PresensiTab> createState() => _PresensiTabState();
+}
+
+class _PresensiTabState extends ConsumerState<_PresensiTab> {
+  String _statusFilter = 'semua';
+  String _timeSort = 'terbaru';
+  bool _isAscending = true;
+
+  @override
+  Widget build(BuildContext context) {
     final selectedEkskulId = ref.watch(selectedSiswaEkskulProvider);
     final value = ref.watch(siswaPresensiProvider(selectedEkskulId));
     return ApiAsyncView(
@@ -141,26 +150,38 @@ class _PresensiTab extends ConsumerWidget {
         final currentEkskulId =
             selectedEkskulId ??
             ((data['pendaftaran'] is Map &&
-                    (data['pendaftaran'] as Map)['ekskul'] is Map)
+                    ((data['pendaftaran'] as Map)['ekskul']) is Map)
                 ? (((data['pendaftaran'] as Map)['ekskul'] as Map)['id']
                           as num?)
                       ?.toInt()
                 : (data['ekskul'] is Map
                       ? ((data['ekskul'] as Map)['id'] as num?)?.toInt()
                       : null));
-        final rows = listOf(data, 'presensi')
-          ..sort((a, b) {
-            final aKegiatan = a['kegiatan'] is Map
-                ? Map<String, dynamic>.from(a['kegiatan'] as Map)
-                : <String, dynamic>{};
-            final bKegiatan = b['kegiatan'] is Map
-                ? Map<String, dynamic>.from(b['kegiatan'] as Map)
-                : <String, dynamic>{};
-            return (bKegiatan['tanggal_kegiatan'] as String? ?? '').compareTo(
-              aKegiatan['tanggal_kegiatan'] as String? ?? '',
-            );
-          });
-        if (rows.isEmpty) {
+        final rawRows = listOf(data, 'presensi');
+        final filtered = rawRows.where((row) {
+          if (_statusFilter == 'semua') return true;
+          final st = (row['status']?.toString() ?? '').toLowerCase();
+          return st == _statusFilter;
+        }).toList();
+
+        final sorted = [...filtered];
+        sorted.sort((a, b) {
+          final aKegiatan = a['kegiatan'] is Map
+              ? Map<String, dynamic>.from(a['kegiatan'] as Map)
+              : <String, dynamic>{};
+          final bKegiatan = b['kegiatan'] is Map
+              ? Map<String, dynamic>.from(b['kegiatan'] as Map)
+              : <String, dynamic>{};
+          final aDate = DateTime.tryParse(aKegiatan['tanggal_kegiatan']?.toString() ?? '') ?? DateTime(0);
+          final bDate = DateTime.tryParse(bKegiatan['tanggal_kegiatan']?.toString() ?? '') ?? DateTime(0);
+          final cmp = _timeSort == 'terbaru' ? bDate.compareTo(aDate) : aDate.compareTo(bDate);
+          if (cmp != 0) return cmp;
+          final nameA = aKegiatan['materi']?.toString() ?? '';
+          final nameB = bKegiatan['materi']?.toString() ?? '';
+          return _isAscending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
+        });
+
+        if (rawRows.isEmpty) {
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
             children: [
@@ -196,40 +217,174 @@ class _PresensiTab extends ConsumerWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                 child: Row(
                   children: [
-                    Text(
-                      'Riwayat Kegiatan (${rows.length})',
-                      style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.mutedText(context),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            PopupMenuButton<String>(
+                              onSelected: (val) {
+                                if (val == 'terbaru' || val == 'terlama') {
+                                  setState(() => _timeSort = val);
+                                } else {
+                                  setState(() => _statusFilter = val);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(enabled: false, child: Text('Status Kehadiran', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
+                                PopupMenuItem(
+                                  value: 'semua',
+                                  child: Row(children: [Icon(_statusFilter == 'semua' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _statusFilter == 'semua' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Semua Status')]),
+                                ),
+                                PopupMenuItem(
+                                  value: 'hadir',
+                                  child: Row(children: [Icon(_statusFilter == 'hadir' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _statusFilter == 'hadir' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Hadir')]),
+                                ),
+                                PopupMenuItem(
+                                  value: 'izin',
+                                  child: Row(children: [Icon(_statusFilter == 'izin' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _statusFilter == 'izin' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Izin')]),
+                                ),
+                                PopupMenuItem(
+                                  value: 'sakit',
+                                  child: Row(children: [Icon(_statusFilter == 'sakit' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _statusFilter == 'sakit' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Sakit')]),
+                                ),
+                                PopupMenuItem(
+                                  value: 'alpha',
+                                  child: Row(children: [Icon(_statusFilter == 'alpha' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _statusFilter == 'alpha' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Alpha')]),
+                                ),
+                                const PopupMenuDivider(),
+                                const PopupMenuItem(enabled: false, child: Text('Urutkan', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
+                                PopupMenuItem(
+                                  value: 'terbaru',
+                                  child: Row(children: [Icon(_timeSort == 'terbaru' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _timeSort == 'terbaru' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Terbaru')]),
+                                ),
+                                PopupMenuItem(
+                                  value: 'terlama',
+                                  child: Row(children: [Icon(_timeSort == 'terlama' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _timeSort == 'terlama' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Terlama')]),
+                                ),
+                              ],
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.surface(context),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(color: AppTheme.outline(context)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.tune_rounded, size: 16, color: AppTheme.blue),
+                                    const SizedBox(width: 6),
+                                    Text('Filter', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+                                    const SizedBox(width: 4),
+                                    const Icon(Icons.arrow_drop_down, size: 18),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: AppTheme.blue,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                _statusFilter == 'semua' ? 'Semua' : (_statusFilter[0].toUpperCase() + _statusFilter.substring(1)),
+                                style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: AppTheme.blue,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                _timeSort == 'terbaru' ? 'Terbaru' : 'Terlama',
+                                style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Tooltip(
+                      message: _isAscending ? 'Urutkan A-Z (Klik untuk Z-A)' : 'Urutkan Z-A (Klik untuk A-Z)',
+                      child: InkWell(
+                        onTap: () => setState(() => _isAscending = !_isAscending),
+                        borderRadius: BorderRadius.circular(999),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface(context),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: AppTheme.outline(context)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _isAscending ? 'A-Z' : 'Z-A',
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: AppTheme.blue,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                _isAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                                size: 14,
+                                color: AppTheme.blue,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
+              ListCountLabel(count: sorted.length, label: 'presensi'),
               Expanded(
-                child: PaginatedList<Map<String, dynamic>>(
-                  items: rows,
-                  pageSize: 10,
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
-                  separatorBuilder: (_, _) => const SizedBox(height: 9),
-                  itemBuilder: (context, row, index) {
-                    final kegiatan = row['kegiatan'] is Map
-                        ? Map<String, dynamic>.from(row['kegiatan'] as Map)
-                        : <String, dynamic>{};
-                    return _AttendanceCard(
-                      title: kegiatan['materi'] as String? ?? 'Kegiatan',
-                      date:
-                          kegiatan['tanggal_text'] as String? ??
-                          kegiatan['tanggal_kegiatan'] as String? ??
-                          '-',
-                      status: row['status'] as String? ?? '-',
-                    );
-                  },
-                ),
+                child: sorted.isEmpty
+                    ? ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.only(top: 24),
+                        children: [
+                          EmptyState(
+                            title: 'Data presensi tidak ditemukan',
+                            subtitle: 'Coba ubah filter status atau urutan.',
+                            icon: Icons.search_off_rounded,
+                          ),
+                        ],
+                      )
+                    : PaginatedList<Map<String, dynamic>>(
+                        items: sorted,
+                        pageSize: 10,
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+                        separatorBuilder: (_, _) => const SizedBox(height: 9),
+                        itemBuilder: (context, row, index) {
+                          final kegiatan = row['kegiatan'] is Map
+                              ? Map<String, dynamic>.from(row['kegiatan'] as Map)
+                              : <String, dynamic>{};
+                          return _AttendanceCard(
+                            title: kegiatan['materi'] as String? ?? 'Kegiatan',
+                            date:
+                                kegiatan['tanggal_text'] as String? ??
+                                kegiatan['tanggal_kegiatan'] as String? ??
+                                '-',
+                            status: row['status'] as String? ?? '-',
+                          );
+                        },
+                      ),
               ),
             ],
           ),

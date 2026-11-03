@@ -69,13 +69,121 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       PopupMenuButton<String>(
-                        onSelected: (val) => setState(() => _statusFilter = val),
+                        onSelected: (val) {
+                          if (val == 'terbaru' || val == 'terlama') {
+                            setState(() => _timeSort = val);
+                          } else if (val == 'semua' || val == 'pending' || val == 'diterima' || val == 'draft' || val == 'ditolak') {
+                            setState(() => _statusFilter = val);
+                          }
+                        },
                         itemBuilder: (context) => [
-                          const PopupMenuItem(value: 'semua', child: Text('Semua Status')),
-                          const PopupMenuItem(value: 'pending', child: Text('Pending')),
-                          const PopupMenuItem(value: 'diterima', child: Text('Diterima')),
-                          const PopupMenuItem(value: 'draft', child: Text('Draft')),
-                          const PopupMenuItem(value: 'ditolak', child: Text('Ditolak')),
+                          const PopupMenuItem(
+                            enabled: false,
+                            child: Text('Status', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                          ),
+                          PopupMenuItem(
+                            value: 'semua',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _statusFilter == 'semua' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  size: 18,
+                                  color: _statusFilter == 'semua' ? AppTheme.blue : AppTheme.mutedText(context),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text('Semua Status'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'pending',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _statusFilter == 'pending' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  size: 18,
+                                  color: _statusFilter == 'pending' ? AppTheme.blue : AppTheme.mutedText(context),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text('Pending'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'diterima',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _statusFilter == 'diterima' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  size: 18,
+                                  color: _statusFilter == 'diterima' ? AppTheme.blue : AppTheme.mutedText(context),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text('Diterima'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'draft',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _statusFilter == 'draft' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  size: 18,
+                                  color: _statusFilter == 'draft' ? AppTheme.blue : AppTheme.mutedText(context),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text('Draft'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'ditolak',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _statusFilter == 'ditolak' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  size: 18,
+                                  color: _statusFilter == 'ditolak' ? AppTheme.blue : AppTheme.mutedText(context),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text('Ditolak'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuDivider(),
+                          const PopupMenuItem(
+                            enabled: false,
+                            child: Text('Urutkan', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                          ),
+                          PopupMenuItem(
+                            value: 'terbaru',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _timeSort == 'terbaru' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  size: 18,
+                                  color: _timeSort == 'terbaru' ? AppTheme.blue : AppTheme.mutedText(context),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text('Terbaru'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'terlama',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _timeSort == 'terlama' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  size: 18,
+                                  color: _timeSort == 'terlama' ? AppTheme.blue : AppTheme.mutedText(context),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text('Terlama'),
+                              ],
+                            ),
+                          ),
                         ],
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -87,9 +195,9 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.filter_list_rounded, size: 16, color: AppTheme.blue),
+                              const Icon(Icons.tune_rounded, size: 16, color: AppTheme.blue),
                               const SizedBox(width: 6),
-                              Text('Status',
+                              Text('Filter',
                                   style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
                               const SizedBox(width: 4),
                               const Icon(Icons.arrow_drop_down, size: 18),
@@ -105,41 +213,22 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
-                          _statusFilter[0].toUpperCase() + _statusFilter.substring(1),
+                          _statusFilter == 'semua'
+                              ? 'Semua Status'
+                              : (_statusFilter[0].toUpperCase() + _statusFilter.substring(1)),
                           style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      PopupMenuButton<String>(
-                        onSelected: (val) => setState(() => _timeSort = val),
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(value: 'terbaru', child: Text('Terbaru')),
-                          PopupMenuItem(value: 'terlama', child: Text('Terlama')),
-                        ],
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surface(context),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: AppTheme.outline(context)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.access_time_rounded, size: 16, color: AppTheme.blue),
-                              const SizedBox(width: 6),
-                              Text(
-                                _timeSort == 'terbaru' ? 'Terbaru' : 'Terlama',
-                                style: GoogleFonts.plusJakartaSans(
-                                  color: AppTheme.blue,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              const Icon(Icons.arrow_drop_down, size: 18, color: AppTheme.blue),
-                            ],
-                          ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: AppTheme.blue,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          _timeSort == 'terbaru' ? 'Terbaru' : 'Terlama',
+                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
                         ),
                       ),
                     ],

@@ -431,11 +431,93 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
                                       PopupMenuButton<String>(
-                                        onSelected: (val) => setState(() => _jenisFilter = val),
+                                        onSelected: (val) {
+                                          if (val == 'terbaru' || val == 'terlama') {
+                                            setState(() => _timeSort = val);
+                                          } else if (val == 'semua' || val == 'rutin' || val == 'event') {
+                                            setState(() => _jenisFilter = val);
+                                          }
+                                        },
                                         itemBuilder: (context) => [
-                                          const PopupMenuItem(value: 'semua', child: Text('Semua Tipe')),
-                                          const PopupMenuItem(value: 'rutin', child: Text('Rutin')),
-                                          const PopupMenuItem(value: 'event', child: Text('Event')),
+                                          const PopupMenuItem(
+                                            enabled: false,
+                                            child: Text('Tipe', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                                          ),
+                                          PopupMenuItem(
+                                            value: 'semua',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  _jenisFilter == 'semua' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                                  size: 18,
+                                                  color: _jenisFilter == 'semua' ? AppTheme.blue : AppTheme.mutedText(context),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                const Text('Semua Tipe'),
+                                              ],
+                                            ),
+                                          ),
+                                          PopupMenuItem(
+                                            value: 'rutin',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  _jenisFilter == 'rutin' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                                  size: 18,
+                                                  color: _jenisFilter == 'rutin' ? AppTheme.blue : AppTheme.mutedText(context),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                const Text('Rutin'),
+                                              ],
+                                            ),
+                                          ),
+                                          PopupMenuItem(
+                                            value: 'event',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  _jenisFilter == 'event' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                                  size: 18,
+                                                  color: _jenisFilter == 'event' ? AppTheme.blue : AppTheme.mutedText(context),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                const Text('Event'),
+                                              ],
+                                            ),
+                                          ),
+                                          const PopupMenuDivider(),
+                                          const PopupMenuItem(
+                                            enabled: false,
+                                            child: Text('Urutkan', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                                          ),
+                                          PopupMenuItem(
+                                            value: 'terbaru',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  _timeSort == 'terbaru' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                                  size: 18,
+                                                  color: _timeSort == 'terbaru' ? AppTheme.blue : AppTheme.mutedText(context),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                const Text('Terbaru'),
+                                              ],
+                                            ),
+                                          ),
+                                          PopupMenuItem(
+                                            value: 'terlama',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  _timeSort == 'terlama' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                                  size: 18,
+                                                  color: _timeSort == 'terlama' ? AppTheme.blue : AppTheme.mutedText(context),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                const Text('Terlama'),
+                                              ],
+                                            ),
+                                          ),
                                         ],
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -447,9 +529,9 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              const Icon(Icons.filter_list_rounded, size: 16, color: AppTheme.blue),
+                                              const Icon(Icons.tune_rounded, size: 16, color: AppTheme.blue),
                                               const SizedBox(width: 6),
-                                              Text('Tipe',
+                                              Text('Filter',
                                                   style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
                                               const SizedBox(width: 4),
                                               const Icon(Icons.arrow_drop_down, size: 18),
@@ -465,41 +547,22 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                                           borderRadius: BorderRadius.circular(999),
                                         ),
                                         child: Text(
-                                          _jenisFilter[0].toUpperCase() + _jenisFilter.substring(1),
+                                          _jenisFilter == 'semua'
+                                              ? 'Semua Tipe'
+                                              : (_jenisFilter[0].toUpperCase() + _jenisFilter.substring(1)),
                                           style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
                                         ),
                                       ),
                                       const SizedBox(width: 8),
-                                      PopupMenuButton<String>(
-                                        onSelected: (val) => setState(() => _timeSort = val),
-                                        itemBuilder: (context) => const [
-                                          PopupMenuItem(value: 'terbaru', child: Text('Terbaru')),
-                                          PopupMenuItem(value: 'terlama', child: Text('Terlama')),
-                                        ],
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.surface(context),
-                                            borderRadius: BorderRadius.circular(999),
-                                            border: Border.all(color: AppTheme.outline(context)),
-                                          ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              const Icon(Icons.access_time_rounded, size: 16, color: AppTheme.blue),
-                                              const SizedBox(width: 6),
-                                              Text(
-                                                _timeSort == 'terbaru' ? 'Terbaru' : 'Terlama',
-                                                style: GoogleFonts.plusJakartaSans(
-                                                  color: AppTheme.blue,
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w800,
-                                                ),
-                                              ),
-                                              const SizedBox(width: 4),
-                                              const Icon(Icons.arrow_drop_down, size: 18, color: AppTheme.blue),
-                                            ],
-                                          ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                        decoration: BoxDecoration(
+                                          color: AppTheme.blue,
+                                          borderRadius: BorderRadius.circular(999),
+                                        ),
+                                        child: Text(
+                                          _timeSort == 'terbaru' ? 'Terbaru' : 'Terlama',
+                                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
                                         ),
                                       ),
                                     ],

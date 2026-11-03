@@ -164,13 +164,87 @@ class _AnggotaListState extends ConsumerState<_AnggotaList> {
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           PopupMenuButton<String>(
-                            onSelected: (val) => setState(() => _status = val),
+                            onSelected: (val) => setState(() {
+                              if (val == 'aktif' || val == 'peringatan' || val == 'nonaktif' || val == 'keluar' || val == 'semua') {
+                                _status = val;
+                              } else if (val == 'tanpa' || val == 'arsip') {
+                                _arsip = val;
+                              }
+                            }),
                             itemBuilder: (context) => [
-                              const PopupMenuItem(value: 'aktif', child: Text('Aktif')),
-                              const PopupMenuItem(value: 'peringatan', child: Text('Peringatan')),
-                              const PopupMenuItem(value: 'nonaktif', child: Text('Nonaktif')),
-                              const PopupMenuItem(value: 'keluar', child: Text('Keluar')),
-                              const PopupMenuItem(value: 'semua', child: Text('Semua Status')),
+                              const PopupMenuItem(enabled: false, child: Text('Status', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
+                              PopupMenuItem(
+                                value: 'aktif',
+                                child: Row(
+                                  children: [
+                                    Icon(_status == 'aktif' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _status == 'aktif' ? AppTheme.blue : AppTheme.mutedText(context)),
+                                    const SizedBox(width: 8),
+                                    const Text('Aktif'),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'peringatan',
+                                child: Row(
+                                  children: [
+                                    Icon(_status == 'peringatan' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _status == 'peringatan' ? AppTheme.blue : AppTheme.mutedText(context)),
+                                    const SizedBox(width: 8),
+                                    const Text('Peringatan'),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'nonaktif',
+                                child: Row(
+                                  children: [
+                                    Icon(_status == 'nonaktif' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _status == 'nonaktif' ? AppTheme.blue : AppTheme.mutedText(context)),
+                                    const SizedBox(width: 8),
+                                    const Text('Nonaktif'),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'keluar',
+                                child: Row(
+                                  children: [
+                                    Icon(_status == 'keluar' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _status == 'keluar' ? AppTheme.blue : AppTheme.mutedText(context)),
+                                    const SizedBox(width: 8),
+                                    const Text('Keluar'),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'semua',
+                                child: Row(
+                                  children: [
+                                    Icon(_status == 'semua' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _status == 'semua' ? AppTheme.blue : AppTheme.mutedText(context)),
+                                    const SizedBox(width: 8),
+                                    const Text('Semua Status'),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuDivider(),
+                              const PopupMenuItem(enabled: false, child: Text('Arsip', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
+                              PopupMenuItem(
+                                value: 'tanpa',
+                                child: Row(
+                                  children: [
+                                    Icon(_arsip == 'tanpa' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _arsip == 'tanpa' ? AppTheme.blue : AppTheme.mutedText(context)),
+                                    const SizedBox(width: 8),
+                                    const Text('Tanpa Arsip'),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'arsip',
+                                child: Row(
+                                  children: [
+                                    Icon(_arsip == 'arsip' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _arsip == 'arsip' ? AppTheme.blue : AppTheme.mutedText(context)),
+                                    const SizedBox(width: 8),
+                                    const Text('Arsip'),
+                                  ],
+                                ),
+                              ),
                             ],
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -182,37 +256,9 @@ class _AnggotaListState extends ConsumerState<_AnggotaList> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.filter_list_rounded, size: 16, color: AppTheme.blue),
+                                  const Icon(Icons.tune_rounded, size: 16, color: AppTheme.blue),
                                   const SizedBox(width: 6),
-                                  Text('Status',
-                                      style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.arrow_drop_down, size: 18),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          PopupMenuButton<String>(
-                            onSelected: (val) => setState(() => _arsip = val),
-                            itemBuilder: (context) => [
-                              const PopupMenuItem(value: 'tanpa', child: Text('Tanpa Arsip')),
-                              const PopupMenuItem(value: 'arsip', child: Text('Arsip')),
-                            ],
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: AppTheme.surface(context),
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(color: AppTheme.outline(context)),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.archive_outlined, size: 16, color: AppTheme.blue),
-                                  const SizedBox(width: 6),
-                                  Text('Arsip',
-                                      style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+                                  Text('Filter', style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
                                   const SizedBox(width: 4),
                                   const Icon(Icons.arrow_drop_down, size: 18),
                                 ],
@@ -227,7 +273,15 @@ class _AnggotaListState extends ConsumerState<_AnggotaList> {
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: Text(
-                              _status[0].toUpperCase() + _status.substring(1),
+                              _status == 'aktif'
+                                  ? 'Aktif'
+                                  : _status == 'peringatan'
+                                      ? 'Peringatan'
+                                      : _status == 'nonaktif'
+                                          ? 'Nonaktif'
+                                          : _status == 'keluar'
+                                              ? 'Keluar'
+                                              : 'Semua',
                               style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
                             ),
                           ),
@@ -510,6 +564,7 @@ class _PendaftaranList extends ConsumerStatefulWidget {
 class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
   String _query = '';
   String _status = 'semua';
+  String _timeSort = 'terbaru';
   bool _isAscending = true;
 
   @override
@@ -526,6 +581,10 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
         });
         final sorted = [...filtered];
         sorted.sort((a, b) {
+          final da = DateTime.tryParse((a['tanggal_daftar'] ?? a['created_at'] ?? a['tgl_daftar'])?.toString() ?? '') ?? DateTime(0);
+          final db = DateTime.tryParse((b['tanggal_daftar'] ?? b['created_at'] ?? b['tgl_daftar'])?.toString() ?? '') ?? DateTime(0);
+          final cmp = _timeSort == 'terbaru' ? db.compareTo(da) : da.compareTo(db);
+          if (cmp != 0) return cmp;
           final nameA = Pendaftaran.fromJson(a).siswaNama ?? '';
           final nameB = Pendaftaran.fromJson(b).siswaNama ?? '';
           return _isAscending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
@@ -547,12 +606,41 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           PopupMenuButton<String>(
-                            onSelected: (value) => setState(() => _status = value),
+                            onSelected: (value) {
+                              if (value == 'terbaru' || value == 'terlama') {
+                                setState(() => _timeSort = value);
+                              } else {
+                                setState(() => _status = value);
+                              }
+                            },
                             itemBuilder: (context) => [
-                              const PopupMenuItem(value: 'semua', child: Text('Semua Status')),
-                              const PopupMenuItem(value: 'pending', child: Text('Menunggu')),
-                              const PopupMenuItem(value: 'diterima', child: Text('Disetujui')),
-                              const PopupMenuItem(value: 'ditolak', child: Text('Ditolak')),
+                              const PopupMenuItem(enabled: false, child: Text('Status', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
+                              PopupMenuItem(
+                                value: 'semua',
+                                child: Row(children: [Icon(_status == 'semua' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _status == 'semua' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Semua Status')]),
+                              ),
+                              PopupMenuItem(
+                                value: 'pending',
+                                child: Row(children: [Icon(_status == 'pending' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _status == 'pending' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Menunggu')]),
+                              ),
+                              PopupMenuItem(
+                                value: 'diterima',
+                                child: Row(children: [Icon(_status == 'diterima' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _status == 'diterima' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Disetujui')]),
+                              ),
+                              PopupMenuItem(
+                                value: 'ditolak',
+                                child: Row(children: [Icon(_status == 'ditolak' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _status == 'ditolak' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Ditolak')]),
+                              ),
+                              const PopupMenuDivider(),
+                              const PopupMenuItem(enabled: false, child: Text('Urutkan', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
+                              PopupMenuItem(
+                                value: 'terbaru',
+                                child: Row(children: [Icon(_timeSort == 'terbaru' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _timeSort == 'terbaru' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Terbaru')]),
+                              ),
+                              PopupMenuItem(
+                                value: 'terlama',
+                                child: Row(children: [Icon(_timeSort == 'terlama' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _timeSort == 'terlama' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Terlama')]),
+                              ),
                             ],
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -564,9 +652,9 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.filter_list_rounded, size: 16, color: AppTheme.blue),
+                                  const Icon(Icons.tune_rounded, size: 16, color: AppTheme.blue),
                                   const SizedBox(width: 6),
-                                  Text('Status',
+                                  Text('Filter',
                                       style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
                                   const SizedBox(width: 4),
                                   const Icon(Icons.arrow_drop_down, size: 18),
@@ -588,6 +676,18 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                                 'ditolak' => 'Ditolak',
                                 _ => 'Semua',
                               },
+                              style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: AppTheme.blue,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              _timeSort == 'terbaru' ? 'Terbaru' : 'Terlama',
                               style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
                             ),
                           ),
@@ -732,10 +832,9 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    StatusChip(_statusLabel(status)),
-                                  ],
-                                ),
+                                     ),
+                                   ],
+                                 ),
                                 if (p.alasan?.isNotEmpty == true) ...[
                                   const SizedBox(height: 12),
                                   _RequestNote(text: p.alasan!),
@@ -838,6 +937,7 @@ class _PengajuanList extends ConsumerStatefulWidget {
 class _PengajuanListState extends ConsumerState<_PengajuanList> {
   String _query = '';
   String _status = 'semua';
+  String _timeSort = 'terbaru';
   bool _isAscending = true;
 
   @override
@@ -854,6 +954,10 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
         });
         final sorted = [...filtered];
         sorted.sort((a, b) {
+          final da = DateTime.tryParse((a['tanggal_daftar'] ?? a['created_at'] ?? a['tgl_daftar'])?.toString() ?? '') ?? DateTime(0);
+          final db = DateTime.tryParse((b['tanggal_daftar'] ?? b['created_at'] ?? b['tgl_daftar'])?.toString() ?? '') ?? DateTime(0);
+          final cmp = _timeSort == 'terbaru' ? db.compareTo(da) : da.compareTo(db);
+          if (cmp != 0) return cmp;
           final nameA = _studentName(a) ?? '';
           final nameB = _studentName(b) ?? '';
           return _isAscending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
@@ -875,12 +979,41 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           PopupMenuButton<String>(
-                            onSelected: (value) => setState(() => _status = value),
+                            onSelected: (value) {
+                              if (value == 'terbaru' || value == 'terlama') {
+                                setState(() => _timeSort = value);
+                              } else {
+                                setState(() => _status = value);
+                              }
+                            },
                             itemBuilder: (context) => [
-                              const PopupMenuItem(value: 'semua', child: Text('Semua Status')),
-                              const PopupMenuItem(value: 'pending', child: Text('Menunggu')),
-                              const PopupMenuItem(value: 'diterima', child: Text('Disetujui')),
-                              const PopupMenuItem(value: 'ditolak', child: Text('Ditolak')),
+                              const PopupMenuItem(enabled: false, child: Text('Status', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
+                              PopupMenuItem(
+                                value: 'semua',
+                                child: Row(children: [Icon(_status == 'semua' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _status == 'semua' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Semua Status')]),
+                              ),
+                              PopupMenuItem(
+                                value: 'pending',
+                                child: Row(children: [Icon(_status == 'pending' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _status == 'pending' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Menunggu')]),
+                              ),
+                              PopupMenuItem(
+                                value: 'diterima',
+                                child: Row(children: [Icon(_status == 'diterima' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _status == 'diterima' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Disetujui')]),
+                              ),
+                              PopupMenuItem(
+                                value: 'ditolak',
+                                child: Row(children: [Icon(_status == 'ditolak' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _status == 'ditolak' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Ditolak')]),
+                              ),
+                              const PopupMenuDivider(),
+                              const PopupMenuItem(enabled: false, child: Text('Urutkan', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12))),
+                              PopupMenuItem(
+                                value: 'terbaru',
+                                child: Row(children: [Icon(_timeSort == 'terbaru' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _timeSort == 'terbaru' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Terbaru')]),
+                              ),
+                              PopupMenuItem(
+                                value: 'terlama',
+                                child: Row(children: [Icon(_timeSort == 'terlama' ? Icons.radio_button_checked : Icons.radio_button_off, size: 18, color: _timeSort == 'terlama' ? AppTheme.blue : AppTheme.mutedText(context)), const SizedBox(width: 8), const Text('Terlama')]),
+                              ),
                             ],
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -892,9 +1025,9 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(Icons.filter_list_rounded, size: 16, color: AppTheme.blue),
+                                  const Icon(Icons.tune_rounded, size: 16, color: AppTheme.blue),
                                   const SizedBox(width: 6),
-                                  Text('Status',
+                                  Text('Filter',
                                       style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
                                   const SizedBox(width: 4),
                                   const Icon(Icons.arrow_drop_down, size: 18),
@@ -916,6 +1049,18 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
                                 'ditolak' => 'Ditolak',
                                 _ => 'Semua',
                               },
+                              style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                            decoration: BoxDecoration(
+                              color: AppTheme.blue,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              _timeSort == 'terbaru' ? 'Terbaru' : 'Terlama',
                               style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
                             ),
                           ),
@@ -1060,12 +1205,9 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    StatusChip(
-                                      _statusLabel(p['status']?.toString()),
-                                    ),
-                                  ],
-                                ),
+                                     ),
+                                   ],
+                                 ),
                                 const SizedBox(height: 12),
                                 _RequestNote(
                                   text:
@@ -1220,10 +1362,7 @@ List<Map<String, dynamic>> _filterByStudentName(
       .toList(growable: false);
 }
 
-int? _int(Object? value) {
-  if (value == null) return null;
-  return int.tryParse(value.toString());
-}
+
 
 String _pendaftaranLabel(String status) => switch (status) {
   'pending' => 'pendaftar menunggu',
