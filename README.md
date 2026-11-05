@@ -67,6 +67,7 @@ Aplikasi Soul membutuhkan konfigurasi environment `API_BASE_URL` saat dijalankan
 2. **Kloning atau buka direktori proyek** di terminal.
    ```bash
    git clone https://github.com/Haruzenn69/Soul-Mobile.git
+   cd Soul-Mobile
    ```
 3. **Instal dependensi**:
    ```bash
