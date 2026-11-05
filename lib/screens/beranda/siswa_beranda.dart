@@ -42,6 +42,9 @@ Color _attendanceColor(String status, BuildContext context) =>
       _ => AppTheme.mutedText(context),
     };
 
+/// Halaman Beranda utama untuk pengguna dengan role Siswa.
+/// Menampilkan ringkasan status ekskul, persentase kehadiran, agenda kegiatan,
+/// tren kehadiran, serta akses cepat ke berbagai fitur siswa.
 class BerandaSiswa extends ConsumerWidget {
   const BerandaSiswa({super.key, required this.user});
 
@@ -49,6 +52,7 @@ class BerandaSiswa extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Memantau provider dashboard siswa untuk mendapatkan data terkini
     final dashboard = ref.watch(siswaDashboardProvider);
 
     return SafeArea(
@@ -365,6 +369,9 @@ class BerandaSiswa extends ConsumerWidget {
   }
 }
 
+/// Widget bagian Hero Header pada Dashboard Siswa.
+/// Menampilkan informasi profil siswa, status keanggotaan ekskul,
+/// serta tombol aksi cepat utama (Daftar/Presensi/Notifikasi).
 class _Hero extends StatelessWidget {
   const _Hero({
     required this.user,
@@ -386,6 +393,7 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Render kotak hero utama dengan gradient khas aplikasi
     return Container(
       key: const ValueKey('siswa-dashboard-hero'),
       clipBehavior: Clip.antiAlias,
@@ -1436,6 +1444,8 @@ class _StudentFeedbackState extends ConsumerState<_StudentFeedback> {
   }
 }
 
+/// Widget kontainer Akses Cepat pada Dashboard Siswa.
+/// Menyediakan navigasi instan ke modul Presensi, Rekap, Nilai, dan Katalog.
 class _QuickAccess extends StatelessWidget {
   const _QuickAccess({
     required this.onPresensi,
@@ -1458,6 +1468,7 @@ class _QuickAccess extends StatelessWidget {
       Card(
         child: Column(
           children: [
+            // Menu Presensi Kehadiran
             _QuickActionTile(
               icon: Icons.fact_check_outlined,
               title: 'Presensi',
@@ -1465,6 +1476,7 @@ class _QuickAccess extends StatelessWidget {
               onTap: onPresensi,
             ),
             const Divider(height: 1, indent: 60),
+            // Menu Rekap Bulanan
             _QuickActionTile(
               icon: Icons.analytics_outlined,
               title: 'Rekap Kehadiran',
@@ -1472,6 +1484,7 @@ class _QuickAccess extends StatelessWidget {
               onTap: onRekap,
             ),
             const Divider(height: 1, indent: 60),
+            // Menu Nilai Periodik
             _QuickActionTile(
               icon: Icons.workspace_premium_outlined,
               title: 'Nilai',
@@ -1479,6 +1492,7 @@ class _QuickAccess extends StatelessWidget {
               onTap: onNilai,
             ),
             const Divider(height: 1, indent: 60),
+            // Menu Katalog Ekstrakurikuler
             _QuickActionTile(
               icon: Icons.explore_outlined,
               title: 'Ekskul',
