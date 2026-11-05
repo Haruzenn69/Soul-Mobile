@@ -64,7 +64,7 @@ lib/
 Aplikasi Soul membutuhkan konfigurasi environment `API_BASE_URL` saat dijalankan menggunakan `--dart-define`.
 
 1. **Pastikan Flutter SDK terpasang** (Versi 3.47.4 atau yang direkomendasikan).
-2. **Kloning atau buka direktori proyek** di terminal.
+2. **Kloning dan buka direktori proyek** di terminal.
    ```bash
    git clone https://github.com/Haruzenn69/Soul-Mobile.git
    cd Soul-Mobile
