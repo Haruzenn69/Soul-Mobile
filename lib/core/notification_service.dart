@@ -1,6 +1,8 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+/// Layanan singleton untuk mengelola notifikasi lokal pada perangkat
+/// (inisialisasi plugin, permintaan izin sistem, dan memunculkan banner notifikasi).
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -9,6 +11,7 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
 
+  /// Menginisialisasi plugin local notifications untuk platform Android & iOS
   Future<void> init() async {
     if (_initialized) return;
     try {
@@ -23,12 +26,14 @@ class NotificationService {
     }
   }
 
+  /// Meminta izin akses notifikasi kepada sistem operasi perangkat
   Future<void> requestPermission() async {
     try {
       await Permission.notification.request();
     } catch (_) {}
   }
 
+  /// Menampilkan notifikasi bahwa proses unduhan file telah selesai
   Future<void> showDownloadNotification({required String fileName}) async {
     try {
       await init();
@@ -51,6 +56,7 @@ class NotificationService {
     } catch (_) {}
   }
 
+  /// Menampilkan notifikasi pembaruan atau informasi umum dari sistem
   Future<void> showUpdateNotification({required String title, required String body}) async {
     try {
       await init();

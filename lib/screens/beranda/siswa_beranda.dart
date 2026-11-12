@@ -28,8 +28,6 @@ const _bulanIndonesia = [
   'Desember',
 ];
 
-
-
 String _monthAbbreviation(int month) =>
     _bulanIndonesia[month - 1].substring(0, 3).toUpperCase();
 
@@ -46,23 +44,25 @@ Color _attendanceColor(String status, BuildContext context) =>
 /// Menampilkan ringkasan status ekskul, persentase kehadiran, agenda kegiatan,
 /// tren kehadiran, serta akses cepat ke berbagai fitur siswa.
 class BerandaSiswa extends ConsumerWidget {
-  const BerandaSiswa({super.key, required this.user});
+  const BerandaSiswa({super.key, required this.user, this.onSelectEkskul});
 
   final AuthUser user;
+  final ValueChanged<int>? onSelectEkskul;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Memantau provider dashboard siswa untuk mendapatkan data terkini
     final dashboard = ref.watch(siswaDashboardProvider);
+    final selectedEkskulId = ref.watch(selectedSiswaEkskulProvider);
 
     return SafeArea(
       child: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(siswaDashboardProvider);
-          ref.invalidate(siswaPresensiProvider(null));
+          ref.invalidate(siswaPresensiProvider(selectedEkskulId));
           await Future.wait([
             ref.read(siswaDashboardProvider.future),
-            ref.read(siswaPresensiProvider(null).future),
+            ref.read(siswaPresensiProvider(selectedEkskulId).future),
           ]);
         },
         child: CustomScrollView(
@@ -95,8 +95,6 @@ class BerandaSiswa extends ConsumerWidget {
                                       'id': sessionEkskul.id,
                                       'nama_ekskul': sessionEkskul.namaEkskul,
                                       'jadwal': sessionEkskul.jadwal,
-                                      'is_open_recruitment':
-                                          sessionEkskul.isOpenRecruitment,
                                     });
                     // UserResource already exposes the active ekskul. Keep the
                     // home consistent with it when a stale/partial dashboard
@@ -114,8 +112,20 @@ class BerandaSiswa extends ConsumerWidget {
                       activeEkskuls.add(ekskul);
                     }
                     final activeSummaries = listOf(data, 'active_summaries');
-                    final hadir = (data['total_hadir'] as num?)?.toInt() ?? 0;
-                    final upcoming = listOf(data, 'kegiatan_mendatang');
+                    final hadir =
+                        (data['total_hadir_selected'] as num?)?.toInt() ??
+                        (data['total_hadir'] as num?)?.toInt() ??
+                        0;
+                    final allUpcoming = listOf(data, 'kegiatan_mendatang');
+                    final upcoming = selectedEkskulId == null
+                        ? allUpcoming
+                        : allUpcoming
+                              .where(
+                                (item) =>
+                                    (item['ekskul_id'] as num?)?.toInt() ==
+                                    selectedEkskulId,
+                              )
+                              .toList();
                     final latestRegistration = data['status_terakhir'] is Map
                         ? Map<String, dynamic>.from(
                             data['status_terakhir'] as Map,
@@ -142,6 +152,9 @@ class BerandaSiswa extends ConsumerWidget {
                           ),
                           onNotifications: () =>
                               ref.read(shellTabProvider.notifier).set(3),
+                          selectedEkskulId:
+                              selectedEkskulId ?? user.aktivEkskul?.id,
+                          onSelectEkskul: onSelectEkskul,
                         ),
                         const SizedBox(height: 14),
                         if (user.needsProfileCompletion || user.needsOnboarding)
@@ -290,13 +303,11 @@ class BerandaSiswa extends ConsumerWidget {
                           actionText: 'Presensi',
                         ),
                         const SizedBox(height: 8),
-                        _KegiatanMendatang(data: data),
-                        const SizedBox(height: 18),
-                        _AttendanceTrend(
-                          totalHadir:
-                              (data['total_hadir_selected'] as num?)?.toInt() ??
-                              hadir,
+                        _KegiatanMendatang(
+                          data: {...data, 'kegiatan_mendatang': upcoming},
                         ),
+                        const SizedBox(height: 18),
+                        _AttendanceTrend(totalHadir: hadir),
                         if (activeSummaries.isNotEmpty)
                           for (final summary in activeSummaries)
                             if (summary['ekskul'] is Map)
@@ -381,6 +392,8 @@ class _Hero extends StatelessWidget {
     required this.onCatalog,
     required this.onAttendance,
     required this.onNotifications,
+    required this.selectedEkskulId,
+    this.onSelectEkskul,
   });
 
   final AuthUser user;
@@ -390,6 +403,8 @@ class _Hero extends StatelessWidget {
   final VoidCallback onCatalog;
   final VoidCallback onAttendance;
   final VoidCallback onNotifications;
+  final int? selectedEkskulId;
+  final ValueChanged<int>? onSelectEkskul;
 
   @override
   Widget build(BuildContext context) {
@@ -478,6 +493,15 @@ class _Hero extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
+              if (onSelectEkskul != null && user.activeEkskuls.length > 1) ...[
+                DashboardEkskulSwitcher(
+                  ekskuls: user.activeEkskuls,
+                  selectedId: selectedEkskulId,
+                  ketuaEkskulId: user.ketuaEkskulId,
+                  onSelected: onSelectEkskul!,
+                ),
+                const SizedBox(height: 10),
+              ],
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 11,
@@ -558,22 +582,22 @@ class _Hero extends StatelessWidget {
                     onPressed: onCatalog,
                   );
                   if (constraints.maxWidth < 300) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        primaryAction,
+                        const SizedBox(height: 10),
+                        secondaryAction,
+                      ],
+                    );
+                  }
+                  return Row(
                     children: [
-                      primaryAction,
-                      const SizedBox(height: 10),
-                      secondaryAction,
+                      Expanded(child: primaryAction),
+                      const SizedBox(width: 10),
+                      Expanded(child: secondaryAction),
                     ],
                   );
-                }
-                return Row(
-                  children: [
-                    Expanded(child: primaryAction),
-                    const SizedBox(width: 10),
-                    Expanded(child: secondaryAction),
-                  ],
-                );
                 },
               ),
             ],
@@ -1093,7 +1117,8 @@ class _AttendanceTrend extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final attendance = ref.watch(siswaPresensiProvider(null));
+    final selectedEkskulId = ref.watch(selectedSiswaEkskulProvider);
+    final attendance = ref.watch(siswaPresensiProvider(selectedEkskulId));
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -1563,7 +1588,11 @@ class _QuickActionTile extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 6),
-            Icon(Icons.chevron_right_rounded, color: AppTheme.mutedText(context), size: 20),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: AppTheme.mutedText(context),
+              size: 20,
+            ),
           ],
         ),
       ),

@@ -5,7 +5,115 @@ import 'package:google_fonts/google_fonts.dart';
 import '../core/app_config.dart';
 import '../core/api_client.dart';
 import '../core/providers.dart';
+import '../models/models.dart';
 import '../theme/app_theme.dart';
+
+class DashboardEkskulSwitcher extends StatelessWidget {
+  const DashboardEkskulSwitcher({
+    super.key,
+    required this.ekskuls,
+    required this.selectedId,
+    required this.ketuaEkskulId,
+    required this.onSelected,
+  });
+
+  final List<Ekskul> ekskuls;
+  final int? selectedId;
+  final int? ketuaEkskulId;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    if (ekskuls.length < 2) return const SizedBox.shrink();
+
+    final selected = ekskuls.where((ekskul) => ekskul.id == selectedId);
+    final current = selected.isNotEmpty ? selected.first : ekskuls.first;
+
+    return PopupMenuButton<int>(
+      key: const ValueKey('dashboard-ekskul-switcher'),
+      tooltip: 'Switch Dashboard',
+      onSelected: onSelected,
+      itemBuilder: (context) => [
+        for (final ekskul in ekskuls)
+          PopupMenuItem<int>(
+            value: ekskul.id,
+            child: Row(
+              children: [
+                Icon(
+                  ekskul.id == current.id
+                      ? Icons.radio_button_checked_rounded
+                      : Icons.radio_button_off_rounded,
+                  size: 18,
+                  color: ekskul.id == current.id
+                      ? AppTheme.blue
+                      : AppTheme.mutedText(context),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    ekskul.namaEkskul,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (ekskul.id == ketuaEkskulId)
+                  Text(
+                    'Ketua',
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.blue,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+      ],
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 280),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.swap_horiz_rounded, color: Colors.white, size: 17),
+            const SizedBox(width: 7),
+            Flexible(
+              child: Text(
+                'Dashboard · ${current.namaEkskul}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.plusJakartaSans(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            if (current.id == ketuaEkskulId) ...[
+              const SizedBox(width: 5),
+              const Icon(
+                Icons.workspace_premium_outlined,
+                color: Colors.white,
+                size: 13,
+              ),
+            ],
+            const SizedBox(width: 3),
+            const Icon(
+              Icons.expand_more_rounded,
+              color: Colors.white,
+              size: 17,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class ActiveEkskulSelector extends StatelessWidget {
   const ActiveEkskulSelector({

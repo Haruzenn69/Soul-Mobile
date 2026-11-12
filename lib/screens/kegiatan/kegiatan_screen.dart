@@ -110,10 +110,8 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
   }
 
   Future<Map<String, dynamic>?> _showBuatDialog() async {
-    final materi = TextEditingController();
-    final deskripsi = TextEditingController();
-    final dateCtrl = TextEditingController();
-    final endDateCtrl = TextEditingController();
+    String materi = '';
+    String deskripsi = '';
     DateTime tanggal = DateTime.now();
     DateTime? tanggalBerakhir;
     bool isEvent = false;
@@ -123,7 +121,6 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) {
-        dateCtrl.text = DateFormat('yyyy-MM-dd').format(tanggal);
         return StatefulBuilder(
           builder: (context, setDialogState) => AlertDialog(
             titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 8),
@@ -161,7 +158,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                     ),
                     const SizedBox(height: 18),
                     TextField(
-                      controller: materi,
+                      onChanged: (value) => materi = value,
                       decoration: const InputDecoration(
                         labelText: 'Materi Kegiatan',
                         hintText: 'mis. Latihan Dasar',
@@ -191,7 +188,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                     ),
                     const SizedBox(height: 14),
                     TextField(
-                      controller: deskripsi,
+                      onChanged: (value) => deskripsi = value,
                       maxLines: 2,
                       decoration: const InputDecoration(
                         labelText: 'Deskripsi (opsional)',
@@ -199,9 +196,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                       ),
                     ),
                     const SizedBox(height: 14),
-                    TextField(
-                      controller: dateCtrl,
-                      readOnly: true,
+                    InkWell(
                       onTap: () async {
                         final picked = await showDatePicker(
                           context: context,
@@ -216,26 +211,25 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                         if (picked != null) {
                           setDialogState(() {
                             tanggal = picked;
-                            dateCtrl.text = DateFormat('yyyy-MM-dd')
-                                .format(picked);
                             if (tanggalBerakhir != null &&
                                 tanggalBerakhir!.isBefore(picked)) {
                               tanggalBerakhir = null;
-                              endDateCtrl.clear();
                             }
                           });
                         }
                       },
-                      decoration: const InputDecoration(
-                        labelText: 'Tanggal Kegiatan',
-                        prefixIcon: Icon(Icons.calendar_today_outlined),
+                      borderRadius: BorderRadius.circular(12),
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Tanggal Kegiatan',
+                          prefixIcon: Icon(Icons.calendar_today_outlined),
+                        ),
+                        child: Text(DateFormat('yyyy-MM-dd').format(tanggal)),
                       ),
                     ),
                     if (isEvent) ...[
                       const SizedBox(height: 14),
-                      TextField(
-                        controller: endDateCtrl,
-                        readOnly: true,
+                      InkWell(
                         onTap: () async {
                           final picked = await showDatePicker(
                             context: context,
@@ -248,14 +242,21 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                           if (picked != null) {
                             setDialogState(() {
                               tanggalBerakhir = picked;
-                              endDateCtrl.text = DateFormat('yyyy-MM-dd')
-                                  .format(picked);
                             });
                           }
                         },
-                        decoration: const InputDecoration(
-                          labelText: 'Tanggal berakhir (opsional)',
-                          prefixIcon: Icon(Icons.event_busy_outlined),
+                        borderRadius: BorderRadius.circular(12),
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Tanggal berakhir (opsional)',
+                            prefixIcon: Icon(Icons.event_busy_outlined),
+                          ),
+                          child: Text(
+                            tanggalBerakhir == null
+                                ? 'Pilih tanggal'
+                                : DateFormat('yyyy-MM-dd')
+                                      .format(tanggalBerakhir!),
+                          ),
                         ),
                       ),
                     ],
@@ -303,16 +304,18 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
               ),
               FilledButton.icon(
                 onPressed: () {
-                  if (materi.text.trim().isEmpty) return;
+                  if (materi.trim().isEmpty) return;
                   Navigator.of(context).pop(<String, dynamic>{
-                    'materi': materi.text.trim(),
-                    'deskripsi': deskripsi.text.trim().isEmpty
+                    'materi': materi.trim(),
+                    'deskripsi': deskripsi.trim().isEmpty
                         ? ''
-                        : deskripsi.text.trim(),
-                    'tanggal_kegiatan': dateCtrl.text,
+                        : deskripsi.trim(),
+                    'tanggal_kegiatan': DateFormat('yyyy-MM-dd')
+                        .format(tanggal),
                     'jenis_kegiatan': isEvent ? 'event' : null,
                     if (tanggalBerakhir != null)
-                      'tanggal_berakhir': endDateCtrl.text,
+                      'tanggal_berakhir': DateFormat('yyyy-MM-dd')
+                          .format(tanggalBerakhir!),
                     ...?(photo == null ? null : {'_photo': photo}),
                     ...?(photoBytes == null
                         ? null
@@ -327,10 +330,6 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
         );
       },
     );
-    materi.dispose();
-    deskripsi.dispose();
-    dateCtrl.dispose();
-    endDateCtrl.dispose();
     return result;
   }
 
@@ -363,401 +362,534 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
         },
       ),
       body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            PageHeader(
-              title: 'Kegiatan',
-              subtitle: 'Atur agenda, dokumentasi, rekap kehadiran, dan laporan bulanan ekskul.',
-              eyebrow: 'AKTIVITAS EKSKUL',
-              topPadding: 25,
+        child: NestedScrollView(
+          headerSliverBuilder: (context, _) => [
+            SliverToBoxAdapter(
+              child: PageHeader(
+                title: 'Kegiatan',
+                subtitle: 'Atur agenda, dokumentasi, rekap kehadiran, dan laporan bulanan ekskul.',
+                eyebrow: 'AKTIVITAS EKSKUL',
+                topPadding: 25,
+              ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
-              child: Container(
-                key: const ValueKey('kegiatan-pill-tabs'),
-                padding: const EdgeInsets.all(5),
-                decoration: BoxDecoration(
-                  color: AppTheme.surface(context),
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: AppTheme.outline(context)),
-                ),
-                child: TabBar(
-                  key: const ValueKey('kegiatan-tab-bar'),
-                  controller: _tabController,
-                  dividerHeight: 0,
-                  overlayColor: WidgetStatePropertyAll(Colors.transparent),
-                  labelColor: AppTheme.blue,
-                  unselectedLabelColor: AppTheme.mutedText(context),
-                  indicatorColor: Colors.transparent,
-                  dividerColor: Colors.transparent,
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  indicator: BoxDecoration(
-                    color: AppTheme.accentSurface(context),
-                    borderRadius: BorderRadius.all(Radius.circular(24)),
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _KegiatanTabBarDelegate(
+                child: Container(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  alignment: Alignment.center,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+                    child: Container(
+                      key: const ValueKey('kegiatan-pill-tabs'),
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surface(context),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(color: AppTheme.outline(context)),
+                      ),
+                      child: TabBar(
+                        key: const ValueKey('kegiatan-tab-bar'),
+                        controller: _tabController,
+                        dividerHeight: 0,
+                        overlayColor: const WidgetStatePropertyAll(
+                          Colors.transparent,
+                        ),
+                        labelColor: AppTheme.blue,
+                        unselectedLabelColor: AppTheme.mutedText(context),
+                        indicatorColor: Colors.transparent,
+                        dividerColor: Colors.transparent,
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        indicator: BoxDecoration(
+                          color: AppTheme.accentSurface(context),
+                          borderRadius: const BorderRadius.all(
+                            Radius.circular(24),
+                          ),
+                        ),
+                        labelPadding: EdgeInsets.zero,
+                        labelStyle: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 11,
+                        ),
+                        unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                        tabs: const [
+                          Tab(height: 30, text: 'Kegiatan'),
+                          Tab(height: 30, text: 'Rekap Kehadiran'),
+                          Tab(height: 30, text: 'Laporan'),
+                        ],
+                      ),
+                    ),
                   ),
-                  labelPadding: EdgeInsets.zero,
-                  labelStyle: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 11,
-                  ),
-                  unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 11,
-                  ),
-                  tabs: const [
-                    Tab(height: 30, text: 'Kegiatan'),
-                    Tab(height: 30, text: 'Rekap Kehadiran'),
-                    Tab(height: 30, text: 'Laporan'),
-                  ],
                 ),
               ),
             ),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
+          ],
+          body: TabBarView(
+            controller: _tabController,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      PopupMenuButton<String>(
-                                        onSelected: (val) {
-                                          if (val == 'terbaru' || val == 'terlama') {
-                                            setState(() => _timeSort = val);
-                                          } else if (val == 'semua' || val == 'rutin' || val == 'event') {
-                                            setState(() => _jenisFilter = val);
-                                          }
-                                        },
-                                        itemBuilder: (context) => [
-                                          const PopupMenuItem(
-                                            enabled: false,
-                                            child: Text('Tipe', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                PopupMenuButton<String>(
+                                  onSelected: (val) {
+                                    if (val == 'terbaru' || val == 'terlama') {
+                                      setState(() => _timeSort = val);
+                                    } else if (val == 'semua' ||
+                                        val == 'rutin' ||
+                                        val == 'event') {
+                                      setState(() => _jenisFilter = val);
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(
+                                      enabled: false,
+                                      child: Text(
+                                        'Tipe',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'semua',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            _jenisFilter == 'semua'
+                                                ? Icons.radio_button_checked
+                                                : Icons.radio_button_off,
+                                            size: 18,
+                                            color: _jenisFilter == 'semua'
+                                                ? AppTheme.blue
+                                                : AppTheme.mutedText(context),
                                           ),
-                                          PopupMenuItem(
-                                            value: 'semua',
-                                            child: Row(
-                                              children: [
-                                                Icon(
-                                                  _jenisFilter == 'semua' ? Icons.radio_button_checked : Icons.radio_button_off,
-                                                  size: 18,
-                                                  color: _jenisFilter == 'semua' ? AppTheme.blue : AppTheme.mutedText(context),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                const Text('Semua Tipe'),
-                                              ],
-                                            ),
-                                          ),
-                                          PopupMenuItem(
-                                            value: 'rutin',
-                                            child: Row(
-                                              children: [
-                                                Icon(
-                                                  _jenisFilter == 'rutin' ? Icons.radio_button_checked : Icons.radio_button_off,
-                                                  size: 18,
-                                                  color: _jenisFilter == 'rutin' ? AppTheme.blue : AppTheme.mutedText(context),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                const Text('Rutin'),
-                                              ],
-                                            ),
-                                          ),
-                                          PopupMenuItem(
-                                            value: 'event',
-                                            child: Row(
-                                              children: [
-                                                Icon(
-                                                  _jenisFilter == 'event' ? Icons.radio_button_checked : Icons.radio_button_off,
-                                                  size: 18,
-                                                  color: _jenisFilter == 'event' ? AppTheme.blue : AppTheme.mutedText(context),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                const Text('Event'),
-                                              ],
-                                            ),
-                                          ),
-                                          const PopupMenuDivider(),
-                                          const PopupMenuItem(
-                                            enabled: false,
-                                            child: Text('Urutkan', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
-                                          ),
-                                          PopupMenuItem(
-                                            value: 'terbaru',
-                                            child: Row(
-                                              children: [
-                                                Icon(
-                                                  _timeSort == 'terbaru' ? Icons.radio_button_checked : Icons.radio_button_off,
-                                                  size: 18,
-                                                  color: _timeSort == 'terbaru' ? AppTheme.blue : AppTheme.mutedText(context),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                const Text('Terbaru'),
-                                              ],
-                                            ),
-                                          ),
-                                          PopupMenuItem(
-                                            value: 'terlama',
-                                            child: Row(
-                                              children: [
-                                                Icon(
-                                                  _timeSort == 'terlama' ? Icons.radio_button_checked : Icons.radio_button_off,
-                                                  size: 18,
-                                                  color: _timeSort == 'terlama' ? AppTheme.blue : AppTheme.mutedText(context),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                const Text('Terlama'),
-                                              ],
-                                            ),
-                                          ),
+                                          const SizedBox(width: 8),
+                                          const Text('Semua Tipe'),
                                         ],
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                          decoration: BoxDecoration(
-                                            color: AppTheme.surface(context),
-                                            borderRadius: BorderRadius.circular(999),
-                                            border: Border.all(color: AppTheme.outline(context)),
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'rutin',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            _jenisFilter == 'rutin'
+                                                ? Icons.radio_button_checked
+                                                : Icons.radio_button_off,
+                                            size: 18,
+                                            color: _jenisFilter == 'rutin'
+                                                ? AppTheme.blue
+                                                : AppTheme.mutedText(context),
                                           ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              const Icon(Icons.tune_rounded, size: 16, color: AppTheme.blue),
-                                              const SizedBox(width: 6),
-                                              Text('Filter',
-                                                  style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
-                                              const SizedBox(width: 4),
-                                              const Icon(Icons.arrow_drop_down, size: 18),
-                                            ],
+                                          const SizedBox(width: 8),
+                                          const Text('Rutin'),
+                                        ],
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'event',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            _jenisFilter == 'event'
+                                                ? Icons.radio_button_checked
+                                                : Icons.radio_button_off,
+                                            size: 18,
+                                            color: _jenisFilter == 'event'
+                                                ? AppTheme.blue
+                                                : AppTheme.mutedText(context),
                                           ),
+                                          const SizedBox(width: 8),
+                                          const Text('Event'),
+                                        ],
+                                      ),
+                                    ),
+                                    const PopupMenuDivider(),
+                                    const PopupMenuItem(
+                                      enabled: false,
+                                      child: Text(
+                                        'Urutkan',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 12,
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.blue,
-                                          borderRadius: BorderRadius.circular(999),
-                                        ),
-                                        child: Text(
-                                          _jenisFilter == 'semua'
-                                              ? 'Semua Tipe'
-                                              : (_jenisFilter[0].toUpperCase() + _jenisFilter.substring(1)),
-                                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
-                                        ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'terbaru',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            _timeSort == 'terbaru'
+                                                ? Icons.radio_button_checked
+                                                : Icons.radio_button_off,
+                                            size: 18,
+                                            color: _timeSort == 'terbaru'
+                                                ? AppTheme.blue
+                                                : AppTheme.mutedText(context),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const Text('Terbaru'),
+                                        ],
                                       ),
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.blue,
-                                          borderRadius: BorderRadius.circular(999),
-                                        ),
-                                        child: Text(
-                                          _timeSort == 'terbaru' ? 'Terbaru' : 'Terlama',
-                                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
-                                        ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'terlama',
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            _timeSort == 'terlama'
+                                                ? Icons.radio_button_checked
+                                                : Icons.radio_button_off,
+                                            size: 18,
+                                            color: _timeSort == 'terlama'
+                                                ? AppTheme.blue
+                                                : AppTheme.mutedText(context),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          const Text('Terlama'),
+                                        ],
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Tooltip(
-                                message: _isAscending ? 'Urutkan A-Z (Klik untuk Z-A)' : 'Urutkan Z-A (Klik untuk A-Z)',
-                                child: InkWell(
-                                  onTap: () => setState(() => _isAscending = !_isAscending),
-                                  borderRadius: BorderRadius.circular(999),
+                                    ),
+                                  ],
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 8,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: AppTheme.surface(context),
                                       borderRadius: BorderRadius.circular(999),
-                                      border: Border.all(color: AppTheme.outline(context)),
+                                      border: Border.all(
+                                        color: AppTheme.outline(context),
+                                      ),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
+                                        const Icon(
+                                          Icons.tune_rounded,
+                                          size: 16,
+                                          color: AppTheme.blue,
+                                        ),
+                                        const SizedBox(width: 6),
                                         Text(
-                                          _isAscending ? 'A-Z' : 'Z-A',
+                                          'Filter',
                                           style: GoogleFonts.plusJakartaSans(
-                                            color: AppTheme.blue,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w800,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
                                           ),
                                         ),
                                         const SizedBox(width: 4),
-                                        Icon(
-                                          _isAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                                          size: 14,
-                                          color: AppTheme.blue,
+                                        const Icon(
+                                          Icons.arrow_drop_down,
+                                          size: 18,
                                         ),
                                       ],
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (v) =>
-                              setState(() => _cari = v.trim().toLowerCase()),
-                          decoration: InputDecoration(
-                            hintText: 'Cari kegiatan...',
-                            prefixIcon: Icon(
-                              Icons.search,
-                              color: AppTheme.mutedText(context),
-                            ),
-                            suffixIcon: _searchController.text.isEmpty
-                                ? null
-                                : IconButton(
-                                    tooltip: 'Hapus pencarian',
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() => _cari = '');
-                                    },
-                                    icon: const Icon(Icons.close_rounded),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 7,
                                   ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: ApiAsyncView(
-                          value: list,
-                          onRetry: () => ref.invalidate(ketuaKegiatanProvider),
-                          builder: (context, data) {
-                            final all = listOf(data, 'kegiatans');
-                            final filteredByType = all.where((k) {
-                              final jenis = (k['jenis_kegiatan'] ?? k['jenis'] ?? '').toString().toLowerCase();
-                              final isEvent = k['is_event'] == true || jenis == 'event' || jenis == 'lomba';
-                              if (_jenisFilter == 'event') return isEvent;
-                              if (_jenisFilter == 'rutin') return !isEvent;
-                              return true;
-                            }).toList();
-
-                            final filtered = _cari.isEmpty
-                                ? filteredByType
-                                : filteredByType
-                                      .where(
-                                        (k) => (k['materi'] as String? ?? '')
-                                            .toLowerCase()
-                                            .contains(_cari),
-                                      )
-                                      .toList();
-                            final sorted = [...filtered];
-                            sorted.sort((a, b) {
-                              final da = DateTime.tryParse((a['created_at'] ?? a['tanggal_kegiatan'] ?? a['tanggal'] ?? '').toString());
-                              final db = DateTime.tryParse((b['created_at'] ?? b['tanggal_kegiatan'] ?? b['tanggal'] ?? '').toString());
-                              if (da != null && db != null) {
-                                final cmp = _timeSort == 'terbaru' ? db.compareTo(da) : da.compareTo(db);
-                                if (cmp != 0) return cmp;
-                              }
-                              final nameA = (a['materi'] ?? '').toString();
-                              final nameB = (b['materi'] ?? '').toString();
-                              return _isAscending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
-                            });
-                            return Column(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                    20,
-                                    0,
-                                    20,
-                                    8,
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.blue,
+                                    borderRadius: BorderRadius.circular(999),
                                   ),
-                                  child: Row(
-                                    children: [
-                                      Text(
-                                        _cari.isEmpty
-                                            ? '${sorted.length} kegiatan'
-                                            : '${sorted.length} hasil pencarian',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          color: AppTheme.mutedText(context),
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      if (_cari.isNotEmpty)
-                                        TextButton(
-                                          onPressed: () {
-                                            _searchController.clear();
-                                            setState(() => _cari = '');
-                                          },
-                                          child: const Text('Hapus filter'),
-                                        ),
-                                    ],
+                                  child: Text(
+                                    _jenisFilter == 'semua'
+                                        ? 'Semua Tipe'
+                                        : (_jenisFilter[0].toUpperCase() +
+                                              _jenisFilter.substring(1)),
+                                    style: GoogleFonts.plusJakartaSans(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                    ),
                                   ),
                                 ),
-                                Expanded(
-                                  child: sorted.isEmpty
-                                      ? EmptyState(
-                                          title: _cari.isEmpty
-                                              ? 'Belum ada kegiatan'
-                                              : 'Kegiatan tidak ditemukan',
-                                          subtitle: _cari.isEmpty
-                                              ? 'Tekan tombol + untuk membuat kegiatan baru.'
-                                              : 'Coba kata kunci lain atau hapus pencarian.',
-                                          icon: _cari.isEmpty
-                                              ? Icons.event_note_outlined
-                                              : Icons.search_off_rounded,
-                                        )
-                                      : ListView.separated(
-                                          padding: const EdgeInsets.fromLTRB(
-                                            16,
-                                            4,
-                                            16,
-                                            16,
-                                          ),
-                                          itemCount: sorted.length,
-                                          separatorBuilder: (_, _) =>
-                                              const SizedBox(height: 10),
-                                          itemBuilder: (context, i) {
-                                            final raw = sorted[i];
-                                            final k = Kegiatan.fromJson(raw);
-                                            return _KegiatanCard(
-                                              kegiatan: k,
-                                              onTap: () => Navigator.of(context)
-                                                  .push(
-                                                    MaterialPageRoute(
-                                                      builder: (_) =>
-                                                          KegiatanDetailScreen(
-                                                            kegiatanId: k.id,
-                                                          ),
-                                                    ),
-                                                  ),
-                                            );
-                                          },
-                                        ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 7,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.blue,
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    _timeSort == 'terbaru'
+                                        ? 'Terbaru'
+                                        : 'Terlama',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      color: Colors.white,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
                                 ),
                               ],
-                            );
-                          },
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 8),
+                        Tooltip(
+                          message: _isAscending
+                              ? 'Urutkan A-Z (Klik untuk Z-A)'
+                              : 'Urutkan Z-A (Klik untuk A-Z)',
+                          child: InkWell(
+                            onTap: () =>
+                                setState(() => _isAscending = !_isAscending),
+                            borderRadius: BorderRadius.circular(999),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.surface(context),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                  color: AppTheme.outline(context),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _isAscending ? 'A-Z' : 'Z-A',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      color: AppTheme.blue,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Icon(
+                                    _isAscending
+                                        ? Icons.arrow_upward_rounded
+                                        : Icons.arrow_downward_rounded,
+                                    size: 14,
+                                    color: AppTheme.blue,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const RekapPresensiContent(),
-                  const LaporanContent(),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (v) =>
+                          setState(() => _cari = v.trim().toLowerCase()),
+                      decoration: InputDecoration(
+                        hintText: 'Cari kegiatan...',
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: AppTheme.mutedText(context),
+                        ),
+                        suffixIcon: _searchController.text.isEmpty
+                            ? null
+                            : IconButton(
+                                tooltip: 'Hapus pencarian',
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _cari = '');
+                                },
+                                icon: const Icon(Icons.close_rounded),
+                              ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: ApiAsyncView(
+                      value: list,
+                      onRetry: () => ref.invalidate(ketuaKegiatanProvider),
+                      builder: (context, data) {
+                        final all = listOf(data, 'kegiatans');
+                        final filteredByType = all.where((k) {
+                          final jenis =
+                              (k['jenis_kegiatan'] ?? k['jenis'] ?? '')
+                                  .toString()
+                                  .toLowerCase();
+                          final isEvent =
+                              k['is_event'] == true ||
+                              jenis == 'event' ||
+                              jenis == 'lomba';
+                          if (_jenisFilter == 'event') return isEvent;
+                          if (_jenisFilter == 'rutin') return !isEvent;
+                          return true;
+                        }).toList();
+
+                        final filtered = _cari.isEmpty
+                            ? filteredByType
+                            : filteredByType
+                                  .where(
+                                    (k) => (k['materi'] as String? ?? '')
+                                        .toLowerCase()
+                                        .contains(_cari),
+                                  )
+                                  .toList();
+                        final sorted = [...filtered];
+                        sorted.sort((a, b) {
+                          final da = DateTime.tryParse(
+                            (a['created_at'] ??
+                                    a['tanggal_kegiatan'] ??
+                                    a['tanggal'] ??
+                                    '')
+                                .toString(),
+                          );
+                          final db = DateTime.tryParse(
+                            (b['created_at'] ??
+                                    b['tanggal_kegiatan'] ??
+                                    b['tanggal'] ??
+                                    '')
+                                .toString(),
+                          );
+                          if (da != null && db != null) {
+                            final cmp = _timeSort == 'terbaru'
+                                ? db.compareTo(da)
+                                : da.compareTo(db);
+                            if (cmp != 0) return cmp;
+                          }
+                          final nameA = (a['materi'] ?? '').toString();
+                          final nameB = (b['materi'] ?? '').toString();
+                          return _isAscending
+                              ? nameA.compareTo(nameB)
+                              : nameB.compareTo(nameA);
+                        });
+                        return Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    _cari.isEmpty
+                                        ? '${sorted.length} kegiatan'
+                                        : '${sorted.length} hasil pencarian',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      color: AppTheme.mutedText(context),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  if (_cari.isNotEmpty)
+                                    TextButton(
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() => _cari = '');
+                                      },
+                                      child: const Text('Hapus filter'),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: sorted.isEmpty
+                                  ? EmptyState(
+                                      title: _cari.isEmpty
+                                          ? 'Belum ada kegiatan'
+                                          : 'Kegiatan tidak ditemukan',
+                                      subtitle: _cari.isEmpty
+                                          ? 'Tekan tombol + untuk membuat kegiatan baru.'
+                                          : 'Coba kata kunci lain atau hapus pencarian.',
+                                      icon: _cari.isEmpty
+                                          ? Icons.event_note_outlined
+                                          : Icons.search_off_rounded,
+                                    )
+                                  : ListView.separated(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        16,
+                                        4,
+                                        16,
+                                        16,
+                                      ),
+                                      itemCount: sorted.length,
+                                      separatorBuilder: (_, _) =>
+                                          const SizedBox(height: 10),
+                                      itemBuilder: (context, i) {
+                                        final raw = sorted[i];
+                                        final k = Kegiatan.fromJson(raw);
+                                        return _KegiatanCard(
+                                          kegiatan: k,
+                                          onTap: () => Navigator.of(context)
+                                              .push(
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      KegiatanDetailScreen(
+                                                        kegiatanId: k.id,
+                                                      ),
+                                                ),
+                                              ),
+                                        );
+                                      },
+                                    ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ],
+              const RekapPresensiContent(),
+              const LaporanContent(),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+class _KegiatanTabBarDelegate extends SliverPersistentHeaderDelegate {
+  const _KegiatanTabBarDelegate({required this.child});
+
+  final Widget child;
+
+  @override
+  double get minExtent => 58;
+
+  @override
+  double get maxExtent => 58;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) => child;
+
+  @override
+  bool shouldRebuild(covariant _KegiatanTabBarDelegate oldDelegate) =>
+      oldDelegate.child != child;
 }
 
 class _KegiatanCard extends StatelessWidget {

@@ -385,7 +385,7 @@ class _EkskulCard extends StatelessWidget {
                       runSpacing: 5,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        StatusChip(ekskul.isOpenRecruitment ? 'Buka' : 'Tutup'),
+                        StatusChip(ekskul.status ? 'Aktif' : 'Tidak aktif'),
                         if (ekskul.kategori?.isNotEmpty == true) ...[
                           _KategoriBadge(kategori: ekskul.kategori!),
                         ],

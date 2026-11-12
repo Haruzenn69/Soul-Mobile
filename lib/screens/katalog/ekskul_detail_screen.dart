@@ -82,105 +82,6 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
     }
   }
 
-  Future<void> _daftar(Ekskul ekskul) async {
-    if (_loading) return;
-    final alasan = await _showAlasanDialog();
-    if (alasan == null || !mounted) return;
-    if (alasan.trim().isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Alasan bergabung wajib diisi untuk mendaftar.'),
-            backgroundColor: Color(0xFFE11D48),
-          ),
-        );
-      }
-      return;
-    }
-
-    setState(() => _loading = true);
-    try {
-      await ref
-          .read(apiClientProvider)
-          .post(
-            '/siswa/daftar-ekskul',
-            data: {'ekskul_id': ekskul.id, 'alasan': alasan},
-          );
-      ref.invalidate(katalogProvider);
-      ref.invalidate(siswaDashboardProvider);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Pendaftaran terkirim. Menunggu konfirmasi ketua ekskul.',
-            ),
-          ),
-        );
-        Navigator.of(context).pop();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _loading = false);
-        await showErrorDialog(context, ref, e);
-      }
-    }
-  }
-
-  Future<String?> _showAlasanDialog() {
-    final controller = TextEditingController();
-    String? errorText;
-    return showDialog<String>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(
-            'Alasan Bergabung',
-            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w800),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: controller,
-                maxLines: 3,
-                maxLength: 1000,
-                onChanged: (_) {
-                  if (errorText != null) {
-                    setDialogState(() => errorText = null);
-                  }
-                },
-                decoration: InputDecoration(
-                  hintText: 'Ceritakan alasanmu ingin bergabung...',
-                  errorText: errorText,
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final text = controller.text.trim();
-                if (text.isEmpty) {
-                  setDialogState(() {
-                    errorText = 'Alasan bergabung wajib diisi.';
-                  });
-                  return;
-                }
-                Navigator.of(context).pop(text);
-              },
-              child: const Text('Daftar'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final detail = ref.watch(ekskulDetailProvider(widget.ekskulId));
@@ -263,8 +164,30 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
                   subtitle: 'Kegiatan terbaru dari ekskul ini.',
                 ),
                 const SizedBox(height: 8),
-                for (final k in kegiatans)
-                  _KegiatanMini(kegiatan: Kegiatan.fromJson(k)),
+                ...(() {
+                  final sortedKegiatans = [...kegiatans]
+                    ..sort((a, b) {
+                      final dateA =
+                          DateTime.tryParse(
+                            a['tanggal_kegiatan']?.toString() ?? '',
+                          ) ??
+                          DateTime(0);
+                      final dateB =
+                          DateTime.tryParse(
+                            b['tanggal_kegiatan']?.toString() ?? '',
+                          ) ??
+                          DateTime(0);
+                      if (dateA != dateB) return dateB.compareTo(dateA);
+
+                      final idA = (a['id'] as num?)?.toInt() ?? 0;
+                      final idB = (b['id'] as num?)?.toInt() ?? 0;
+                      return idB.compareTo(idA);
+                    });
+                  final limited = sortedKegiatans.take(4);
+                  return limited.map(
+                    (k) => _KegiatanMini(kegiatan: Kegiatan.fromJson(k)),
+                  );
+                }()),
               ],
               if (galeri.isNotEmpty) ...[
                 const SizedBox(height: 20),
@@ -385,147 +308,32 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: Consumer(
-            builder: (context, ref, _) {
-              final ekskul = _ekskul;
-              if (ekskul == null) return const SizedBox.shrink();
-              final katalog = ref.watch(katalogProvider);
-              return katalog.when(
-                loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
-                data: (data) {
-                  final activeRegistrations = listOf(
-                    data,
-                    'active_pendaftarans',
-                  );
-                  final pendingRegistrations = listOf(
-                    data,
-                    'pending_pendaftarans',
-                  );
-                  final activeIds = activeRegistrations
-                      .map(
-                        (item) => item['ekskul'] is Map
-                            ? (item['ekskul'] as Map)['id']
-                            : null,
-                      )
-                      .whereType<num>()
-                      .map((id) => id.toInt())
-                      .toSet();
-                  final pendingIds = pendingRegistrations
-                      .map(
-                        (item) => item['ekskul'] is Map
-                            ? (item['ekskul'] as Map)['id']
-                            : null,
-                      )
-                      .whereType<num>()
-                      .map((id) => id.toInt())
-                      .toSet();
-                  if (activeIds.isEmpty && data['pendaftaran'] is Map) {
-                    final id = ((data['pendaftaran'] as Map)['ekskul'] is Map)
-                        ? (((data['pendaftaran'] as Map)['ekskul'] as Map)['id']
-                              as num?)
-                        : null;
-                    if (id != null) activeIds.add(id.toInt());
-                  }
-                  if (pendingIds.isEmpty && data['pending'] is Map) {
-                    final id = ((data['pending'] as Map)['ekskul'] is Map)
-                        ? (((data['pending'] as Map)['ekskul'] as Map)['id']
-                              as num?)
-                        : null;
-                    if (id != null) pendingIds.add(id.toInt());
-                  }
-                  final allPendaftaransBottom = listOf(data, 'pendaftarans');
-                  for (final item in allPendaftaransBottom) {
-                    if (item['ekskul'] is Map) {
-                      final id = (item['ekskul'] as Map)['id'];
-                      if (id is num) {
-                        final st = (item['status'] as String? ?? '').toLowerCase();
-                        final iid = id.toInt();
-                        if (st == 'diterima' || st == 'aktif' || st == 'approved' || st == 'accept') {
-                          activeIds.add(iid);
-                        } else if (st == 'pending' || st == 'menunggu' || st == 'waiting') {
-                          pendingIds.add(iid);
-                        }
-                      }
-                    }
-                  }
-                  final sudahAktif = activeIds.contains(ekskul.id);
-                  final sudahPending = pendingIds.contains(ekskul.id);
-                  final profilLengkap = data['profile_complete'] == true;
-                  final reasons = data['alasan_per_ekskul'] is Map
-                      ? Map<String, dynamic>.from(
-                          data['alasan_per_ekskul'] as Map,
-                        )
-                      : const <String, dynamic>{};
-                  final rejectedRegistrations = listOf(
-                    data,
-                    'rejected_pendaftarans',
-                  );
-                  final rejectedIds = rejectedRegistrations
-                      .map(
-                        (item) => item['ekskul'] is Map
-                            ? (item['ekskul'] as Map)['id']
-                            : null,
-                      )
-                      .whereType<num>()
-                      .map((id) => id.toInt())
-                      .toSet();
-                  final isRejected = rejectedIds.contains(ekskul.id);
-                  final registrationBlockReason = isRejected
-                      ? null
-                      : reasons[ekskul.id.toString()]?.toString();
-                  if (sudahAktif || sudahPending) {
-                    return SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: null,
-                        child: Text(
-                          sudahAktif
-                              ? 'Sudah terdaftar di ekskul'
-                              : 'Menunggu persetujuan pendaftaran',
-                        ),
-                      ),
-                    );
-                  }
-                  if (!profilLengkap) {
-                    return const SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: null,
-                        child: Text('Lengkapi profil sebelum mendaftar'),
-                      ),
-                    );
-                  }
-                  if (registrationBlockReason != null) {
-                    return SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton(
-                        onPressed: null,
-                        child: Text(registrationBlockReason),
-                      ),
-                    );
-                  }
-                  return SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: ekskul.isOpenRecruitment && ekskul.status
-                          ? () => _daftar(ekskul)
-                          : null,
-                      child: _loading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2.5,
-                              ),
-                            )
-                          : Text(_loading ? '' : 'Daftar ke Ekskul'),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppTheme.accentSurface(context),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppTheme.outline(context)),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  color: AppTheme.accent(context),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Keanggotaan dikelola langsung oleh ketua ekskul. Hubungi ketua jika ingin bergabung.',
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.text(context),
+                      fontSize: 11,
+                      height: 1.35,
                     ),
-                  );
-                },
-              );
-            },
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -553,13 +361,13 @@ class _DetailHero extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.outline(context)),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0D0F172A),
-            blurRadius: 14,
-            offset: Offset(0, 5),
+            color: Color(0x0A0F172A),
+            blurRadius: 12,
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -568,7 +376,7 @@ class _DetailHero extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: 170,
+            height: 150,
             width: double.infinity,
             child: Stack(
               fit: StackFit.expand,
@@ -586,7 +394,7 @@ class _DetailHero extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Colors.black26, Colors.transparent],
+                      colors: [Colors.black38, Colors.transparent],
                     ),
                   ),
                 ),
@@ -596,18 +404,16 @@ class _DetailHero extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
-                      vertical: 6,
+                      vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: ekskul.isOpenRecruitment && ekskul.status
+                      color: ekskul.status
                           ? const Color(0xFF15803D)
                           : const Color(0xFF334155),
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
-                      ekskul.isOpenRecruitment && ekskul.status
-                          ? 'Pendaftaran Dibuka'
-                          : 'Pendaftaran Ditutup',
+                      ekskul.status ? 'Ekskul Aktif' : 'Tidak Aktif',
                       style: GoogleFonts.plusJakartaSans(
                         color: Colors.white,
                         fontSize: 10,
@@ -620,30 +426,30 @@ class _DetailHero extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Transform.translate(
-                  offset: const Offset(0, -28),
+                  offset: const Offset(0, -24),
                   child: Container(
-                    width: 64,
-                    height: 64,
-                    padding: const EdgeInsets.all(3),
+                    width: 56,
+                    height: 56,
+                    padding: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       color: AppTheme.surface(context),
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AppTheme.outline(context)),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0x1A0F172A),
-                          blurRadius: 8,
-                          offset: Offset(0, 3),
+                          color: Color(0x140F172A),
+                          blurRadius: 6,
+                          offset: Offset(0, 2),
                         ),
                       ],
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(14),
                       child: (ekskul.logo ?? '').isNotEmpty
                           ? _ImageOrPlaceholder(
                               url: AppConfig.imageUrl(ekskul.logo),
@@ -657,7 +463,7 @@ class _DetailHero extends StatelessWidget {
                                   initials.toUpperCase(),
                                   style: GoogleFonts.plusJakartaSans(
                                     color: Colors.white,
-                                    fontSize: 21,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.w900,
                                   ),
                                 ),
@@ -667,7 +473,7 @@ class _DetailHero extends StatelessWidget {
                   ),
                 ),
                 Transform.translate(
-                  offset: const Offset(0, -20),
+                  offset: const Offset(0, -16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -679,7 +485,7 @@ class _DetailHero extends StatelessWidget {
                               ekskul.namaEkskul,
                               style: GoogleFonts.plusJakartaSans(
                                 color: AppTheme.text(context),
-                                fontSize: 21,
+                                fontSize: 19,
                                 fontWeight: FontWeight.w900,
                                 height: 1.15,
                               ),
@@ -689,16 +495,16 @@ class _DetailHero extends StatelessWidget {
                           const Icon(
                             Icons.verified_rounded,
                             color: AppTheme.blue,
-                            size: 20,
+                            size: 18,
                           ),
                         ],
                       ),
                       if (ekskul.kategori?.isNotEmpty == true) ...[
-                        const SizedBox(height: 9),
+                        const SizedBox(height: 7),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
+                            horizontal: 9,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             color: AppTheme.accentSurface(context),
@@ -711,9 +517,9 @@ class _DetailHero extends StatelessWidget {
                               const Icon(
                                 Icons.category_outlined,
                                 color: AppTheme.blue,
-                                size: 14,
+                                size: 13,
                               ),
-                              const SizedBox(width: 5),
+                              const SizedBox(width: 4),
                               Text(
                                 ekskul.kategori!,
                                 style: GoogleFonts.plusJakartaSans(
@@ -727,23 +533,23 @@ class _DetailHero extends StatelessWidget {
                         ),
                       ],
                       if (ekskul.tagline?.isNotEmpty == true) ...[
-                        const SizedBox(height: 5),
+                        const SizedBox(height: 4),
                         Text(
                           '“${ekskul.tagline}”',
                           style: GoogleFonts.plusJakartaSans(
                             color: AppTheme.mutedText(context),
-                            fontSize: 12.5,
+                            fontSize: 12,
                             fontStyle: FontStyle.italic,
-                            height: 1.45,
+                            height: 1.4,
                           ),
                         ),
                       ],
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 12),
                       GridView.count(
                         crossAxisCount: 2,
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        childAspectRatio: 2.6,
+                        childAspectRatio: 2.8,
                         crossAxisSpacing: 8,
                         mainAxisSpacing: 8,
                         children: [

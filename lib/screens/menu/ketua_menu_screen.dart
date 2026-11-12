@@ -12,6 +12,7 @@ import '../../widgets/common.dart';
 import '../faq/ketua_faq_screen.dart';
 import '../nilai/nilai_screen.dart';
 import '../profil/profil_screen.dart';
+import '../profil/pengajuan_kepengurusan_screen.dart';
 import '../profil_ekskul/profil_ekskul_screen.dart';
 import '../testimoni/testimoni_manage_screen.dart';
 
@@ -61,6 +62,12 @@ class KetuaMenuScreen extends ConsumerWidget {
                 title: 'Profil Ekskul & Prestasi',
                 subtitle: 'Perbarui informasi, galeri, dan prestasi.',
                 onTap: () => _open(context, ProfilEkskulScreen(user: user)),
+              ),
+              _MenuTile(
+                icon: Icons.group_add_outlined,
+                title: 'Pengajuan Kepengurusan',
+                subtitle: 'Ajukan penambahan atau perubahan pengurus.',
+                onTap: () => _open(context, const PengajuanKepengurusanScreen()),
               ),
               _MenuTile(
                 icon: Icons.reviews_outlined,

@@ -83,102 +83,111 @@ class _RekapPresensiContentState extends ConsumerState<RekapPresensiContent> {
                   ? data['presensi_pelatih'] as Map
                   : null;
 
-              return ListView(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              return Column(
                 children: [
-                  _periodHero(
-                    bulan: bulan,
-                    selected: _selectedMonth,
-                    months: availableMonths,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: _periodHero(
+                      bulan: bulan,
+                      selected: _selectedMonth,
+                      months: availableMonths,
+                    ),
                   ),
-                  const SizedBox(height: 18),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: StatCard(
-                          label: 'Hadir',
-                          value:
-                              '${(data['total_hadir'] as num?)?.toInt() ?? 0}',
-                          icon: Icons.check_circle_outline,
-                          color: const Color(0xFF15803D),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: StatCard(
-                          label: 'Izin',
-                          value:
-                              '${(data['total_izin'] as num?)?.toInt() ?? 0}',
-                          icon: Icons.event_note_outlined,
-                          color: const Color(0xFF1E5AA8),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: StatCard(
-                          label: 'Sakit',
-                          value:
-                              '${(data['total_sakit'] as num?)?.toInt() ?? 0}',
-                          icon: Icons.medical_information_outlined,
-                          color: const Color(0xFFC77700),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: StatCard(
-                          label: 'Alpha',
-                          value:
-                              '${(data['total_alpha'] as num?)?.toInt() ?? 0}',
-                          icon: Icons.person_off_outlined,
-                          color: const Color(0xFFE11D48),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (pelatih != null && presensiPelatih != null) ...[
-                    const SizedBox(height: 18),
-                    _rekapCard(
-                      title: 'Pelatih',
-                      subtitle: 'Kehadiran pelatih selama bulan berjalan.',
-                      icon: Icons.sports_outlined,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              pelatih['nama']?.toString() ?? '-',
-                              style: GoogleFonts.plusJakartaSans(
-                                color: AppTheme.text(context),
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 18, 16, 100),
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: StatCard(
+                                label: 'Hadir',
+                                value:
+                                    '${(data['total_hadir'] as num?)?.toInt() ?? 0}',
+                                icon: Icons.check_circle_outline,
+                                color: const Color(0xFF15803D),
                               ),
                             ),
-                          ),
-                          _miniBadge(
-                            'Hadir',
-                            presensiPelatih['hadir'],
-                            const Color(0xFF15803D),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: StatCard(
+                                label: 'Izin',
+                                value:
+                                    '${(data['total_izin'] as num?)?.toInt() ?? 0}',
+                                icon: Icons.event_note_outlined,
+                                color: const Color(0xFF1E5AA8),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: StatCard(
+                                label: 'Sakit',
+                                value:
+                                    '${(data['total_sakit'] as num?)?.toInt() ?? 0}',
+                                icon: Icons.medical_information_outlined,
+                                color: const Color(0xFFC77700),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: StatCard(
+                                label: 'Alpha',
+                                value:
+                                    '${(data['total_alpha'] as num?)?.toInt() ?? 0}',
+                                icon: Icons.person_off_outlined,
+                                color: const Color(0xFFE11D48),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (pelatih != null && presensiPelatih != null) ...[
+                          const SizedBox(height: 18),
+                          _rekapCard(
+                            title: 'Pelatih',
+                            subtitle:
+                                'Kehadiran pelatih selama bulan berjalan.',
+                            icon: Icons.sports_outlined,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    pelatih['nama']?.toString() ?? '-',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      color: AppTheme.text(context),
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                _miniBadge(
+                                  'Hadir',
+                                  presensiPelatih['hadir'],
+                                  const Color(0xFF15803D),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
-                      ),
+                        const SizedBox(height: 22),
+                        SectionTitle('Daftar Anggota (${rows.length})'),
+                        const SizedBox(height: 12),
+                        if (rows.isEmpty)
+                          const EmptyState(
+                            title: 'Belum ada data presensi bulan ini',
+                            icon: Icons.assignment_outlined,
+                          )
+                        else
+                          for (final r in rows) ...[
+                            _memberCard(r),
+                            const SizedBox(height: 10),
+                          ],
+                      ],
                     ),
-                  ],
-                  const SizedBox(height: 22),
-                  SectionTitle('Daftar Anggota (${rows.length})'),
-                  const SizedBox(height: 12),
-                  if (rows.isEmpty)
-                    const EmptyState(
-                      title: 'Belum ada data presensi bulan ini',
-                      icon: Icons.assignment_outlined,
-                    )
-                  else
-                    for (final r in rows) ...[
-                      _memberCard(r),
-                      const SizedBox(height: 10),
-                    ],
+                  ),
                 ],
               );
             },

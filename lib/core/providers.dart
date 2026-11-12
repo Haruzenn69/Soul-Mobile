@@ -70,8 +70,10 @@ class AuthController extends Notifier<AuthState> {
           );
       final user = AuthUser.fromJson(
         res['data'] is Map
-            ? (res['data'] as Map)['user'] as Map<String, dynamic>?
-            : null,
+            ? ((res['data'] as Map)['user'] is Map
+                ? (res['data'] as Map)['user'] as Map<String, dynamic>
+                : (res['data'] as Map) as Map<String, dynamic>)
+            : (res['user'] is Map ? res['user'] as Map<String, dynamic> : res),
       );
       if (user.role != 'siswa') {
         try {
@@ -105,9 +107,11 @@ class AuthController extends Notifier<AuthState> {
         '/auth/login',
         data: {'identifier': identifier, 'password': password},
       );
-      final data = res['data'] as Map<String, dynamic>;
+      final data = res['data'] is Map ? res['data'] as Map<String, dynamic> : res;
       final token = data['token'] as String;
-      final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>?);
+      final user = AuthUser.fromJson(
+        data['user'] is Map ? data['user'] as Map<String, dynamic> : data,
+      );
       if (user.role != 'siswa') {
         api.setToken(token);
         await api.post('/auth/logout');

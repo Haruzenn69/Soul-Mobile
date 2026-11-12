@@ -3,8 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../core/app_config.dart';
 
+/// Kumpulan definisi tema visual aplikasi Soul (Light & Dark theme),
+/// palet warna, tipografi Google Fonts Plus Jakarta Sans, serta helper warna komponen.
 class AppTheme {
-  // Shared palette from Laravel's Tailwind theme tokens.
+  // Palet warna bersama turunan token Tailwind
   static const blue = Color(AppConfig.brandBlue);
   static const blueDark = Color(AppConfig.brandBlueDark);
   static const blueBg = Color(AppConfig.brandBg);
@@ -23,9 +25,11 @@ class AppTheme {
   static const darkInk = Color(0xFFF5F5F5);
   static const darkSub = Color(0xFFA6AFBD);
 
+  /// Mengecek apakah mode gelap sedang aktif
   static bool isDark(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark;
 
+  // Helper warna status (Warning, Danger, Success, Info) yang adaptif terhadap Dark/Light mode
   static Color warningSurface(BuildContext context) =>
       isDark(context) ? const Color(0xFF332A1B) : const Color(0xFFFFFBEB);
   static Color warningBorder(BuildContext context) =>
@@ -54,6 +58,7 @@ class AppTheme {
   static Color infoText(BuildContext context) =>
       isDark(context) ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8);
 
+  // Helper warna UI adaptif
   static Color surface(BuildContext context) =>
       Theme.of(context).colorScheme.surface;
   static Color surfaceVariant(BuildContext context) =>
@@ -70,6 +75,8 @@ class AppTheme {
       Theme.of(context).brightness == Brightness.dark
       ? const Color(0xFF202B3A)
       : lightAccentSurface;
+
+  /// Gradient warna untuk hero card pada beranda
   static LinearGradient brandHeroGradient(BuildContext context) {
     final colors = isDark(context)
         ? const [Color(0xFF17283D), Color(0xFF1E3A5F), Color(0xFF1D4ED8)]
@@ -84,6 +91,7 @@ class AppTheme {
   static Color brandHeroShadow(BuildContext context) =>
       blue.withValues(alpha: isDark(context) ? 0.1 : 0.18);
 
+  /// Konfigurasi Tema Terang (Light Theme)
   static ThemeData light() {
     final base = ThemeData.light(useMaterial3: true);
     final scheme =

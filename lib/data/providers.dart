@@ -1,13 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/api_client.dart';
 import '../core/providers.dart';
 
+/// Definisi tipe data peta JSON (Map &lt;String, dynamic&gt;)
 typedef Json = Map<String, dynamic>;
 
+/// Fungsi bantu untuk menginvalidasi seluruh cache provider
 Future<void> invalidateAll(Ref ref) async {
   await Future<void>.delayed(Duration.zero);
 }
 
+/// Helper untuk mengekstrak objek `data` dari respons standar JSON API
 Map<String, dynamic>? dataOf(Object? body) {
   if (body is! Map) return null;
   final d = body['data'];
@@ -15,6 +19,7 @@ Map<String, dynamic>? dataOf(Object? body) {
   return Map<String, dynamic>.from(d);
 }
 
+/// Helper untuk mengekstrak daftar list dari respons JSON API berdasarkan key tertentu
 List<Map<String, dynamic>> listOf(Map<String, dynamic>? data, String key) {
   final v = data?[key];
   if (v is List) {
@@ -23,23 +28,62 @@ List<Map<String, dynamic>> listOf(Map<String, dynamic>? data, String key) {
   return const [];
 }
 
+Future<Map<String, dynamic>> _getAllPages(
+  ApiClient api,
+  String path,
+  String collectionKey,
+) async {
+  final items = <Map<String, dynamic>>[];
+  Map<String, dynamic>? result;
+  var page = 1;
+
+  while (true) {
+    final response = await api.get(
+      path,
+      query: {'page': page, 'per_page': 100},
+    );
+    final data = dataOf(response) ?? {};
+    result ??= data;
+    items.addAll(listOf(data, collectionKey));
+
+    final pagination = data['pagination'];
+    final lastPage = pagination is Map
+        ? (pagination['last'] as num?)?.toInt() ?? page
+        : page;
+    if (page >= lastPage) break;
+    page++;
+  }
+
+  return {...result, collectionKey: items};
+}
+
+/// Provider untuk mengambil data Dashboard Siswa
 final siswaDashboardProvider = FutureProvider<Map<String, dynamic>>((
   ref,
 ) async {
-  final res = await ref.read(apiClientProvider).get('/siswa/dashboard');
+  final ekskulId = ref.watch(selectedSiswaEkskulProvider);
+  final res = await ref
+      .read(apiClientProvider)
+      .get(
+        '/siswa/dashboard',
+        query: ekskulId == null ? null : {'ekskul_id': ekskulId},
+      );
   return dataOf(res) ?? {};
 });
 
+/// Provider untuk mengambil data Katalog Ekskul Siswa
 final katalogProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final res = await ref.read(apiClientProvider).get('/siswa/katalog');
   return dataOf(res) ?? {};
 });
 
+/// Provider untuk mengambil daftar Notifikasi pengguna
 final notifikasiProvider = FutureProvider<Map<String, dynamic>>((ref) async {
   final res = await ref.read(apiClientProvider).get('/siswa/notifikasi');
   return dataOf(res) ?? {};
 });
 
+/// Provider untuk mengambil data Dashboard Ketua Ekstrakurikuler
 final ketuaDashboardProvider = FutureProvider<Map<String, dynamic>>((
   ref,
 ) async {
@@ -47,16 +91,25 @@ final ketuaDashboardProvider = FutureProvider<Map<String, dynamic>>((
   return dataOf(res) ?? {};
 });
 
+/// Provider untuk mengambil daftar Kegiatan Ekskul (Ketua)
 final ketuaKegiatanProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  final res = await ref.read(apiClientProvider).get('/ketua/kegiatan');
-  return dataOf(res) ?? {};
+  return _getAllPages(
+    ref.read(apiClientProvider),
+    '/ketua/kegiatan',
+    'kegiatans',
+  );
 });
 
+/// Provider untuk mengambil daftar Anggota Ekskul (Ketua)
 final ketuaAnggotaProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  final res = await ref.read(apiClientProvider).get('/ketua/anggota');
-  return dataOf(res) ?? {};
+  return _getAllPages(
+    ref.read(apiClientProvider),
+    '/ketua/anggota',
+    'anggotas',
+  );
 });
 
+/// Provider family untuk mengambil daftar Pendaftaran berdasarkan status (Ketua)
 final ketuaPendaftaranProvider =
     FutureProvider.family<Map<String, dynamic>, String>((ref, status) async {
       final query = (status.isNotEmpty && status != 'semua')
@@ -68,6 +121,7 @@ final ketuaPendaftaranProvider =
       return dataOf(res) ?? {};
     });
 
+/// Provider family untuk mengambil daftar Pengajuan Keluar berdasarkan status (Ketua)
 final ketuaPengajuanProvider =
     FutureProvider.family<Map<String, dynamic>, String>((ref, status) async {
       final query = (status.isNotEmpty && status != 'semua')

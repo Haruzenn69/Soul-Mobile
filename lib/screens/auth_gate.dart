@@ -9,13 +9,18 @@ import 'onboarding_dialog.dart';
 import 'profil/profil_edit_screen.dart';
 import 'splash_screen.dart';
 
+/// Widget penentu gerbang autentikasi (AuthGate).
+/// Memantau status login pengguna (`AuthStatus`) dan mengarahkan tampilan ke SplashScreen,
+/// LoginScreen, MainShell, dialog Onboarding, atau dialog kelengkapan profil secara dinamis.
 class AuthGate extends ConsumerWidget {
   const AuthGate({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Memantau status autentikasi dari authControllerProvider
     final state = ref.watch(authControllerProvider);
 
+    // Jika status pengguna unauthenticated, reset stack navigasi ke rute awal
     if (state.status == AuthStatus.unauthenticated) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!context.mounted) return;
@@ -27,6 +32,7 @@ class AuthGate extends ConsumerWidget {
       });
     }
 
+    // Switch berdasarkan status autentikasi saat ini
     return switch (state.status) {
       AuthStatus.unknown => const SplashScreen(),
       AuthStatus.unauthenticated => const LoginScreen(),
@@ -38,6 +44,7 @@ class AuthGate extends ConsumerWidget {
   }
 }
 
+/// Widget perantara untuk menampilkan dialog onboarding bagi pengguna baru/belum onboarding.
 class _OnboardingPrompt extends StatefulWidget {
   const _OnboardingPrompt({required this.user});
 
@@ -55,6 +62,7 @@ class _OnboardingPromptState extends State<_OnboardingPrompt> {
     super.didChangeDependencies();
     if (_promptShown) return;
     _promptShown = true;
+    // Menampilkan dialog onboarding setelah frame selesai dimuat
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _showOnboardingPrompt();
     });
@@ -72,6 +80,7 @@ class _OnboardingPromptState extends State<_OnboardingPrompt> {
   Widget build(BuildContext context) => MainShell(user: widget.user);
 }
 
+/// Widget perantara untuk mempromosikan dialog kelengkapan data profil diri pengguna.
 class _ProfileCompletionPrompt extends ConsumerStatefulWidget {
   const _ProfileCompletionPrompt({required this.user});
 
@@ -92,6 +101,7 @@ class _ProfileCompletionPromptState
     if (_promptShown) return;
     if (!widget.user.needsProfileCompletion) return;
     _promptShown = true;
+    // Menampilkan dialog ajakan melengkapi profil jika data belum lengkap
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _showProfilePrompt();
     });
@@ -123,6 +133,7 @@ class _ProfileCompletionPromptState
     );
 
     if (!mounted || completeProfile != true) return;
+    // Navigasi ke halaman edit profil jika pengguna memilih melengkapi sekarang
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (_) => ProfilEditScreen(user: widget.user),

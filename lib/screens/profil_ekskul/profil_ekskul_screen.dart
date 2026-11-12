@@ -114,7 +114,6 @@ class _ProfilTabState extends ConsumerState<_ProfilTab> {
   final _jadwal = TextEditingController();
   bool _initialized = false;
   bool _saving = false;
-  bool _isOpenRecruitment = false;
   XFile? _logoFile;
   XFile? _coverFile;
   Uint8List? _logoBytes;
@@ -137,33 +136,7 @@ class _ProfilTabState extends ConsumerState<_ProfilTab> {
     _deskripsi.text = ekskul['deskripsi'] as String? ?? '';
     _tujuan.text = ekskul['tujuan'] as String? ?? '';
     _jadwal.text = ekskul['jadwal'] as String? ?? '';
-    _isOpenRecruitment = ekskul['is_open_recruitment'] as bool? ?? false;
     _initialized = true;
-  }
-
-  Future<void> _toggleRecruitment() async {
-    try {
-      await ref
-          .read(apiClientProvider)
-          .post('/ketua/profil-ekskul/toggle-recruitment');
-      setState(() => _isOpenRecruitment = !_isOpenRecruitment);
-      ref.invalidate(ketuaProfilEkskulProvider);
-      ref.invalidate(ketuaDashboardProvider);
-      ref.invalidate(katalogProvider);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _isOpenRecruitment
-                  ? 'Pendaftaran ekskul dibuka!'
-                  : 'Pendaftaran ekskul ditutup!',
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) await showErrorDialog(context, ref, e);
-    }
   }
 
   Future<void> _saveProfile() async {
@@ -265,51 +238,6 @@ class _ProfilTabState extends ConsumerState<_ProfilTab> {
         return ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.surface(context),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.outline(context)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Pendaftaran Anggota Baru',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: AppTheme.text(context),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _isOpenRecruitment
-                              ? 'Status: Buka (Siswa dapat mendaftar)'
-                              : 'Status: Tutup (Pendaftaran dinonaktifkan)',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: _isOpenRecruitment
-                                ? const Color(0xFF16803C)
-                                : AppTheme.mutedText(context),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Switch(
-                    value: _isOpenRecruitment,
-                    activeThumbImage: null,
-                    onChanged: (_) => _toggleRecruitment(),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(

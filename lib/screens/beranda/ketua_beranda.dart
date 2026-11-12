@@ -8,20 +8,21 @@ import '../../data/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
-import '../anggota/anggota_screen.dart';
 import '../faq/ketua_faq_screen.dart';
 import '../laporan/laporan_screen.dart';
 import '../kegiatan/kegiatan_screen.dart';
 import '../testimoni/testimoni_manage_screen.dart';
 
 class BerandaKetua extends ConsumerWidget {
-  const BerandaKetua({super.key, required this.user});
+  const BerandaKetua({super.key, required this.user, this.onSelectEkskul});
 
   final AuthUser user;
+  final ValueChanged<int>? onSelectEkskul;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboard = ref.watch(ketuaDashboardProvider);
+    final selectedEkskulId = ref.watch(selectedSiswaEkskulProvider);
 
     return SafeArea(
       child: RefreshIndicator(
@@ -41,8 +42,8 @@ class BerandaKetua extends ConsumerWidget {
                   builder: (context, data) {
                     final totalAnggota =
                         (data['total_anggota'] as num?)?.toInt() ?? 0;
-                    final pendingCount =
-                        (data['pending_count'] as num?)?.toInt() ?? 0;
+                    final anggotaBaruCount =
+                        (data['anggota_baru_bulan_ini'] as num?)?.toInt() ?? 0;
                     final kegiatanBulanIni =
                         (data['kegiatan_bulan_ini'] as num?)?.toInt() ?? 0;
                     final testimoniPending =
@@ -77,13 +78,15 @@ class BerandaKetua extends ConsumerWidget {
                               ),
                             ),
                           ),
-                          onReviewApplications: () =>
-                              _openKetuaMembers(context, user, 1),
+                          onAddMembers: () =>
+                              ref.read(shellTabProvider.notifier).set(1),
+                          selectedEkskulId: selectedEkskulId,
+                          onSelectEkskul: onSelectEkskul,
                         ),
                         const SizedBox(height: 14),
                         _StatsGrid(
                           totalAnggota: totalAnggota,
-                          pendingCount: pendingCount,
+                          anggotaBaruCount: anggotaBaruCount,
                           kegiatanBulanIni: kegiatanBulanIni,
                           moderasiPending: moderasiPending,
                         ),
@@ -108,9 +111,8 @@ class BerandaKetua extends ConsumerWidget {
                         ),
                         const SizedBox(height: 18),
                         _PriorityActions(
-                          pendingCount: pendingCount,
-                          onApplications: () =>
-                              _openKetuaMembers(context, user, 1),
+                          onAddMembers: () =>
+                              ref.read(shellTabProvider.notifier).set(1),
                         ),
                         const SizedBox(height: 18),
                         _QuickActions(
@@ -137,35 +139,24 @@ class BerandaKetua extends ConsumerWidget {
   }
 }
 
-void _openKetuaMembers(BuildContext context, AuthUser user, int initialTab) {
-  final titles = ['Anggota', 'Pendaftaran'];
-  Navigator.of(context).push(
-    MaterialPageRoute<void>(
-      builder: (_) {
-        final tab = initialTab.clamp(0, titles.length - 1);
-        return Scaffold(
-          appBar: AppBar(title: Text(titles[tab])),
-          body: AnggotaScreen(user: user, initialTab: tab),
-        );
-      },
-    ),
-  );
-}
-
 class _Header extends StatelessWidget {
   const _Header({
     required this.user,
     required this.ekskul,
     required this.ekskulName,
     required this.onCreateActivity,
-    required this.onReviewApplications,
+    required this.onAddMembers,
+    required this.selectedEkskulId,
+    this.onSelectEkskul,
   });
 
   final AuthUser user;
   final Map<String, dynamic> ekskul;
   final String ekskulName;
   final VoidCallback onCreateActivity;
-  final VoidCallback onReviewApplications;
+  final VoidCallback onAddMembers;
+  final int? selectedEkskulId;
+  final ValueChanged<int>? onSelectEkskul;
 
   @override
   Widget build(BuildContext context) {
@@ -274,6 +265,15 @@ class _Header extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 10),
+              if (onSelectEkskul != null && user.activeEkskuls.length > 1) ...[
+                DashboardEkskulSwitcher(
+                  ekskuls: user.activeEkskuls,
+                  selectedId: selectedEkskulId,
+                  ketuaEkskulId: user.ketuaEkskulId,
+                  onSelected: onSelectEkskul!,
+                ),
+                const SizedBox(height: 10),
+              ],
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 11,
@@ -314,7 +314,7 @@ class _Header extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'Kelola keanggotaan, tinjau pendaftaran, dan pantau kehadiran ekskulmu.',
+                'Kelola anggota, tambahkan siswa, dan pantau kehadiran ekskulmu.',
                 style: GoogleFonts.plusJakartaSans(
                   color: Colors.white.withValues(alpha: 0.9),
                   fontSize: 11.5,
@@ -331,11 +331,11 @@ class _Header extends StatelessWidget {
                     onPressed: onCreateActivity,
                   );
                   final reviewAction = _HeroActionButton(
-                    key: const ValueKey('ketua-hero-review-action'),
-                    label: 'Tinjau pendaftar',
-                    icon: Icons.assignment_outlined,
+                    key: const ValueKey('ketua-hero-add-members-action'),
+                    label: 'Tambah anggota',
+                    icon: Icons.person_add_alt_1_rounded,
                     secondary: true,
-                    onPressed: onReviewApplications,
+                    onPressed: onAddMembers,
                   );
                   if (constraints.maxWidth < 300) {
                     return Column(
@@ -591,13 +591,13 @@ class _LegendItem extends StatelessWidget {
 class _StatsGrid extends StatelessWidget {
   const _StatsGrid({
     required this.totalAnggota,
-    required this.pendingCount,
+    required this.anggotaBaruCount,
     required this.kegiatanBulanIni,
     required this.moderasiPending,
   });
 
   final int totalAnggota;
-  final int pendingCount;
+  final int anggotaBaruCount;
   final int kegiatanBulanIni;
   final int moderasiPending;
 
@@ -617,10 +617,10 @@ class _StatsGrid extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: StatCard(
-              label: 'Pendaftaran',
-              value: '$pendingCount',
-              icon: Icons.how_to_reg_outlined,
-              color: AppTheme.warningText(context),
+              label: 'Anggota Baru',
+              value: '$anggotaBaruCount',
+              icon: Icons.person_add_alt_1_rounded,
+              color: AppTheme.successText(context),
             ),
           ),
         ],
@@ -902,13 +902,9 @@ class _ModerationTile extends StatelessWidget {
 }
 
 class _PriorityActions extends StatelessWidget {
-  const _PriorityActions({
-    required this.pendingCount,
-    required this.onApplications,
-  });
+  const _PriorityActions({required this.onAddMembers});
 
-  final int pendingCount;
-  final VoidCallback onApplications;
+  final VoidCallback onAddMembers;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -919,37 +915,27 @@ class _PriorityActions extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(child: SectionTitle('Yang Perlu Ditinjau')),
-              StatusChip('$pendingCount menunggu'),
+              const Expanded(child: SectionTitle('Kelola Anggota')),
+              StatusChip('Aksi cepat'),
             ],
           ),
           const SizedBox(height: 2),
           Text(
-            'Aksi cepat untuk tugas yang menunggu.',
+            'Tambahkan siswa langsung ke ekstrakurikulermu.',
             style: GoogleFonts.plusJakartaSans(
               color: AppTheme.mutedText(context),
               fontSize: 11,
             ),
           ),
           const SizedBox(height: 10),
-          if (pendingCount > 0)
-            _PriorityTile(
-              icon: Icons.assignment_outlined,
-              title: 'Pendaftaran baru',
-              subtitle: '$pendingCount menunggu tinjauan',
-              color: AppTheme.warningText(context),
-              tint: AppTheme.warningSurface(context),
-              onTap: onApplications,
-            )
-          else
-            _PriorityTile(
-              icon: Icons.check_circle_outline_rounded,
-              title: 'Semua sudah ditinjau',
-              subtitle: 'Belum ada pendaftaran yang menunggu.',
-              color: AppTheme.successText(context),
-              tint: AppTheme.successSurface(context),
-              onTap: onApplications,
-            ),
+          _PriorityTile(
+            icon: Icons.person_add_alt_1_rounded,
+            title: 'Tambah anggota',
+            subtitle: 'Cari siswa dan tambahkan langsung.',
+            color: AppTheme.infoText(context),
+            tint: AppTheme.infoSurface(context),
+            onTap: onAddMembers,
+          ),
         ],
       ),
     ),

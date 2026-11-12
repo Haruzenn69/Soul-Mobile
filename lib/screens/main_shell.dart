@@ -15,14 +15,89 @@ import 'menu/ketua_menu_screen.dart';
 import 'notifikasi/notifikasi_screen.dart';
 import 'profil/profil_screen.dart';
 
-class MainShell extends StatelessWidget {
+class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key, required this.user});
 
   final AuthUser user;
 
   @override
+  ConsumerState<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends ConsumerState<MainShell> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _initializeEkskulSelection();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant MainShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.user.id != widget.user.id) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(shellTabProvider.notifier).set(0);
+        ref.read(selectedSiswaEkskulProvider.notifier).clear();
+        _initializeEkskulSelection();
+      });
+    }
+  }
+
+  void _initializeEkskulSelection() {
+    final selectedId = ref.read(selectedSiswaEkskulProvider);
+    final availableIds = widget.user.activeEkskuls
+        .map((ekskul) => ekskul.id)
+        .toList();
+    if (selectedId != null && availableIds.contains(selectedId)) return;
+
+    final defaultId = _defaultEkskulId(widget.user);
+    if (defaultId != null) {
+      ref.read(selectedSiswaEkskulProvider.notifier).select(defaultId);
+    }
+  }
+
+  int? _defaultEkskulId(AuthUser user) {
+    final preferredId = user.aktivEkskul?.id;
+    if (preferredId != null &&
+        user.activeEkskuls.any((ekskul) => ekskul.id == preferredId)) {
+      return preferredId;
+    }
+
+    for (final ekskul in user.activeEkskuls) {
+      if (ekskul.id != user.ketuaEkskulId) return ekskul.id;
+    }
+    return user.activeEkskuls.firstOrNull?.id ?? preferredId;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return user.isKetua ? KetuaShell(user: user) : SiswaShell(user: user);
+    ref.listen(selectedSiswaEkskulProvider, (previous, next) {
+      if (previous != null && previous != next) {
+        ref.read(shellTabProvider.notifier).set(0);
+      }
+    });
+
+    final user = widget.user;
+    final storedEkskulId = ref.watch(selectedSiswaEkskulProvider);
+    final selectedEkskulId =
+        user.activeEkskuls.any((ekskul) => ekskul.id == storedEkskulId)
+        ? storedEkskulId
+        : _defaultEkskulId(user);
+    final isKetuaDashboard =
+        user.isKetua &&
+        (user.ketuaEkskulId == null ||
+            selectedEkskulId == null ||
+            selectedEkskulId == user.ketuaEkskulId);
+    void onSelectEkskul(int ekskulId) {
+      ref.read(selectedSiswaEkskulProvider.notifier).select(ekskulId);
+    }
+
+    return isKetuaDashboard
+        ? KetuaShell(user: user, onSelectEkskul: onSelectEkskul)
+        : SiswaShell(user: user, onSelectEkskul: onSelectEkskul);
   }
 }
 
@@ -35,7 +110,7 @@ class _TabItem {
 }
 
 class _ShellScaffold extends ConsumerStatefulWidget {
-  const _ShellScaffold({required this.tabs, required this.user});
+  const _ShellScaffold({super.key, required this.tabs, required this.user});
 
   final List<_TabItem> tabs;
   final AuthUser user;
@@ -60,7 +135,11 @@ class _ShellScaffoldState extends ConsumerState<_ShellScaffold> {
     final unreadCount = notifAsync.maybeWhen(
       data: (d) {
         final list = listOf(d, 'notifikasis');
-        return list.where((item) => (item['dibaca'] == false || item['is_read'] == false)).length;
+        return list
+            .where(
+              (item) => (item['dibaca'] == false || item['is_read'] == false),
+            )
+            .length;
       },
       orElse: () => 0,
     );
@@ -127,16 +206,10 @@ class _ShellScaffoldState extends ConsumerState<_ShellScaffold> {
 
                 return NavigationDestination(
                   icon: count > 0
-                      ? Badge(
-                          label: Text(badgeText),
-                          child: iconWidget,
-                        )
+                      ? Badge(label: Text(badgeText), child: iconWidget)
                       : iconWidget,
                   selectedIcon: count > 0
-                      ? Badge(
-                          label: Text(badgeText),
-                          child: selectedIconWidget,
-                        )
+                      ? Badge(label: Text(badgeText), child: selectedIconWidget)
                       : selectedIconWidget,
                   label: tab.label,
                 );
@@ -150,19 +223,21 @@ class _ShellScaffoldState extends ConsumerState<_ShellScaffold> {
 }
 
 class SiswaShell extends StatelessWidget {
-  const SiswaShell({super.key, required this.user});
+  const SiswaShell({super.key, required this.user, this.onSelectEkskul});
 
   final AuthUser user;
+  final ValueChanged<int>? onSelectEkskul;
 
   @override
   Widget build(BuildContext context) {
     return _ShellScaffold(
+      key: const ValueKey('siswa-shell'),
       user: user,
       tabs: [
         _TabItem(
           'Beranda',
           Icons.home_outlined,
-          (_) => BerandaSiswa(user: user),
+          (_) => BerandaSiswa(user: user, onSelectEkskul: onSelectEkskul),
         ),
         _TabItem(
           'Ekskul',
@@ -190,19 +265,21 @@ class SiswaShell extends StatelessWidget {
 }
 
 class KetuaShell extends StatelessWidget {
-  const KetuaShell({super.key, required this.user});
+  const KetuaShell({super.key, required this.user, this.onSelectEkskul});
 
   final AuthUser user;
+  final ValueChanged<int>? onSelectEkskul;
 
   @override
   Widget build(BuildContext context) {
     return _ShellScaffold(
+      key: const ValueKey('ketua-shell'),
       user: user,
       tabs: [
         _TabItem(
           'Beranda',
           Icons.home_outlined,
-          (_) => BerandaKetua(user: user),
+          (_) => BerandaKetua(user: user, onSelectEkskul: onSelectEkskul),
         ),
         _TabItem(
           'Anggota',

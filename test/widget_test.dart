@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:soul/core/api_client.dart';
 import 'package:soul/core/providers.dart';
+import 'package:soul/core/token_storage.dart';
 import 'package:soul/data/providers.dart';
 import 'package:soul/main.dart';
 import 'package:soul/models/models.dart';
@@ -10,6 +14,7 @@ import 'package:soul/screens/kegiatan/kegiatan_detail_screen.dart';
 import 'package:soul/screens/kegiatan/kegiatan_screen.dart';
 import 'package:soul/screens/kegiatan/presensi_input_screen.dart';
 import 'package:soul/screens/anggota/anggota_screen.dart';
+import 'package:soul/screens/anggota/tambah_anggota_screen.dart';
 import 'package:soul/screens/aktivitas/siswa_aktivitas_screen.dart';
 import 'package:soul/screens/auth_gate.dart';
 import 'package:soul/screens/beranda/ketua_beranda.dart';
@@ -82,7 +87,234 @@ void _ignoreFilter(String _) {}
 
 void _ignoreInt(int _) {}
 
+class _DirectMembershipApiClient extends ApiClient {
+  _DirectMembershipApiClient() : super(tokenStorage: const TokenStorage());
+
+  final List<String> requestedPaths = [];
+  final List<Map<String, dynamic>> getQueries = [];
+  Map<String, dynamic>? submittedData;
+  Completer<Map<String, dynamic>>? pendingPageTwo;
+  bool paginate = false;
+
+  @override
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, dynamic>? query,
+  }) async {
+    requestedPaths.add(path);
+    if (path == '/siswa/kelas') {
+      return {
+        'data': {
+          'kelas': [
+            {'id': 5, 'nama': 'XI IPA 1'},
+          ],
+        },
+      };
+    }
+    final requestQuery = Map<String, dynamic>.from(query ?? {});
+    getQueries.add(requestQuery);
+    if (requestQuery['page'] == 2 && pendingPageTwo != null) {
+      return pendingPageTwo!.future;
+    }
+    final isSearch = requestQuery['q'] != null;
+    return {
+      'data': {
+        'items': isSearch
+            ? [
+                {
+                  'id': 44,
+                  'nama': 'Hasil Cari',
+                  'nis': '3456789012',
+                  'kelas': 'XI IPA 3',
+                  'sudah_aktif': false,
+                },
+              ]
+            : [
+                {
+                  'id': 42,
+                  'nama': 'Calon Anggota',
+                  'nis': '1234567890',
+                  'kelas': 'XI IPA 1',
+                  'sudah_aktif': false,
+                },
+                {
+                  'id': 43,
+                  'nama': 'Sudah Aktif',
+                  'nis': '2345678901',
+                  'kelas': 'XI IPA 2',
+                  'sudah_aktif': true,
+                },
+              ],
+        'current_page': 1,
+        'last_page': paginate && !isSearch ? 2 : 1,
+      },
+    };
+  }
+
+  @override
+  Future<Map<String, dynamic>> post(
+    String path, {
+    Object? data,
+    Map<String, dynamic>? query,
+  }) async {
+    requestedPaths.add(path);
+    submittedData = Map<String, dynamic>.from(data! as Map);
+    return {'message': 'Berhasil menambahkan 1 siswa ke ekstrakurikuler.'};
+  }
+}
+
+class _PagedKetuaListApiClient extends ApiClient {
+  _PagedKetuaListApiClient() : super(tokenStorage: const TokenStorage());
+
+  final List<(String, int, int)> requestedPages = [];
+
+  @override
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, dynamic>? query,
+  }) async {
+    final page = query?['page'] as int? ?? 1;
+    requestedPages.add((path, page, query?['per_page'] as int? ?? 0));
+    final collectionKey = path == '/ketua/anggota' ? 'anggotas' : 'kegiatans';
+    final count = page == 1 ? 10 : 2;
+
+    return {
+      'data': {
+        collectionKey: List.generate(
+          count,
+          (index) => {'id': ((page - 1) * 10) + index + 1},
+        ),
+        'pagination': {'current': page, 'last': 2, 'per_page': 100},
+      },
+    };
+  }
+}
+
+class _SiswaDashboardApiClient extends ApiClient {
+  _SiswaDashboardApiClient() : super(tokenStorage: const TokenStorage());
+
+  Map<String, dynamic>? requestedQuery;
+
+  @override
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, dynamic>? query,
+  }) async {
+    requestedQuery = query;
+    return {'data': {}};
+  }
+}
+
 void main() {
+  test('ketua list providers load every API page', () async {
+    final api = _PagedKetuaListApiClient();
+    final container = ProviderContainer(
+      overrides: [apiClientProvider.overrideWithValue(api)],
+    );
+    addTearDown(container.dispose);
+
+    final members = await container.read(ketuaAnggotaProvider.future);
+    final activities = await container.read(ketuaKegiatanProvider.future);
+
+    expect(members['anggotas'], hasLength(12));
+    expect(activities['kegiatans'], hasLength(12));
+    expect(api.requestedPages, [
+      ('/ketua/anggota', 1, 100),
+      ('/ketua/anggota', 2, 100),
+      ('/ketua/kegiatan', 1, 100),
+      ('/ketua/kegiatan', 2, 100),
+    ]);
+  });
+
+  test('student dashboard requests the selected extracurricular', () async {
+    final api = _SiswaDashboardApiClient();
+    final container = ProviderContainer(
+      overrides: [apiClientProvider.overrideWithValue(api)],
+    );
+    addTearDown(container.dispose);
+    container.read(selectedSiswaEkskulProvider.notifier).select(42);
+
+    await container.read(siswaDashboardProvider.future);
+
+    expect(api.requestedQuery, {'ekskul_id': 42});
+  });
+
+  testWidgets('dashboard switch changes the global navigation shell', (
+    tester,
+  ) async {
+    final user = AuthUser.fromJson({
+      'id': 1,
+      'username': 'siswa-ketua',
+      'email': 'ketua@example.test',
+      'role': 'siswa',
+      'siswa': {
+        'id': 10,
+        'nama': 'Siswa Ketua',
+        'nis': '1234567890',
+        'jabatan': 'ketua',
+        'is_ketua': true,
+        'is_profile_complete': true,
+      },
+      'aktiv_ekskul': {'id': 1, 'nama_ekskul': 'Basket', 'status': true},
+      'active_ekskuls': [
+        {'id': 1, 'nama_ekskul': 'Basket', 'status': true},
+        {'id': 2, 'nama_ekskul': 'Paskibra', 'status': true},
+      ],
+      'ketua_ekskul_id': 2,
+    });
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          notifikasiProvider.overrideWith((ref) async => {}),
+          siswaDashboardProvider.overrideWith((ref) async => {}),
+          ketuaDashboardProvider.overrideWith((ref) async => {}),
+        ],
+        child: MaterialApp(home: MainShell(user: user)),
+      ),
+    );
+    await tester.pump(const Duration(seconds: 1));
+
+    List<String> navigationLabels() => tester
+        .widgetList<NavigationDestination>(find.byType(NavigationDestination))
+        .map((destination) => destination.label)
+        .toList();
+
+    expect(navigationLabels(), contains('Ekskul'));
+    expect(find.text('Dashboard · Basket'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('dashboard-ekskul-switcher')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Paskibra'));
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(navigationLabels(), contains('Anggota'));
+    expect(navigationLabels(), isNot(contains('Ekskul')));
+    expect(
+      tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
+      0,
+    );
+    expect(find.byType(BerandaKetua), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(const ValueKey('ketua-dashboard-hero')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('dashboard-ekskul-switcher')),
+      findsOneWidget,
+    );
+    expect(find.text('Dashboard · Paskibra'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('dashboard-ekskul-switcher')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('Basket').last);
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(navigationLabels(), contains('Ekskul'));
+    expect(find.text('Dashboard · Basket'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   test('app themes use the shared Laravel palette', () {
     expect(AppTheme.blue, const Color(0xFF2563EB));
     expect(AppTheme.blueDark, const Color(0xFF1D4ED8));
@@ -547,7 +779,6 @@ void main() {
       aktivEkskul: Ekskul(
         id: 1,
         namaEkskul: 'Klub Teater',
-        isOpenRecruitment: true,
         status: true,
         anggotaCount: 8,
       ),
@@ -562,7 +793,6 @@ void main() {
                 'id': 1,
                 'nama_ekskul': 'Klub Teater',
                 'cover': 'http://localhost:8000/storage/ekskul/cover.jpg',
-                'is_open_recruitment': true,
                 'status': true,
                 'anggota_count': 8,
               },
@@ -963,7 +1193,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('ketua member management only shows members and applications', (
+  testWidgets('ketua member management keeps its three navigation tabs', (
     tester,
   ) async {
     const ketua = AuthUser(
@@ -989,7 +1219,9 @@ void main() {
                     'id': 10,
                     'nama': 'Alya Anggota',
                     'foto': 'storage/profile-photos/alya.jpg',
+                    'jabatan': 'anggota',
                   },
+                  'jabatan_ekskul': 'sekretaris',
                 },
                 {
                   'id': 2,
@@ -1000,25 +1232,17 @@ void main() {
                     'id': 11,
                     'nama': 'Bima Anggota',
                     'foto': 'storage/profile-photos/bima.jpg',
+                    'jabatan': 'anggota',
                   },
                 },
               ],
             },
           ),
           ketuaPendaftaranProvider.overrideWith(
-            (ref, status) async => {
-              'pendaftarans': [
-                {
-                  'id': 3,
-                  'status': 'pending',
-                  'status_label': 'Pending',
-                  'siswa': {
-                    'nama': 'Citra Pendaftar',
-                    'foto': 'storage/profile-photos/citra.jpg',
-                  },
-                },
-              ],
-            },
+            (ref, status) async => {'pendaftarans': []},
+          ),
+          ketuaPengajuanProvider.overrideWith(
+            (ref, status) async => {'pengajuans': []},
           ),
         ],
         child: const MaterialApp(
@@ -1028,26 +1252,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final pill = tester.widget<Container>(
-      find.byKey(const ValueKey('anggota-pill-tabs')),
-    );
-    expect(
-      (pill.decoration! as BoxDecoration).borderRadius,
-      BorderRadius.circular(28),
-    );
-    expect(pill.padding, const EdgeInsets.all(5));
-    final tabs = tester.widget<TabBar>(
-      find.byKey(const ValueKey('anggota-tab-bar')),
-    );
-    expect(tabs.indicatorSize, TabBarIndicatorSize.tab);
-    expect(tabs.labelPadding, EdgeInsets.zero);
-    expect(
-      find.byWidgetPredicate((widget) => widget is Tab && widget.height == 30),
-      findsNWidgets(3),
-    );
-    expect(find.text('Pengajuan'), findsNothing);
+    expect(find.byKey(const ValueKey('anggota-pill-tabs')), findsOneWidget);
+    expect(find.text('Kelola Anggota'), findsOneWidget);
+    expect(find.text('Pendaftaran'), findsOneWidget);
+    expect(find.text('Pengajuan'), findsOneWidget);
+    expect(find.byKey(const ValueKey('open-add-members')), findsNothing);
 
     expect(find.text('Alya Anggota'), findsOneWidget);
+    expect(find.text('Sekretaris'), findsOneWidget);
+    expect(find.text('Anggota'), findsOneWidget);
     expect(
       find.byWidgetPredicate(
         (widget) =>
@@ -1073,18 +1286,139 @@ void main() {
 
     await tester.tap(find.text('Pendaftaran'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).first, 'Citra');
-    await tester.pumpAndSettle();
-    expect(find.text('Citra Pendaftar'), findsOneWidget);
+    expect(find.byKey(const ValueKey('open-add-members')), findsOneWidget);
     expect(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is PersonAvatar &&
-            widget.photoUrl == 'storage/profile-photos/citra.jpg',
-      ),
-      findsWidgets,
+      find.byKey(const ValueKey('Cari nama pendaftar...')),
+      findsOneWidget,
     );
 
+    await tester.tap(find.text('Pengajuan'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('Cari nama siswa...')), findsOneWidget);
+
+    await tester.drag(find.byType(NestedScrollView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('PENGELOLAAN EKSKUL'), findsNothing);
+    expect(find.byKey(const ValueKey('anggota-tab-bar')), findsOneWidget);
+    expect(find.byKey(const ValueKey('Cari nama siswa...')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('ketua can select and add students directly', (tester) async {
+    final api = _DirectMembershipApiClient();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [apiClientProvider.overrideWithValue(api)],
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                key: const ValueKey('open-add-students-test'),
+                onPressed: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const TambahAnggotaScreen(),
+                  ),
+                ),
+                child: const Text('Open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('open-add-students-test')));
+    await tester.pumpAndSettle();
+
+    expect(api.requestedPaths, contains('/ketua/anggota/calon-siswa'));
+    expect(api.requestedPaths, contains('/siswa/kelas'));
+    await tester.tap(find.byType(DropdownButtonFormField<int?>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('XI IPA 1').last);
+    await tester.pumpAndSettle();
+    expect(api.getQueries.any((query) => query['kelas_id'] == 5), isTrue);
+    expect(find.text('Calon Anggota'), findsOneWidget);
+    expect(find.text('Sudah Aktif'), findsOneWidget);
+    expect(find.text('Tambahkan 0 siswa'), findsOneWidget);
+    await tester.tap(find.text('Calon Anggota'));
+    await tester.pump();
+    expect(find.text('Tambahkan 1 siswa'), findsOneWidget);
+    expect(find.byType(InputChip), findsNothing);
+    await tester.enterText(find.byType(TextField), 'hasil baru');
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pumpAndSettle();
+    expect(find.text('Hasil Cari'), findsOneWidget);
+    expect(find.text('Tambahkan 1 siswa'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('submit-direct-members')));
+    await tester.pumpAndSettle();
+
+    expect(api.requestedPaths, contains('/ketua/anggota'));
+    expect(api.submittedData, {
+      'siswa_ids': [42],
+    });
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a new search supersedes an in-flight next-page request', (
+    tester,
+  ) async {
+    final api = _DirectMembershipApiClient()
+      ..paginate = true
+      ..pendingPageTwo = Completer<Map<String, dynamic>>();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [apiClientProvider.overrideWithValue(api)],
+        child: MaterialApp(
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                key: const ValueKey('open-add-students-race-test'),
+                onPressed: () => Navigator.of(context).push<void>(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const TambahAnggotaScreen(),
+                  ),
+                ),
+                child: const Text('Open'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byKey(const ValueKey('open-add-students-race-test')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Berikutnya'));
+    await tester.pump();
+
+    await tester.enterText(find.byType(TextField), 'hasil baru');
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pumpAndSettle();
+
+    expect(
+      api.getQueries.any(
+        (query) => query['q'] == 'hasil baru' && query['page'] == 1,
+      ),
+      isTrue,
+    );
+    expect(find.text('Hasil Cari'), findsOneWidget);
+    api.pendingPageTwo!.complete({
+      'data': {
+        'items': [
+          {
+            'id': 45,
+            'nama': 'Hasil Lama',
+            'nis': '4567890123',
+            'kelas': 'XI IPA 4',
+            'sudah_aktif': false,
+          },
+        ],
+        'current_page': 2,
+        'last_page': 2,
+      },
+    });
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hasil Lama'), findsNothing);
+    expect(find.text('Hasil Cari'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -1111,7 +1445,7 @@ void main() {
           ketuaDashboardProvider.overrideWith(
             (ref) async => {
               'total_anggota': 4,
-              'pending_count': 0,
+              'anggota_baru_bulan_ini': 1,
               'kegiatan_bulan_ini': 2,
               'testimoni_pending_count': 1,
               'faq_pending_count': 2,
@@ -1135,7 +1469,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Anggota'), findsWidgets);
-    expect(find.text('Pendaftaran'), findsWidgets);
+    expect(find.text('Anggota Baru'), findsOneWidget);
     expect(find.text('Kegiatan Bulan Ini'), findsOneWidget);
     expect(find.text('Moderasi'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
@@ -1156,7 +1490,7 @@ void main() {
       find.byKey(const ValueKey('ketua-hero-create-action')),
     );
     final reviewActionRect = tester.getRect(
-      find.byKey(const ValueKey('ketua-hero-review-action')),
+      find.byKey(const ValueKey('ketua-hero-add-members-action')),
     );
     expect(createActionRect.height, 42);
     expect(reviewActionRect.height, 42);
@@ -1168,8 +1502,8 @@ void main() {
       ValueKey('moderation-tile-faq'),
       ValueKey('priority-review-tile'),
       ValueKey('quick-action-anggota'),
-      ValueKey('quick-action-pendaftaran'),
       ValueKey('quick-action-kegiatan'),
+      ValueKey('quick-action-laporan bulanan'),
     ]) {
       final height = tester.getSize(find.byKey(key)).height;
       expect(height, inInclusiveRange(44, 64), reason: '$key height: $height');
@@ -1256,6 +1590,100 @@ void main() {
     await tester.tap(find.byTooltip('Hapus pencarian'));
     await tester.pumpAndSettle();
     expect(find.text('2 kegiatan'), findsOneWidget);
+    await tester.drag(find.byType(NestedScrollView), const Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(find.text('AKTIVITAS EKSKUL'), findsNothing);
+    expect(find.byKey(const ValueKey('kegiatan-tab-bar')), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'closing the create activity dialog does not reuse disposed fields',
+    (tester) async {
+      const ketua = AuthUser(
+        id: 1,
+        username: 'ketua',
+        email: 'ketua@example.test',
+        role: 'ketua',
+        needsOnboarding: false,
+        needsProfileCompletion: false,
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            ketuaKegiatanProvider.overrideWith(
+              (ref) async => {'kegiatans': []},
+            ),
+          ],
+          child: MaterialApp(
+            home: Scaffold(body: KegiatanScreen(user: ketua)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Buat kegiatan'));
+      await tester.pumpAndSettle();
+      expect(find.text('Buat Kegiatan'), findsOneWidget);
+
+      await tester.tap(find.text('Batal'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('attendance month filter stays visible while records scroll', (
+    tester,
+  ) async {
+    const ketua = AuthUser(
+      id: 1,
+      username: 'ketua',
+      email: 'ketua@example.test',
+      role: 'ketua',
+      needsOnboarding: false,
+      needsProfileCompletion: false,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ketuaKegiatanProvider.overrideWith((ref) async => {'kegiatans': []}),
+          ketuaLaporanProvider.overrideWith((ref) async => {}),
+          ketuaRekapMonthProvider(null).overrideWith(
+            (ref) async => {
+              'bulan': '2026-10',
+              'available_months': ['2026-10'],
+              'rows': List.generate(
+                16,
+                (index) => {
+                  'nama': 'Anggota $index',
+                  'kelas': 'X-1',
+                  'persentase_kehadiran': 75,
+                  'hadir': 3,
+                  'izin': 1,
+                  'sakit': 0,
+                  'alpha': 0,
+                },
+              ),
+            },
+          ),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(body: KegiatanScreen(user: ketua)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Rekap Kehadiran'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('rekap-period-tap')), findsOneWidget);
+    await tester.drag(find.byType(ListView).last, const Offset(0, -1000));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('rekap-period-tap')), findsOneWidget);
+    expect(find.text('Oktober 2026'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

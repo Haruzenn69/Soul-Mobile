@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'app_config.dart';
 import 'token_storage.dart';
 
+/// Representasi exception khusus untuk error API/jaringan beserta kode status HTTP.
 class ApiException implements Exception {
   final int? statusCode;
   final String message;
@@ -21,8 +22,12 @@ class ApiException implements Exception {
   String toString() => message;
 }
 
+/// Klien HTTP berbasis Dio untuk menangani komunikasi dengan REST API backend,
+/// menyisipkan token Authorization secara otomatis, serta melakukan error parsing.
 class ApiClient {
-  ApiClient({required this._tokenStorage}) {
+  ApiClient({required TokenStorage tokenStorage})
+    // ignore: prefer_initializing_formals
+    : _tokenStorage = tokenStorage {
     _dio = Dio(
       BaseOptions(
         baseUrl: AppConfig.apiBaseUrl,
@@ -44,16 +49,16 @@ class ApiClient {
 
   bool get hasToken => _token != null;
 
-  /// Keep the in-memory token synchronized with secure storage after login.
-  /// Without this, switching accounts can keep using the previous token.
+  /// Menyinkronkan token di memori setelah login agar tidak menggunakan token sesi sebelumnya.
   void setToken(String token) => _token = token;
 
-  /// Clear both the in-memory token and the persisted token.
+  /// Menghapus token di memori maupun dari secure storage lokal.
   Future<void> clearToken() async {
     _token = null;
     await _tokenStorage.clear();
   }
 
+  /// Interceptor request untuk menyisipkan header Authorization Bearer token secara otomatis.
   Future<void> _onRequest(
     RequestOptions options,
     RequestInterceptorHandler handler,
@@ -66,6 +71,7 @@ class ApiClient {
     handler.next(options);
   }
 
+  /// Interceptor error untuk menangani kegagalan HTTP, status 401, serta menerjemahkan pesan error.
   Future<void> _onError(
     DioException err,
     ErrorInterceptorHandler handler,
@@ -205,8 +211,12 @@ class ApiClient {
     try {
       return _unwrap(await _guard(() => _dio.delete(path, data: data)));
     } on ApiException catch (e) {
-      if (e.statusCode == 405 || e.message.contains('not supported') || e.message.contains('No query results')) {
-        final cleanPath = path.replaceAll('/delete-all', '').replaceAll('/all', '');
+      if (e.statusCode == 405 ||
+          e.message.contains('not supported') ||
+          e.message.contains('No query results')) {
+        final cleanPath = path
+            .replaceAll('/delete-all', '')
+            .replaceAll('/all', '');
         try {
           return _unwrap(await _guard(() => _dio.delete('$cleanPath/clear')));
         } catch (_) {
@@ -214,7 +224,11 @@ class ApiClient {
             return _unwrap(await _guard(() => _dio.post('$cleanPath/clear')));
           } catch (_) {
             try {
-              return _unwrap(await _guard(() => _dio.post(cleanPath, data: {'_method': 'DELETE'})));
+              return _unwrap(
+                await _guard(
+                  () => _dio.post(cleanPath, data: {'_method': 'DELETE'}),
+                ),
+              );
             } catch (_) {
               rethrow;
             }

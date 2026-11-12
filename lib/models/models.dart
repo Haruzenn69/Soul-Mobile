@@ -1,3 +1,4 @@
+/// Model data untuk Kelas Siswa.
 class Kelas {
   final int id;
   final String nama;
@@ -15,6 +16,7 @@ class Kelas {
     required this.rombel,
   });
 
+  /// Mengonversi peta JSON menjadi objek `Kelas`.
   factory Kelas.fromJson(Map<String, dynamic> j) => Kelas(
     id: (j['id'] as num).toInt(),
     nama: j['nama'] as String? ?? '',
@@ -25,6 +27,7 @@ class Kelas {
   );
 }
 
+/// Model data untuk profil Siswa.
 class Siswa {
   final int id;
   final String nama;
@@ -48,6 +51,7 @@ class Siswa {
     this.kelas,
   });
 
+  /// Mengonversi peta JSON menjadi objek `Siswa`.
   factory Siswa.fromJson(Map<String, dynamic>? j) => Siswa(
     id: (j?['id'] as num?)?.toInt() ?? 0,
     nama: j?['nama'] as String? ?? '',
@@ -63,12 +67,14 @@ class Siswa {
   );
 }
 
+/// Model data untuk Pembina Ekskul.
 class Pembina {
   final int id;
   final String nama;
 
   const Pembina({required this.id, required this.nama});
 
+  /// Mengonversi peta JSON menjadi objek `Pembina`.
   factory Pembina.fromJson(Map<String, dynamic>? j) => Pembina(
     id: (j?['id'] as num?)?.toInt() ?? 0,
     nama: j?['nama'] as String? ?? '',
@@ -85,7 +91,6 @@ class Ekskul {
   final String? jadwal;
   final String? logo;
   final String? cover;
-  final bool isOpenRecruitment;
   final bool status;
   final int anggotaCount;
   final Pembina? pembina;
@@ -101,7 +106,6 @@ class Ekskul {
     this.jadwal,
     this.logo,
     this.cover,
-    required this.isOpenRecruitment,
     required this.status,
     required this.anggotaCount,
     this.pembina,
@@ -119,7 +123,6 @@ class Ekskul {
       jadwal: j?['jadwal'] as String?,
       logo: j?['logo'] as String?,
       cover: j?['cover'] as String?,
-      isOpenRecruitment: j?['is_open_recruitment'] as bool? ?? false,
       status: j?['status'] as bool? ?? false,
       anggotaCount: (j?['anggota_count'] as num?)?.toInt() ?? 0,
       pembina: j?['pembina'] is Map
@@ -129,8 +132,7 @@ class Ekskul {
     );
   }
 
-  String get statusLabel =>
-      isOpenRecruitment && status ? 'Buka Pendaftaran' : 'Tutup';
+  String get statusLabel => status ? 'Aktif' : 'Tidak aktif';
 }
 
 class Pendaftaran {
@@ -142,6 +144,7 @@ class Pendaftaran {
   final String? alasan;
   final Ekskul? ekskul;
   final Map<String, dynamic>? siswaRaw;
+  final Map<String, dynamic>? rawJson;
 
   const Pendaftaran({
     required this.id,
@@ -152,6 +155,7 @@ class Pendaftaran {
     this.alasan,
     this.ekskul,
     this.siswaRaw,
+    this.rawJson,
   });
 
   factory Pendaftaran.fromJson(Map<String, dynamic>? j) => Pendaftaran(
@@ -167,9 +171,33 @@ class Pendaftaran {
     siswaRaw: j?['siswa'] is Map
         ? Map<String, dynamic>.from(j!['siswa'] as Map)
         : null,
+    rawJson: j,
   );
 
   String? get siswaNama => siswaRaw?['nama'] as String?;
+  String? get siswaJabatan {
+    final pengurus = rawJson?['pengurus'] is Map
+        ? (rawJson!['pengurus'] as Map)['jabatan']
+        : null;
+    final value =
+        rawJson?['jabatan_ekskul'] ??
+        rawJson?['pengurus_jabatan'] ??
+        rawJson?['role_ekskul'] ??
+        rawJson?['struktur'] ??
+        pengurus ??
+        siswaRaw?['jabatan_ekskul'] ??
+        siswaRaw?['pengurus_jabatan'] ??
+        siswaRaw?['role_ekskul'] ??
+        siswaRaw?['struktur'];
+    final role = value?.toString().trim();
+    if (role == null ||
+        role.isEmpty ||
+        role.toLowerCase() == 'siswa' ||
+        role.toLowerCase() == 'anggota') {
+      return null;
+    }
+    return role;
+  }
 }
 
 class Kegiatan {
@@ -254,6 +282,7 @@ class AuthUser {
   final Siswa? siswa;
   final Ekskul? aktivEkskul;
   final List<Ekskul> activeEkskuls;
+  final int? ketuaEkskulId;
   final String? jabatan;
   final String? foto;
 
@@ -267,6 +296,7 @@ class AuthUser {
     this.siswa,
     this.aktivEkskul,
     this.activeEkskuls = const [],
+    this.ketuaEkskulId,
     this.jabatan,
     this.foto,
   });
@@ -292,6 +322,7 @@ class AuthUser {
                 .map((item) => Ekskul.fromJson(Map<String, dynamic>.from(item)))
                 .toList()
           : const [],
+      ketuaEkskulId: (j?['ketua_ekskul_id'] as num?)?.toInt(),
       jabatan:
           jabatanRaw ??
           (j?['siswa'] is Map
