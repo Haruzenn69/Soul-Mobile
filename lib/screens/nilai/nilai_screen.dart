@@ -83,21 +83,6 @@ class NilaiScreen extends ConsumerWidget {
           value: value,
           onRetry: () => ref.invalidate(siswaNilaiProvider(selectedEkskulId)),
           builder: (context, data) {
-            final activeEkskuls = listOf(data, 'active_ekskuls');
-            final currentEkskulId =
-                selectedEkskulId ??
-                ((data['pendaftaran'] is Map &&
-                        (data['pendaftaran'] as Map)['ekskul'] is Map)
-                    ? (((data['pendaftaran'] as Map)['ekskul'] as Map)['id']
-                              as num?)
-                          ?.toInt()
-                    : null);
-            final selector = ActiveEkskulSelector(
-              ekskuls: activeEkskuls,
-              selectedId: currentEkskulId,
-              onChanged: (id) =>
-                  ref.read(selectedSiswaEkskulProvider.notifier).select(id),
-            );
             final pendaftaran = data['pendaftaran'] is Map
                 ? Map<String, dynamic>.from(data['pendaftaran'] as Map)
                 : null;
@@ -114,7 +99,6 @@ class NilaiScreen extends ConsumerWidget {
             if (pendaftaran == null) {
               return Column(
                 children: [
-                  selector,
                   const Expanded(
                     child: EmptyState(
                       title: 'Belum Terdaftar di Ekskul',
@@ -136,7 +120,6 @@ class NilaiScreen extends ConsumerWidget {
                   : null;
               return Column(
                 children: [
-                  selector,
                   Expanded(
                     child: _NilaiBelumAda(
                       ekskulNama: ekskul?['nama_ekskul']?.toString(),
@@ -150,7 +133,6 @@ class NilaiScreen extends ConsumerWidget {
 
             return Column(
               children: [
-                selector,
                 Expanded(
                   child: _NilaiDetail(
                     ekskulNama: ekskul?['nama_ekskul']?.toString(),

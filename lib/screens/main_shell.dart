@@ -60,15 +60,17 @@ class _MainShellState extends ConsumerState<MainShell> {
   }
 
   int? _defaultEkskulId(AuthUser user) {
+    final memberEkskul = user.activeEkskuls
+        .where((ekskul) => ekskul.id != user.ketuaEkskulId)
+        .firstOrNull;
+    if (memberEkskul != null) return memberEkskul.id;
+
     final preferredId = user.aktivEkskul?.id;
     if (preferredId != null &&
         user.activeEkskuls.any((ekskul) => ekskul.id == preferredId)) {
       return preferredId;
     }
 
-    for (final ekskul in user.activeEkskuls) {
-      if (ekskul.id != user.ketuaEkskulId) return ekskul.id;
-    }
     return user.activeEkskuls.firstOrNull?.id ?? preferredId;
   }
 

@@ -31,6 +31,13 @@ const _bulanIndonesia = [
 String _monthAbbreviation(int month) =>
     _bulanIndonesia[month - 1].substring(0, 3).toUpperCase();
 
+int? _defaultStudentEkskulId(AuthUser user) {
+  for (final ekskul in user.activeEkskuls) {
+    if (ekskul.id != user.ketuaEkskulId) return ekskul.id;
+  }
+  return user.aktivEkskul?.id ?? user.activeEkskuls.firstOrNull?.id;
+}
+
 Color _attendanceColor(String status, BuildContext context) =>
     switch (status.toLowerCase()) {
       'hadir' => const Color(0xFF15803D),
@@ -53,7 +60,8 @@ class BerandaSiswa extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Memantau provider dashboard siswa untuk mendapatkan data terkini
     final dashboard = ref.watch(siswaDashboardProvider);
-    final selectedEkskulId = ref.watch(selectedSiswaEkskulProvider);
+    final selectedEkskulId =
+        ref.watch(selectedSiswaEkskulProvider) ?? _defaultStudentEkskulId(user);
 
     return SafeArea(
       child: RefreshIndicator(
@@ -152,8 +160,7 @@ class BerandaSiswa extends ConsumerWidget {
                           ),
                           onNotifications: () =>
                               ref.read(shellTabProvider.notifier).set(3),
-                          selectedEkskulId:
-                              selectedEkskulId ?? user.aktivEkskul?.id,
+                          selectedEkskulId: selectedEkskulId,
                           onSelectEkskul: onSelectEkskul,
                         ),
                         const SizedBox(height: 14),

@@ -788,492 +788,505 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
   Widget build(BuildContext context) {
     final data = ref.watch(ketuaPendaftaranProvider(_status));
 
-    return ApiAsyncView(
-      value: data,
-      onRetry: () => ref.invalidate(ketuaPendaftaranProvider(_status)),
-      builder: (context, d) {
-        final items = listOf(d, 'pendaftarans');
-        final filtered = _filterByStudentName(items, _query, (item) {
-          return Pendaftaran.fromJson(item).siswaNama;
-        });
-        final sorted = [...filtered];
-        sorted.sort((a, b) {
-          final da =
-              DateTime.tryParse(
-                (a['tanggal_daftar'] ?? a['created_at'] ?? a['tgl_daftar'])
-                        ?.toString() ??
-                    '',
-              ) ??
-              DateTime(0);
-          final db =
-              DateTime.tryParse(
-                (b['tanggal_daftar'] ?? b['created_at'] ?? b['tgl_daftar'])
-                        ?.toString() ??
-                    '',
-              ) ??
-              DateTime(0);
-          final cmp = _timeSort == 'terbaru'
-              ? db.compareTo(da)
-              : da.compareTo(db);
-          if (cmp != 0) return cmp;
-          final nameA = Pendaftaran.fromJson(a).siswaNama ?? '';
-          final nameB = Pendaftaran.fromJson(b).siswaNama ?? '';
-          return _isAscending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
-        });
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  key: const ValueKey('open-add-members'),
-                  onPressed: _addMembers,
-                  icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
-                  label: const Text('Tambah anggota'),
-                ),
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      floatingActionButton: FloatingActionButton.extended(
+        key: const ValueKey('open-add-members'),
+        heroTag: 'open-add-members-fab',
+        onPressed: _addMembers,
+        backgroundColor: AppTheme.blue,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.person_add_alt_1_rounded),
+        label: const Text('Tambah Anggota'),
+      ),
+      body: ApiAsyncView(
+        value: data,
+        onRetry: () => ref.invalidate(ketuaPendaftaranProvider(_status)),
+        builder: (context, d) {
+          final items = listOf(d, 'pendaftarans');
+          final filtered = _filterByStudentName(items, _query, (item) {
+            return Pendaftaran.fromJson(item).siswaNama;
+          });
+          final sorted = [...filtered];
+          sorted.sort((a, b) {
+            final da =
+                DateTime.tryParse(
+                  (a['tanggal_daftar'] ?? a['created_at'] ?? a['tgl_daftar'])
+                          ?.toString() ??
+                      '',
+                ) ??
+                DateTime(0);
+            final db =
+                DateTime.tryParse(
+                  (b['tanggal_daftar'] ?? b['created_at'] ?? b['tgl_daftar'])
+                          ?.toString() ??
+                      '',
+                ) ??
+                DateTime(0);
+            final cmp = _timeSort == 'terbaru'
+                ? db.compareTo(da)
+                : da.compareTo(db);
+            if (cmp != 0) return cmp;
+            final nameA = Pendaftaran.fromJson(a).siswaNama ?? '';
+            final nameB = Pendaftaran.fromJson(b).siswaNama ?? '';
+            return _isAscending
+                ? nameA.compareTo(nameB)
+                : nameB.compareTo(nameA);
+          });
+          return Column(
+            children: [
+              NameSearchField(
+                hint: 'Cari nama pendaftar...',
+                onChanged: (value) => setState(() => _query = value),
               ),
-            ),
-            NameSearchField(
-              hint: 'Cari nama pendaftar...',
-              onChanged: (value) => setState(() => _query = value),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          PopupMenuButton<String>(
-                            onSelected: (value) {
-                              if (value == 'terbaru' || value == 'terlama') {
-                                setState(() => _timeSort = value);
-                              } else {
-                                setState(() => _status = value);
-                              }
-                            },
-                            itemBuilder: (context) => [
-                              const PopupMenuItem(
-                                enabled: false,
-                                child: Text(
-                                  'Status',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 12,
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            PopupMenuButton<String>(
+                              onSelected: (value) {
+                                if (value == 'terbaru' || value == 'terlama') {
+                                  setState(() => _timeSort = value);
+                                } else {
+                                  setState(() => _status = value);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                  enabled: false,
+                                  child: Text(
+                                    'Status',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              PopupMenuItem(
-                                value: 'semua',
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      _status == 'semua'
-                                          ? Icons.radio_button_checked
-                                          : Icons.radio_button_off,
-                                      size: 18,
-                                      color: _status == 'semua'
-                                          ? AppTheme.blue
-                                          : AppTheme.mutedText(context),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Text('Semua Status'),
-                                  ],
-                                ),
-                              ),
-                              PopupMenuItem(
-                                value: 'pending',
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      _status == 'pending'
-                                          ? Icons.radio_button_checked
-                                          : Icons.radio_button_off,
-                                      size: 18,
-                                      color: _status == 'pending'
-                                          ? AppTheme.blue
-                                          : AppTheme.mutedText(context),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Text('Menunggu'),
-                                  ],
-                                ),
-                              ),
-                              PopupMenuItem(
-                                value: 'diterima',
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      _status == 'diterima'
-                                          ? Icons.radio_button_checked
-                                          : Icons.radio_button_off,
-                                      size: 18,
-                                      color: _status == 'diterima'
-                                          ? AppTheme.blue
-                                          : AppTheme.mutedText(context),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Text('Disetujui'),
-                                  ],
-                                ),
-                              ),
-                              PopupMenuItem(
-                                value: 'ditolak',
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      _status == 'ditolak'
-                                          ? Icons.radio_button_checked
-                                          : Icons.radio_button_off,
-                                      size: 18,
-                                      color: _status == 'ditolak'
-                                          ? AppTheme.blue
-                                          : AppTheme.mutedText(context),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Text('Ditolak'),
-                                  ],
-                                ),
-                              ),
-                              const PopupMenuDivider(),
-                              const PopupMenuItem(
-                                enabled: false,
-                                child: Text(
-                                  'Urutkan',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 12,
+                                PopupMenuItem(
+                                  value: 'semua',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        _status == 'semua'
+                                            ? Icons.radio_button_checked
+                                            : Icons.radio_button_off,
+                                        size: 18,
+                                        color: _status == 'semua'
+                                            ? AppTheme.blue
+                                            : AppTheme.mutedText(context),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Text('Semua Status'),
+                                    ],
                                   ),
                                 ),
-                              ),
-                              PopupMenuItem(
-                                value: 'terbaru',
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      _timeSort == 'terbaru'
-                                          ? Icons.radio_button_checked
-                                          : Icons.radio_button_off,
-                                      size: 18,
-                                      color: _timeSort == 'terbaru'
-                                          ? AppTheme.blue
-                                          : AppTheme.mutedText(context),
+                                PopupMenuItem(
+                                  value: 'pending',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        _status == 'pending'
+                                            ? Icons.radio_button_checked
+                                            : Icons.radio_button_off,
+                                        size: 18,
+                                        color: _status == 'pending'
+                                            ? AppTheme.blue
+                                            : AppTheme.mutedText(context),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Text('Menunggu'),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'diterima',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        _status == 'diterima'
+                                            ? Icons.radio_button_checked
+                                            : Icons.radio_button_off,
+                                        size: 18,
+                                        color: _status == 'diterima'
+                                            ? AppTheme.blue
+                                            : AppTheme.mutedText(context),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Text('Disetujui'),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'ditolak',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        _status == 'ditolak'
+                                            ? Icons.radio_button_checked
+                                            : Icons.radio_button_off,
+                                        size: 18,
+                                        color: _status == 'ditolak'
+                                            ? AppTheme.blue
+                                            : AppTheme.mutedText(context),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Text('Ditolak'),
+                                    ],
+                                  ),
+                                ),
+                                const PopupMenuDivider(),
+                                const PopupMenuItem(
+                                  enabled: false,
+                                  child: Text(
+                                    'Urutkan',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 12,
                                     ),
-                                    const SizedBox(width: 8),
-                                    const Text('Terbaru'),
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'terbaru',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        _timeSort == 'terbaru'
+                                            ? Icons.radio_button_checked
+                                            : Icons.radio_button_off,
+                                        size: 18,
+                                        color: _timeSort == 'terbaru'
+                                            ? AppTheme.blue
+                                            : AppTheme.mutedText(context),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Text('Terbaru'),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem(
+                                  value: 'terlama',
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        _timeSort == 'terlama'
+                                            ? Icons.radio_button_checked
+                                            : Icons.radio_button_off,
+                                        size: 18,
+                                        color: _timeSort == 'terlama'
+                                            ? AppTheme.blue
+                                            : AppTheme.mutedText(context),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Text('Terlama'),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.surface(context),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: AppTheme.outline(context),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.tune_rounded,
+                                      size: 16,
+                                      color: AppTheme.blue,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Filter',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(Icons.arrow_drop_down, size: 18),
                                   ],
                                 ),
                               ),
-                              PopupMenuItem(
-                                value: 'terlama',
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      _timeSort == 'terlama'
-                                          ? Icons.radio_button_checked
-                                          : Icons.radio_button_off,
-                                      size: 18,
-                                      color: _timeSort == 'terlama'
-                                          ? AppTheme.blue
-                                          : AppTheme.mutedText(context),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Text('Terlama'),
-                                  ],
-                                ),
-                              ),
-                            ],
-                            child: Container(
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 8,
+                                horizontal: 12,
+                                vertical: 7,
                               ),
                               decoration: BoxDecoration(
-                                color: AppTheme.surface(context),
+                                color: AppTheme.blue,
                                 borderRadius: BorderRadius.circular(999),
-                                border: Border.all(
-                                  color: AppTheme.outline(context),
+                              ),
+                              child: Text(
+                                switch (_status) {
+                                  'pending' => 'Menunggu',
+                                  'diterima' => 'Disetujui',
+                                  'ditolak' => 'Ditolak',
+                                  _ => 'Semua',
+                                },
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
                                 ),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.tune_rounded,
-                                    size: 16,
-                                    color: AppTheme.blue,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Filter',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.arrow_drop_down, size: 18),
-                                ],
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 7,
                               ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.blue,
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              switch (_status) {
-                                'pending' => 'Menunggu',
-                                'diterima' => 'Disetujui',
-                                'ditolak' => 'Ditolak',
-                                _ => 'Semua',
-                              },
-                              style: GoogleFonts.plusJakartaSans(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.blue,
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              _timeSort == 'terbaru' ? 'Terbaru' : 'Terlama',
-                              style: GoogleFonts.plusJakartaSans(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Tooltip(
-                    message: _isAscending
-                        ? 'Urutkan A-Z (Klik untuk Z-A)'
-                        : 'Urutkan Z-A (Klik untuk A-Z)',
-                    child: InkWell(
-                      onTap: () => setState(() => _isAscending = !_isAscending),
-                      borderRadius: BorderRadius.circular(999),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppTheme.surface(context),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: AppTheme.outline(context)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _isAscending ? 'A-Z' : 'Z-A',
-                              style: GoogleFonts.plusJakartaSans(
+                              decoration: BoxDecoration(
                                 color: AppTheme.blue,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
+                                borderRadius: BorderRadius.circular(999),
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              _isAscending
-                                  ? Icons.arrow_upward_rounded
-                                  : Icons.arrow_downward_rounded,
-                              size: 14,
-                              color: AppTheme.blue,
+                              child: Text(
+                                _timeSort == 'terbaru' ? 'Terbaru' : 'Terlama',
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            ListCountLabel(
-              count: sorted.length,
-              label: _pendaftaranLabel(_status),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: () async {
-                  ref.invalidate(ketuaPendaftaranProvider(_status));
-                  try {
-                    await ref.read(ketuaPendaftaranProvider(_status).future);
-                  } catch (_) {}
-                },
-                child: sorted.isEmpty
-                    ? ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.only(top: 24),
-                        children: [
-                          EmptyState(
-                            title: items.isEmpty
-                                ? _pendaftaranEmptyTitle(_status)
-                                : 'Nama pendaftar tidak ditemukan',
-                            subtitle: items.isEmpty
-                                ? _pendaftaranEmptySubtitle(_status)
-                                : 'Coba kata kunci nama yang lain.',
-                            icon: items.isEmpty
-                                ? (_status == 'semua'
-                                      ? Icons.history_outlined
-                                      : Icons.how_to_reg_outlined)
-                                : Icons.search_off_rounded,
+                    const SizedBox(width: 8),
+                    Tooltip(
+                      message: _isAscending
+                          ? 'Urutkan A-Z (Klik untuk Z-A)'
+                          : 'Urutkan Z-A (Klik untuk A-Z)',
+                      child: InkWell(
+                        onTap: () =>
+                            setState(() => _isAscending = !_isAscending),
+                        borderRadius: BorderRadius.circular(999),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
                           ),
-                        ],
-                      )
-                    : PaginatedList<Map<String, dynamic>>(
-                        items: sorted,
-                        pageSize: 25,
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        separatorBuilder: (_, _) => const SizedBox(height: 8),
-                        itemBuilder: (context, raw, i) {
-                          final p = Pendaftaran.fromJson(raw);
-                          final status = raw['status']?.toString() ?? 'pending';
-                          return Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: AppTheme.surface(context),
-                              borderRadius: BorderRadius.circular(17),
-                              border: Border.all(
-                                color: AppTheme.outline(context),
-                              ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surface(context),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: AppTheme.outline(context),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    PersonAvatar(
-                                      name: p.siswaNama ?? 'Pendaftar',
-                                      photoUrl: p.siswaRaw?['foto']?.toString(),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            children: [
-                                              Flexible(
-                                                child: Text(
-                                                  p.siswaNama ??
-                                                      'Pendaftar Baru',
-                                                  style:
-                                                      GoogleFonts.plusJakartaSans(
-                                                        color: AppTheme.text(
-                                                          context,
-                                                        ),
-                                                        fontSize: 13.5,
-                                                        fontWeight:
-                                                            FontWeight.w800,
-                                                      ),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 6),
-                                              StatusChip(_statusLabel(status)),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            p.tanggalDaftar ??
-                                                'Permintaan bergabung',
-                                            style: GoogleFonts.plusJakartaSans(
-                                              color: AppTheme.mutedText(
-                                                context,
-                                              ),
-                                              fontSize: 10.5,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _isAscending ? 'A-Z' : 'Z-A',
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: AppTheme.blue,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
                                 ),
-                                if (p.alasan?.isNotEmpty == true) ...[
-                                  const SizedBox(height: 12),
-                                  _RequestNote(text: p.alasan!),
-                                ],
-                                if (p.alasan?.isNotEmpty != true) ...[
-                                  const SizedBox(height: 12),
-                                  const _RequestNote(
-                                    text: 'Tidak ada catatan pendaftaran.',
-                                  ),
-                                ],
-                                if (status == 'pending') ...[
-                                  const SizedBox(height: 12),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                _isAscending
+                                    ? Icons.arrow_upward_rounded
+                                    : Icons.arrow_downward_rounded,
+                                size: 14,
+                                color: AppTheme.blue,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ListCountLabel(
+                count: sorted.length,
+                label: _pendaftaranLabel(_status),
+              ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    ref.invalidate(ketuaPendaftaranProvider(_status));
+                    try {
+                      await ref.read(ketuaPendaftaranProvider(_status).future);
+                    } catch (_) {}
+                  },
+                  child: sorted.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.only(top: 24),
+                          children: [
+                            EmptyState(
+                              title: items.isEmpty
+                                  ? _pendaftaranEmptyTitle(_status)
+                                  : 'Nama pendaftar tidak ditemukan',
+                              subtitle: items.isEmpty
+                                  ? _pendaftaranEmptySubtitle(_status)
+                                  : 'Coba kata kunci nama yang lain.',
+                              icon: items.isEmpty
+                                  ? (_status == 'semua'
+                                        ? Icons.history_outlined
+                                        : Icons.how_to_reg_outlined)
+                                  : Icons.search_off_rounded,
+                            ),
+                          ],
+                        )
+                      : PaginatedList<Map<String, dynamic>>(
+                          items: sorted,
+                          pageSize: 25,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                          separatorBuilder: (_, _) => const SizedBox(height: 8),
+                          itemBuilder: (context, raw, i) {
+                            final p = Pendaftaran.fromJson(raw);
+                            final status =
+                                raw['status']?.toString() ?? 'pending';
+                            return Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: AppTheme.surface(context),
+                                borderRadius: BorderRadius.circular(17),
+                                border: Border.all(
+                                  color: AppTheme.outline(context),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
                                   Row(
                                     children: [
-                                      Expanded(
-                                        child: OutlinedButton(
-                                          onPressed: () => _proses(
-                                            context,
-                                            ref,
-                                            p,
-                                            'ditolak',
-                                          ),
-                                          style: OutlinedButton.styleFrom(
-                                            foregroundColor:
-                                                AppTheme.dangerText(context),
-                                            side: BorderSide(
-                                              color: AppTheme.dangerBorder(
-                                                context,
-                                              ),
-                                            ),
-                                          ),
-                                          child: const Text('Tolak'),
-                                        ),
+                                      PersonAvatar(
+                                        name: p.siswaNama ?? 'Pendaftar',
+                                        photoUrl: p.siswaRaw?['foto']
+                                            ?.toString(),
                                       ),
-                                      const SizedBox(width: 8),
+                                      const SizedBox(width: 10),
                                       Expanded(
-                                        child: ElevatedButton(
-                                          onPressed: () => _proses(
-                                            context,
-                                            ref,
-                                            p,
-                                            'diterima',
-                                          ),
-                                          child: const Text('Terima'),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Flexible(
+                                                  child: Text(
+                                                    p.siswaNama ??
+                                                        'Pendaftar Baru',
+                                                    style:
+                                                        GoogleFonts.plusJakartaSans(
+                                                          color: AppTheme.text(
+                                                            context,
+                                                          ),
+                                                          fontSize: 13.5,
+                                                          fontWeight:
+                                                              FontWeight.w800,
+                                                        ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                StatusChip(
+                                                  _statusLabel(status),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              p.tanggalDaftar ??
+                                                  'Permintaan bergabung',
+                                              style:
+                                                  GoogleFonts.plusJakartaSans(
+                                                    color: AppTheme.mutedText(
+                                                      context,
+                                                    ),
+                                                    fontSize: 10.5,
+                                                  ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
                                   ),
+                                  if (p.alasan?.isNotEmpty == true) ...[
+                                    const SizedBox(height: 12),
+                                    _RequestNote(text: p.alasan!),
+                                  ],
+                                  if (p.alasan?.isNotEmpty != true) ...[
+                                    const SizedBox(height: 12),
+                                    const _RequestNote(
+                                      text: 'Tidak ada catatan pendaftaran.',
+                                    ),
+                                  ],
+                                  if (status == 'pending') ...[
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: OutlinedButton(
+                                            onPressed: () => _proses(
+                                              context,
+                                              ref,
+                                              p,
+                                              'ditolak',
+                                            ),
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor:
+                                                  AppTheme.dangerText(context),
+                                              side: BorderSide(
+                                                color: AppTheme.dangerBorder(
+                                                  context,
+                                                ),
+                                              ),
+                                            ),
+                                            child: const Text('Tolak'),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: ElevatedButton(
+                                            onPressed: () => _proses(
+                                              context,
+                                              ref,
+                                              p,
+                                              'diterima',
+                                            ),
+                                            child: const Text('Terima'),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ],
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                              ),
+                            );
+                          },
+                        ),
+                ),
               ),
-            ),
-          ],
-        );
-      },
+            ],
+          );
+        },
+      ),
     );
   }
 

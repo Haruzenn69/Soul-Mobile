@@ -255,7 +255,7 @@ void main() {
         'is_ketua': true,
         'is_profile_complete': true,
       },
-      'aktiv_ekskul': {'id': 1, 'nama_ekskul': 'Basket', 'status': true},
+      'aktiv_ekskul': {'id': 2, 'nama_ekskul': 'Paskibra', 'status': true},
       'active_ekskuls': [
         {'id': 1, 'nama_ekskul': 'Basket', 'status': true},
         {'id': 2, 'nama_ekskul': 'Paskibra', 'status': true},
@@ -286,7 +286,23 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('dashboard-ekskul-switcher')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.text('Paskibra'));
+    final selectedMenuItem = find.ancestor(
+      of: find.byIcon(Icons.radio_button_checked_rounded),
+      matching: find.byType(PopupMenuItem<int>),
+    );
+    final ketuaMenuItem = find.ancestor(
+      of: find.text('Ketua'),
+      matching: find.byType(PopupMenuItem<int>),
+    );
+    expect(
+      find.descendant(of: selectedMenuItem, matching: find.text('Basket')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: ketuaMenuItem, matching: find.text('Paskibra')),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Paskibra').last);
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
     expect(navigationLabels(), contains('Anggota'));
@@ -1019,7 +1035,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('student activity switches attendance between active clubs', (
+  testWidgets('student activity follows the global club selection', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(360, 800);
@@ -1060,9 +1076,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Latihan Basket'), findsOneWidget);
-    await tester.tap(find.byKey(const ValueKey('active-ekskul-12')));
-    await tester.pumpAndSettle();
-    expect(find.text('Latihan Futsal'), findsOneWidget);
+    expect(find.text('Pilih ekskul'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -1258,6 +1272,18 @@ void main() {
     expect(find.text('Pengajuan'), findsOneWidget);
     expect(find.byKey(const ValueKey('open-add-members')), findsNothing);
 
+    await tester.tap(find.text('Pendaftaran'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('open-add-members')), findsOneWidget);
+    expect(find.text('Tambah Anggota'), findsOneWidget);
+    final addMembersFab = tester.widget<FloatingActionButton>(
+      find.byKey(const ValueKey('open-add-members')),
+    );
+    expect(addMembersFab.backgroundColor, AppTheme.blue);
+    expect(addMembersFab.foregroundColor, Colors.white);
+
+    await tester.tap(find.text('Kelola Anggota'));
+    await tester.pumpAndSettle();
     expect(find.text('Alya Anggota'), findsOneWidget);
     expect(find.text('Sekretaris'), findsOneWidget);
     expect(find.text('Anggota'), findsOneWidget);
