@@ -10,16 +10,243 @@ import '../../widgets/common.dart';
 import 'profil_edit_screen.dart';
 import 'pengajuan_keluar_screen.dart';
 
+class _ProfileMetric {
+  const _ProfileMetric(this.label, this.value);
+
+  final String label;
+  final String value;
+}
+
+class _ProfileHeroCard extends StatelessWidget {
+  const _ProfileHeroCard({
+    required this.name,
+    required this.photoUrl,
+    required this.subtitle,
+    required this.metrics,
+    this.onEdit,
+  });
+
+  final String name;
+  final String? photoUrl;
+  final String subtitle;
+  final List<_ProfileMetric> metrics;
+  final VoidCallback? onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: AppTheme.surface(context),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: AppTheme.outline(context)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: dark ? 0.12 : 0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 7),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Stack(
+            children: [
+              Container(
+                height: 118,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: dark
+                        ? const [Color(0xFF1E3A5F), Color(0xFF334155)]
+                        : const [Color(0xFFBFDBFE), Color(0xFFE0F2FE)],
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: -64,
+                      right: -24,
+                      child: Container(
+                        width: 190,
+                        height: 190,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.16),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      left: -38,
+                      bottom: -96,
+                      child: Container(
+                        width: 180,
+                        height: 180,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.13),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (onEdit != null)
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: IconButton(
+                    tooltip: 'Edit Profil',
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit_outlined),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.86),
+                      foregroundColor: AppTheme.blue,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          Transform.translate(
+            offset: const Offset(0, -36),
+            child: Container(
+              width: 78,
+              height: 78,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                gradient: AppTheme.brandHeroGradient(context),
+                shape: BoxShape.circle,
+              ),
+              child: PersonAvatar(
+                name: name,
+                photoUrl: photoUrl,
+                radius: 36,
+                backgroundColor: AppTheme.surface(context),
+                foregroundColor: AppTheme.blue,
+              ),
+            ),
+          ),
+          Transform.translate(
+            offset: const Offset(0, -24),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  Text(
+                    name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.text(context),
+                      fontSize: 21,
+                      height: 1.2,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.mutedText(context),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 18),
+            child: Row(
+              children: [
+                for (var index = 0; index < metrics.length; index++) ...[
+                  if (index > 0)
+                    Container(
+                      width: 1,
+                      height: 32,
+                      color: AppTheme.outline(context),
+                    ),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        Text(
+                          metrics[index].value,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            color: AppTheme.text(context),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          metrics[index].label.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            color: AppTheme.mutedText(context),
+                            fontSize: 9,
+                            letterSpacing: 0.6,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class ProfilScreen extends ConsumerWidget {
-  const ProfilScreen({super.key, required this.user, this.showHeader = true});
+  const ProfilScreen({
+    super.key,
+    required this.user,
+    this.showHeader = true,
+    this.readOnly = false,
+    this.enrollment,
+  });
 
   final AuthUser user;
   final bool showHeader;
+  final bool readOnly;
+  final Pendaftaran? enrollment;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final siswa = user.siswa;
     final darkMode = ref.watch(themeModeProvider) == ThemeMode.dark;
+    final className = siswa?.kelas?.nama.trim() ?? '';
+    final roleLabel = readOnly
+        ? _formatProfileValue(
+            enrollment?.siswaJabatan ?? siswa?.jabatan ?? 'Anggota',
+          )
+        : user.isKetua
+        ? 'Ketua Ekskul'
+        : _formatProfileValue(siswa?.jabatan ?? 'Siswa');
+    final ekskul = enrollment?.ekskul ?? user.aktivEkskul;
+    final subtitle = [
+      if (className.isNotEmpty) className,
+      if (readOnly && ekskul?.namaEkskul.isNotEmpty == true)
+        ekskul!.namaEkskul
+      else if (!readOnly)
+        roleLabel,
+    ].join(' · ');
 
     return SafeArea(
       child: ListView(
@@ -32,93 +259,51 @@ class ProfilScreen extends ConsumerWidget {
               eyebrow: 'AKUN',
               topPadding: 25,
             ),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: AppTheme.brandHeroGradient(context),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.brandHeroShadow(context),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    PersonAvatar(
-                      name: user.namaTampilan,
-                      photoUrl: user.fotoUrl,
-                      radius: 28,
-                      backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      foregroundColor: Colors.white,
+          _ProfileHeroCard(
+            name: user.namaTampilan,
+            photoUrl: user.fotoUrl,
+            subtitle: subtitle.isEmpty ? roleLabel : subtitle,
+            metrics: [
+              _ProfileMetric(
+                'NIS',
+                siswa?.nis.trim().isNotEmpty == true ? siswa!.nis : '-',
+              ),
+              _ProfileMetric('Kelas', className.isEmpty ? '-' : className),
+              _ProfileMetric(
+                readOnly ? 'Ekskul' : 'Jabatan',
+                readOnly ? (ekskul?.namaEkskul ?? roleLabel) : roleLabel,
+              ),
+            ],
+            onEdit: readOnly
+                ? null
+                : () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProfilEditScreen(user: user),
                     ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 11,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Text(
-                        user.isKetua ? 'KETUA' : 'SISWA',
-                        style: GoogleFonts.plusJakartaSans(
-                          color: const Color(0xFF1D4ED8),
-                          fontSize: 10,
-                          letterSpacing: 0.6,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 22),
-                Text(
-                  user.namaTampilan,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(
-                    color: Colors.white,
-                    fontSize: 25,
-                    height: 1.2,
-                    fontWeight: FontWeight.w900,
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  siswa?.kelas?.nama.isNotEmpty == true
-                      ? '${siswa!.kelas!.nama} · ${user.isKetua ? 'Ketua Ekskul' : (siswa.jabatan)}'
-                      : user.isKetua
-                      ? 'Ketua ekstrakurikuler'
-                      : 'Siswa',
-                  style: GoogleFonts.plusJakartaSans(
-                    color: Colors.white.withValues(alpha: 0.88),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
           ),
           const SizedBox(height: 18),
           _contentCard(
             context: context,
             icon: Icons.badge_outlined,
             title: 'Data Diri',
-            subtitle: 'Informasi akun dan identitas sekolahmu.',
+            subtitle: readOnly
+                ? 'Informasi identitas siswa.'
+                : 'Informasi akun dan identitas sekolahmu.',
             child: Column(
               children: [
-                _row(context, Icons.alternate_email, 'Username', user.username),
-                _divider(context),
-                _row(context, Icons.mail_outline, 'Email', user.email),
-                _divider(context),
+                if (!readOnly) ...[
+                  _row(
+                    context,
+                    Icons.alternate_email,
+                    'Username',
+                    user.username,
+                  ),
+                  _divider(context),
+                  _row(context, Icons.mail_outline, 'Email', user.email),
+                  _divider(context),
+                ],
                 _row(context, Icons.badge_outlined, 'NIS', siswa?.nis ?? '-'),
                 _divider(context),
                 _row(
@@ -135,25 +320,55 @@ class ProfilScreen extends ConsumerWidget {
                   siswa?.kelas?.nama ?? '-',
                 ),
                 _divider(context),
-                _row(
-                  context,
-                  Icons.verified_outlined,
-                  'Jabatan',
-                  user.isKetua ? 'Ketua Ekskul' : (siswa?.jabatan ?? '-'),
-                ),
-                if (user.aktivEkskul != null) ...[
+                _row(context, Icons.verified_outlined, 'Jabatan', roleLabel),
+                if (ekskul != null) ...[
                   _divider(context),
                   _row(
                     context,
                     Icons.explore_outlined,
-                    'Ekskul Aktif',
-                    user.aktivEkskul!.namaEkskul,
+                    readOnly ? 'Ekstrakurikuler' : 'Ekskul Aktif',
+                    ekskul.namaEkskul,
                   ),
                 ],
               ],
             ),
           ),
-          if (!user.isKetua) ...[
+          if (readOnly && enrollment != null) ...[
+            const SizedBox(height: 14),
+            _contentCard(
+              context: context,
+              icon: Icons.groups_outlined,
+              title: 'Keanggotaan',
+              subtitle: 'Informasi pendaftaran pada ekstrakurikuler ini.',
+              child: Column(
+                children: [
+                  _row(
+                    context,
+                    Icons.verified_outlined,
+                    'Status',
+                    enrollment!.statusLabel,
+                  ),
+                  _divider(context),
+                  _row(
+                    context,
+                    Icons.calendar_today_outlined,
+                    'Tanggal Bergabung',
+                    enrollment!.tanggalDaftar ?? '-',
+                  ),
+                  if (enrollment!.alasan?.trim().isNotEmpty == true) ...[
+                    _divider(context),
+                    _row(
+                      context,
+                      Icons.notes_rounded,
+                      'Alasan Bergabung',
+                      enrollment!.alasan!,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+          if (!readOnly && !user.isKetua) ...[
             const SizedBox(height: 14),
             _contentCard(
               context: context,
@@ -180,146 +395,166 @@ class ProfilScreen extends ConsumerWidget {
               ),
             ),
           ],
-          const SizedBox(height: 14),
-          _contentCard(
-            context: context,
-            icon: Icons.lock_outline_rounded,
-            title: 'Akun & Keamanan',
-            subtitle: 'Kelola akses ke akunmu.',
-            child: Column(
-              children: [
-                _actionRow(
-                  context: context,
-                  icon: Icons.edit_outlined,
-                  label: 'Edit Profil',
-                  subtitle: 'Perbarui data pribadimu.',
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ProfilEditScreen(user: user),
+          if (!readOnly) ...[
+            const SizedBox(height: 14),
+            _contentCard(
+              context: context,
+              icon: Icons.lock_outline_rounded,
+              title: 'Akun & Keamanan',
+              subtitle: 'Kelola akses ke akunmu.',
+              child: Column(
+                children: [
+                  _actionRow(
+                    context: context,
+                    icon: Icons.edit_outlined,
+                    label: 'Edit Profil',
+                    subtitle: 'Perbarui data pribadimu.',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProfilEditScreen(user: user),
+                      ),
                     ),
                   ),
-                ),
-                _divider(context),
-                _actionRow(
-                  context: context,
-                  icon: Icons.key_outlined,
-                  label: 'Ubah Kata Sandi',
-                  subtitle: 'Buat kata sandi baru untuk keamanan akun.',
-                  onTap: () => _changePassword(context, ref),
-                ),
-                _divider(context),
-                Material(
-                  color: Colors.transparent,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 38,
-                          height: 38,
-                          decoration: BoxDecoration(
-                            color: AppTheme.accentSurface(context),
-                            borderRadius: BorderRadius.circular(12),
+                  _divider(context),
+                  _actionRow(
+                    context: context,
+                    icon: Icons.key_outlined,
+                    label: 'Ubah Kata Sandi',
+                    subtitle: 'Buat kata sandi baru untuk keamanan akun.',
+                    onTap: () => _changePassword(context, ref),
+                  ),
+                  _divider(context),
+                  Material(
+                    color: Colors.transparent,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: AppTheme.accentSurface(context),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              darkMode
+                                  ? Icons.dark_mode_rounded
+                                  : Icons.light_mode_rounded,
+                              color: AppTheme.blue,
+                              size: 20,
+                            ),
                           ),
-                          child: Icon(
-                            darkMode
-                                ? Icons.dark_mode_rounded
-                                : Icons.light_mode_rounded,
-                            color: AppTheme.blue,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 11),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Mode gelap',
-                                style: GoogleFonts.plusJakartaSans(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurface,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Gunakan tampilan gelap aplikasi.',
-                                style: GoogleFonts.plusJakartaSans(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurfaceVariant,
-                                  fontSize: 11,
-                                  height: 1.3,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Switch(
-                          value: darkMode,
-                          onChanged: (enabled) async {
-                            try {
-                              await ref
-                                  .read(themeModeProvider.notifier)
-                                  .setDarkMode(enabled);
-                            } catch (_) {
-                              if (!context.mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Preferensi tema gagal disimpan.',
+                          const SizedBox(width: 11),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Mode gelap',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
-                              );
-                            }
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                _divider(context),
-                _actionRow(
-                  context: context,
-                  icon: Icons.logout,
-                  label: 'Logout',
-                  subtitle: 'Keluar dari aplikasi.',
-                  color: const Color(0xFFE11D48),
-                  iconBackground: AppTheme.dangerSurface(context),
-                  onTap: () async {
-                    final confirmed = await showDialog<bool>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Keluar?'),
-                        content: const Text(
-                          'Kamu akan keluar dari aplikasi dan kembali ke halaman login.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.of(ctx).pop(false),
-                            child: const Text('Batal'),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Gunakan tampilan gelap aplikasi.',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                    fontSize: 11,
+                                    height: 1.3,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          FilledButton(
-                            onPressed: () => Navigator.of(ctx).pop(true),
-                            child: const Text('Keluar'),
+                          Switch(
+                            value: darkMode,
+                            onChanged: (enabled) async {
+                              try {
+                                await ref
+                                    .read(themeModeProvider.notifier)
+                                    .setDarkMode(enabled);
+                              } catch (_) {
+                                if (!context.mounted) return;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Preferensi tema gagal disimpan.',
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
                           ),
                         ],
                       ),
-                    );
-                    if (confirmed != true || !context.mounted) return;
-                    await ref.read(authControllerProvider.notifier).logout();
-                  },
-                ),
-              ],
+                    ),
+                  ),
+                  _divider(context),
+                  _actionRow(
+                    context: context,
+                    icon: Icons.logout,
+                    label: 'Logout',
+                    subtitle: 'Keluar dari aplikasi.',
+                    color: const Color(0xFFE11D48),
+                    iconBackground: AppTheme.dangerSurface(context),
+                    onTap: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Keluar?'),
+                          content: const Text(
+                            'Kamu akan keluar dari aplikasi dan kembali ke halaman login.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(ctx).pop(false),
+                              child: const Text('Batal'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.of(ctx).pop(true),
+                              child: const Text('Keluar'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirmed != true || !context.mounted) return;
+                      await ref.read(authControllerProvider.notifier).logout();
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
+  }
+
+  String _formatProfileValue(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return '-';
+    return trimmed
+        .split(RegExp(r'[_\s]+'))
+        .where((part) => part.isNotEmpty)
+        .map(
+          (part) => '${part.substring(0, 1).toUpperCase()}${part.substring(1)}',
+        )
+        .join(' ');
+  }
+
+  String _shortEmail(String email) {
+    final separator = email.lastIndexOf('@');
+    if (separator <= 9) return email;
+    return '${email.substring(0, 9)}...${email.substring(separator)}';
   }
 
   Widget _contentCard({
@@ -395,6 +630,7 @@ class ProfilScreen extends ConsumerWidget {
 
   Widget _row(BuildContext context, IconData icon, String label, String value) {
     final colors = Theme.of(context).colorScheme;
+    final displayValue = label == 'Email' ? _shortEmail(value) : value;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 11),
       child: Row(
@@ -414,15 +650,34 @@ class ProfilScreen extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: GoogleFonts.plusJakartaSans(
-                color: colors.onSurface,
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            child: label == 'Email'
+                ? Text(
+                    displayValue,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: false,
+                    textAlign: TextAlign.right,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: colors.onSurface,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  )
+                : FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      value,
+                      maxLines: 1,
+                      softWrap: false,
+                      textAlign: TextAlign.right,
+                      style: GoogleFonts.plusJakartaSans(
+                        color: colors.onSurface,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
           ),
         ],
       ),

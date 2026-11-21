@@ -434,6 +434,33 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
+                    key: const ValueKey('kegiatan-search'),
+                    padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (v) =>
+                          setState(() => _cari = v.trim().toLowerCase()),
+                      decoration: InputDecoration(
+                        hintText: 'Cari kegiatan...',
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: AppTheme.mutedText(context),
+                        ),
+                        suffixIcon: _searchController.text.isEmpty
+                            ? null
+                            : IconButton(
+                                tooltip: 'Hapus pencarian',
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() => _cari = '');
+                                },
+                                icon: const Icon(Icons.close_rounded),
+                              ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    key: const ValueKey('kegiatan-filter-row'),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 6,
@@ -699,31 +726,6 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: (v) =>
-                          setState(() => _cari = v.trim().toLowerCase()),
-                      decoration: InputDecoration(
-                        hintText: 'Cari kegiatan...',
-                        prefixIcon: Icon(
-                          Icons.search,
-                          color: AppTheme.mutedText(context),
-                        ),
-                        suffixIcon: _searchController.text.isEmpty
-                            ? null
-                            : IconButton(
-                                tooltip: 'Hapus pencarian',
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() => _cari = '');
-                                },
-                                icon: const Icon(Icons.close_rounded),
-                              ),
-                      ),
                     ),
                   ),
                   Expanded(

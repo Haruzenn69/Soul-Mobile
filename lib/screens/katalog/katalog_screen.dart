@@ -122,21 +122,62 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
   }
 
   Widget _body(BuildContext context, Map<String, dynamic> data) {
-    final pending = listOf(data, 'pending_pendaftarans').toList();
-    if (pending.isEmpty && data['pending'] is Map) {
-      pending.add(Map<String, dynamic>.from(data['pending'] as Map));
+    final ekskuls = listOf(data, 'ekskuls').toList();
+    if (ekskuls.isEmpty) {
+      ekskuls.addAll(listOf(data, 'joinable'));
+      for (final enrollment in [
+        ...listOf(data, 'active_pendaftarans'),
+        ...listOf(data, 'pending_pendaftarans'),
+      ]) {
+        final ekskul = enrollment['ekskul'];
+        if (ekskul is Map) {
+          final raw = Map<String, dynamic>.from(ekskul);
+          final id = (raw['id'] as num?)?.toInt();
+          if (id != null && !_containsEkskul(ekskuls, id)) {
+            ekskuls.add(raw);
+          }
+        }
+      }
     }
-    final pendaftaran = listOf(data, 'active_pendaftarans').toList();
-    if (pendaftaran.isEmpty && data['pendaftaran'] is Map) {
-      pendaftaran.add(Map<String, dynamic>.from(data['pendaftaran'] as Map));
+
+    final membershipStatusByEkskul = <int, String>{};
+    for (final enrollment in listOf(data, 'active_pendaftarans')) {
+      final ekskul = enrollment['ekskul'];
+      final id = ekskul is Map ? (ekskul['id'] as num?)?.toInt() : null;
+      if (id != null) {
+        membershipStatusByEkskul[id] =
+            enrollment['status']?.toString() == 'peringatan'
+            ? 'Peringatan'
+            : 'Terdaftar';
+      }
     }
-    final adaJoinable =
-        (data['joinable'] is List) && (data['joinable'] as List).isNotEmpty;
-    final joinable = listOf(data, 'joinable');
+    if (listOf(data, 'active_pendaftarans').isEmpty &&
+        data['pendaftaran'] is Map) {
+      final pendaftaran = Map<String, dynamic>.from(data['pendaftaran'] as Map);
+      final ekskul = pendaftaran['ekskul'];
+      final id = ekskul is Map ? (ekskul['id'] as num?)?.toInt() : null;
+      if (id != null) membershipStatusByEkskul[id] = 'Terdaftar';
+    }
+    for (final enrollment in listOf(data, 'pending_pendaftarans')) {
+      final ekskul = enrollment['ekskul'];
+      final id = ekskul is Map ? (ekskul['id'] as num?)?.toInt() : null;
+      if (id != null && !membershipStatusByEkskul.containsKey(id)) {
+        membershipStatusByEkskul[id] = 'Menunggu';
+      }
+    }
+    if (listOf(data, 'pending_pendaftarans').isEmpty &&
+        data['pending'] is Map) {
+      final pending = Map<String, dynamic>.from(data['pending'] as Map);
+      final ekskul = pending['ekskul'];
+      final id = ekskul is Map ? (ekskul['id'] as num?)?.toInt() : null;
+      if (id != null && !membershipStatusByEkskul.containsKey(id)) {
+        membershipStatusByEkskul[id] = 'Menunggu';
+      }
+    }
 
     final filtered = _cari.isEmpty
-        ? joinable
-        : joinable.where((e) {
+        ? ekskuls
+        : ekskuls.where((e) {
             final nama = (e['nama_ekskul'] as String? ?? '').toLowerCase();
             final kategori = (e['kategori'] as String? ?? '').toLowerCase();
             final pembinaRaw = e['pembina'];
@@ -156,75 +197,35 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
             return (category.isEmpty ? 'Lainnya' : category) == _kategori;
           }).toList();
 
-    final itemCount =
-        pending.length + pendaftaran.length + filteredByCategory.length;
-
-    if (itemCount == 0) {
+    if (filteredByCategory.isEmpty) {
       return EmptyState(
-        title: adaJoinable ? 'Tidak ada yang cocok' : 'Belum ada ekskul',
-        subtitle: adaJoinable
+        title: ekskuls.isNotEmpty ? 'Tidak ada yang cocok' : 'Belum ada ekskul',
+        subtitle: ekskuls.isNotEmpty
             ? 'Coba ubah kata kunci atau pilih kategori lain.'
-            : 'Belum ada ekskul yang bisa didaftar saat ini.',
+            : 'Belum ada ekstrakurikuler yang tersedia saat ini.',
         icon: Icons.unfold_more_outlined,
       );
     }
 
     return PaginatedList<Map<String, dynamic>>(
-      items: [
-        ...pending.map((e) => {'_type': 'pending', 'data': e}),
-        ...pendaftaran.map((e) => {'_type': 'pendaftaran', 'data': e}),
-        ...filteredByCategory.map((e) => {'_type': 'ekskul', 'data': e}),
-      ],
+      items: filteredByCategory,
       pageSize: 10,
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, item, index) {
-        final type = item['_type']?.toString();
-        final raw = item['data'] is Map
-            ? Map<String, dynamic>.from(item['data'] as Map)
-            : <String, dynamic>{};
-        if (type == 'pending') {
-          final club = raw['ekskul'] is Map
-              ? (raw['ekskul'] as Map)['nama_ekskul']?.toString()
-              : null;
-          return _InfoBanner(
-            color: AppTheme.warningSurface(context),
-            border: AppTheme.warningBorder(context),
-            icon: Icon(
-              Icons.hourglass_top,
-              color: AppTheme.warningText(context),
-              size: 20,
-            ),
-            text:
-                'Pendaftaran kamu ke ${club ?? 'ekskul'} masih menunggu persetujuan ketua.',
-            textColor: AppTheme.warningText(context),
-            onTap: () => _openDetail(context, raw),
-          );
-        }
-        if (type == 'pendaftaran') {
-          final club = raw['ekskul'] is Map
-              ? (raw['ekskul'] as Map)['nama_ekskul']?.toString()
-              : null;
-          return _InfoBanner(
-            color: AppTheme.successSurface(context),
-            border: AppTheme.successBorder(context),
-            icon: Icon(
-              Icons.check_circle,
-              color: AppTheme.successText(context),
-              size: 20,
-            ),
-            text: 'Kamu sudah aktif di ${club ?? 'ekskul'}.',
-            textColor: AppTheme.successText(context),
-            onTap: () => _openDetail(context, raw),
-          );
-        }
+        final raw = Map<String, dynamic>.from(item);
+        final id = (raw['id'] as num?)?.toInt();
         return _EkskulCard(
           ekskul: Ekskul.fromJson(raw),
+          membershipStatus: id == null ? null : membershipStatusByEkskul[id],
           onTap: () => _openDetail(context, raw),
         );
       },
     );
   }
+
+  bool _containsEkskul(List<Map<String, dynamic>> items, int id) =>
+      items.any((item) => (item['id'] as num?)?.toInt() == id);
 
   void _openDetail(BuildContext context, Map<String, dynamic> data) {
     final ekskulRaw = data['ekskul'] is Map ? data['ekskul'] as Map : data;
@@ -236,73 +237,11 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
   }
 }
 
-class _InfoBanner extends StatelessWidget {
-  const _InfoBanner({
-    required this.color,
-    required this.border,
-    required this.icon,
-    required this.text,
-    required this.textColor,
-    this.onTap,
-  });
-
-  final Color color;
-  final Color border;
-  final Widget icon;
-  final String text;
-  final Color textColor;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: color,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: border),
-            ),
-            child: Row(
-              children: [
-                icon,
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    text,
-                    style: GoogleFonts.plusJakartaSans(
-                      color: textColor,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-                if (onTap != null)
-                  const Icon(
-                    Icons.chevron_right,
-                    color: Colors.black26,
-                    size: 20,
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _EkskulCard extends StatelessWidget {
-  const _EkskulCard({required this.ekskul, this.onTap});
+  const _EkskulCard({required this.ekskul, this.membershipStatus, this.onTap});
 
   final Ekskul ekskul;
+  final String? membershipStatus;
   final VoidCallback? onTap;
 
   @override
@@ -386,6 +325,8 @@ class _EkskulCard extends StatelessWidget {
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         StatusChip(ekskul.status ? 'Aktif' : 'Tidak aktif'),
+                        if (membershipStatus != null)
+                          StatusChip(membershipStatus!),
                         if (ekskul.kategori?.isNotEmpty == true) ...[
                           _KategoriBadge(kategori: ekskul.kategori!),
                         ],

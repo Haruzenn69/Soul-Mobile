@@ -26,6 +26,7 @@ import 'package:soul/screens/main_shell.dart';
 import 'package:soul/screens/menu/ketua_menu_screen.dart';
 import 'package:soul/screens/notifikasi/notifikasi_screen.dart';
 import 'package:soul/screens/profil/profil_screen.dart';
+import 'package:soul/screens/profil/pengajuan_kepengurusan_screen.dart';
 import 'package:soul/theme/app_theme.dart';
 import 'package:soul/theme/theme_controller.dart';
 import 'package:soul/widgets/common.dart';
@@ -282,6 +283,9 @@ void main() {
 
     expect(navigationLabels(), contains('Ekskul'));
     expect(find.text('Dashboard · Basket'), findsOneWidget);
+    expect(find.byKey(const ValueKey('siswa-dashboard-hero')), findsOneWidget);
+    expect(find.text('DASHBOARD SISWA'), findsOneWidget);
+    expect(find.byKey(const ValueKey('dashboard-hero-metrics')), findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('dashboard-ekskul-switcher')));
     await tester.pump();
@@ -459,7 +463,7 @@ void main() {
     const user = AuthUser(
       id: 1,
       username: 'student',
-      email: 'student@example.test',
+      email: 'ketua.paskib@soul.test',
       role: 'siswa',
       needsOnboarding: false,
       needsProfileCompletion: false,
@@ -474,6 +478,10 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    final email = tester.widget<Text>(find.text('ketua.pas...@soul.test'));
+    expect(email.maxLines, 1);
+    expect(email.softWrap, isFalse);
+    expect(email.style?.fontSize, 13);
     await tester.drag(find.byType(ListView), const Offset(0, -700));
     await tester.pumpAndSettle();
 
@@ -919,6 +927,73 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('catalog lists all clubs and labels existing memberships', (
+    tester,
+  ) async {
+    const user = AuthUser(
+      id: 1,
+      username: 'student',
+      email: 'student@example.test',
+      role: 'siswa',
+      needsOnboarding: false,
+      needsProfileCompletion: false,
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          katalogProvider.overrideWith(
+            (ref) async => {
+              'ekskuls': [
+                {
+                  'id': 1,
+                  'nama_ekskul': 'Basket Terdaftar',
+                  'kategori': 'Olahraga',
+                  'status': true,
+                },
+                {
+                  'id': 2,
+                  'nama_ekskul': 'Teater Menunggu',
+                  'kategori': 'Seni',
+                  'status': true,
+                },
+                {
+                  'id': 3,
+                  'nama_ekskul': 'Klub Belum Diikuti',
+                  'kategori': 'Bahasa',
+                  'status': true,
+                },
+              ],
+              'active_pendaftarans': [
+                {
+                  'status': 'diterima',
+                  'ekskul': {'id': 1},
+                },
+              ],
+              'pending_pendaftarans': [
+                {
+                  'status': 'pending',
+                  'ekskul': {'id': 2},
+                },
+              ],
+            },
+          ),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(body: KatalogScreen(user: user)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Basket Terdaftar'), findsWidgets);
+    expect(find.text('Teater Menunggu'), findsWidgets);
+    expect(find.text('Klub Belum Diikuti'), findsWidgets);
+    expect(find.text('Terdaftar'), findsOneWidget);
+    expect(find.text('Menunggu'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   test('auth user reads profile photo from nested student resource', () {
     final user = AuthUser.fromJson({
       'id': 1,
@@ -1249,14 +1324,48 @@ void main() {
                     'jabatan': 'anggota',
                   },
                 },
+                ...List.generate(
+                  24,
+                  (index) => {
+                    'id': index + 3,
+                    'status': 'diterima',
+                    'status_label': 'Aktif',
+                    'is_active': true,
+                    'siswa': {
+                      'id': index + 12,
+                      'nama': 'Anggota Tambahan $index',
+                      'jabatan': 'anggota',
+                    },
+                  },
+                ),
               ],
             },
           ),
           ketuaPendaftaranProvider.overrideWith(
-            (ref, status) async => {'pendaftarans': []},
+            (ref, status) async => {
+              'pendaftarans': List.generate(
+                24,
+                (index) => {
+                  'id': index + 1,
+                  'status': 'pending',
+                  'tanggal_daftar': '2026-10-01',
+                  'siswa': {'id': index + 20, 'nama': 'Pendaftar $index'},
+                },
+              ),
+            },
           ),
           ketuaPengajuanProvider.overrideWith(
-            (ref, status) async => {'pengajuans': []},
+            (ref, status) async => {
+              'pengajuans': List.generate(
+                24,
+                (index) => {
+                  'id': index + 1,
+                  'status': 'pending',
+                  'tanggal_daftar': '2026-10-01',
+                  'siswa': {'id': index + 30, 'nama': 'Pengajuan $index'},
+                },
+              ),
+            },
           ),
         ],
         child: const MaterialApp(
@@ -1295,6 +1404,35 @@ void main() {
       ),
       findsWidgets,
     );
+    await tester.tap(find.byTooltip('Opsi siswa').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Informasi Siswa'));
+    await tester.pumpAndSettle();
+    expect(find.text('Informasi Siswa'), findsOneWidget);
+    expect(find.text('Alya Anggota'), findsOneWidget);
+    expect(find.text('Data Diri'), findsOneWidget);
+    await tester.drag(find.byType(ListView).last, const Offset(0, -700));
+    await tester.pumpAndSettle();
+    expect(find.text('Keanggotaan'), findsOneWidget);
+    expect(find.text('Edit Profil'), findsNothing);
+    expect(find.text('Logout'), findsNothing);
+    expect(find.byTooltip('Edit Profil'), findsNothing);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.byType(ListView).first, const Offset(0, -700));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('anggota-search')), findsNothing);
+    expect(find.byKey(const ValueKey('anggota-filter-row')), findsOneWidget);
+    await tester.drag(find.byType(ListView).first, const Offset(0, 300));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('anggota-search')), findsOneWidget);
+    expect(
+      tester.getRect(find.byKey(const ValueKey('anggota-search'))).top,
+      greaterThanOrEqualTo(
+        tester.getRect(find.byKey(const ValueKey('anggota-tab-bar'))).bottom,
+      ),
+    );
     await tester.enterText(
       find.byKey(const ValueKey('Cari nama anggota...')),
       'Bima',
@@ -1317,16 +1455,45 @@ void main() {
       find.byKey(const ValueKey('Cari nama pendaftar...')),
       findsOneWidget,
     );
+    await tester.drag(find.byType(ListView).last, const Offset(0, -700));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('pendaftaran-search')), findsNothing);
+    expect(
+      find.byKey(const ValueKey('pendaftaran-filter-row')),
+      findsOneWidget,
+    );
+    await tester.drag(find.byType(ListView).last, const Offset(0, 300));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('pendaftaran-search')), findsOneWidget);
+    expect(
+      tester.getRect(find.byKey(const ValueKey('pendaftaran-search'))).top,
+      greaterThanOrEqualTo(
+        tester.getRect(find.byKey(const ValueKey('anggota-tab-bar'))).bottom,
+      ),
+    );
 
     await tester.tap(find.text('Pengajuan'));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('Cari nama siswa...')), findsOneWidget);
+    await tester.drag(find.byType(ListView).last, const Offset(0, -700));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('pengajuan-search')), findsNothing);
+    expect(find.byKey(const ValueKey('pengajuan-filter-row')), findsOneWidget);
+    await tester.drag(find.byType(ListView).last, const Offset(0, 300));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('pengajuan-search')), findsOneWidget);
+    expect(
+      tester.getRect(find.byKey(const ValueKey('pengajuan-search'))).top,
+      greaterThanOrEqualTo(
+        tester.getRect(find.byKey(const ValueKey('anggota-tab-bar'))).bottom,
+      ),
+    );
 
     await tester.drag(find.byType(NestedScrollView), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.text('PENGELOLAAN EKSKUL'), findsNothing);
     expect(find.byKey(const ValueKey('anggota-tab-bar')), findsOneWidget);
-    expect(find.byKey(const ValueKey('Cari nama siswa...')), findsOneWidget);
+    expect(find.byKey(const ValueKey('pengajuan-search')), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -1473,6 +1640,7 @@ void main() {
               'total_anggota': 4,
               'anggota_baru_bulan_ini': 1,
               'kegiatan_bulan_ini': 2,
+              'pengajuan_count': 5,
               'testimoni_pending_count': 1,
               'faq_pending_count': 2,
               'ekskul': {'nama_ekskul': 'Karate'},
@@ -1497,11 +1665,12 @@ void main() {
     expect(find.text('Anggota'), findsWidgets);
     expect(find.text('Anggota Baru'), findsOneWidget);
     expect(find.text('Kegiatan Bulan Ini'), findsOneWidget);
-    expect(find.text('Moderasi'), findsOneWidget);
-    expect(find.text('3'), findsOneWidget);
+    expect(find.text('Pengajuan Keluar'), findsOneWidget);
+    expect(find.text('Moderasi'), findsNothing);
+    expect(find.text('5'), findsOneWidget);
     expect(find.text('DASHBOARD KETUA'), findsOneWidget);
     expect(find.text('Memimpin Karate'), findsOneWidget);
-    expect(find.text('Pengajuan Keluar'), findsNothing);
+    expect(find.byKey(const ValueKey('dashboard-hero-metrics')), findsNothing);
     final heroRect = tester.getRect(
       find.byKey(const ValueKey('ketua-dashboard-hero')),
     );
@@ -1568,6 +1737,15 @@ void main() {
                   'tanggal_text': '8 Oktober 2026',
                   'is_event': true,
                 },
+                ...List.generate(
+                  20,
+                  (index) => {
+                    'id': index + 3,
+                    'materi': 'Kegiatan Tambahan $index',
+                    'tanggal_text': '9 Oktober 2026',
+                    'presensis_count': 2,
+                  },
+                ),
               ],
             },
           ),
@@ -1587,7 +1765,12 @@ void main() {
     expect(fab.shape, const CircleBorder());
     expect(find.byIcon(Icons.add_rounded), findsOneWidget);
     expect(find.text('Buat Kegiatan'), findsNothing);
-    expect(find.text('2 kegiatan'), findsOneWidget);
+    expect(find.text('22 kegiatan'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Latihan Rutin'),
+      120,
+      scrollable: find.byType(Scrollable).last,
+    );
     expect(find.text('Latihan Rutin'), findsOneWidget);
     expect(
       find.byKey(const ValueKey('activity-documentation-1')),
@@ -1595,7 +1778,12 @@ void main() {
     );
     expect(
       find.byKey(const ValueKey('activity-documentation-fallback')),
-      findsOneWidget,
+      findsWidgets,
+    );
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('activity-event-badge-2')),
+      120,
+      scrollable: find.byType(Scrollable).last,
     );
     final eventBadgeRect = tester.getRect(
       find.byKey(const ValueKey('activity-event-badge-2')),
@@ -1615,7 +1803,18 @@ void main() {
     expect(find.text('Kegiatan tidak ditemukan'), findsOneWidget);
     await tester.tap(find.byTooltip('Hapus pencarian'));
     await tester.pumpAndSettle();
-    expect(find.text('2 kegiatan'), findsOneWidget);
+    expect(find.text('22 kegiatan'), findsOneWidget);
+    final searchRect = tester.getRect(
+      find.byKey(const ValueKey('kegiatan-search')),
+    );
+    final filterRect = tester.getRect(
+      find.byKey(const ValueKey('kegiatan-filter-row')),
+    );
+    expect(searchRect.bottom, lessThanOrEqualTo(filterRect.top));
+    await tester.drag(find.byType(ListView).first, const Offset(0, -700));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('kegiatan-search')), findsOneWidget);
+    expect(find.byKey(const ValueKey('kegiatan-filter-row')), findsOneWidget);
     await tester.drag(find.byType(NestedScrollView), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.text('AKTIVITAS EKSKUL'), findsNothing);
@@ -1659,9 +1858,7 @@ void main() {
     },
   );
 
-  testWidgets('attendance month filter stays visible while records scroll', (
-    tester,
-  ) async {
+  testWidgets('attendance hero scrolls away with records', (tester) async {
     const ketua = AuthUser(
       id: 1,
       username: 'ketua',
@@ -1708,8 +1905,8 @@ void main() {
     await tester.drag(find.byType(ListView).last, const Offset(0, -1000));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const ValueKey('rekap-period-tap')), findsOneWidget);
-    expect(find.text('Oktober 2026'), findsOneWidget);
+    expect(find.byKey(const ValueKey('rekap-period-tap')), findsNothing);
+    expect(find.text('Oktober 2026'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -1954,6 +2151,67 @@ void main() {
       await tester.pumpAndSettle();
     }
     expect(find.text('Member 299'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('leadership submissions show assigned officers per position', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          siswaDashboardProvider.overrideWith(
+            (ref) async => {
+              'ekskul': {'id': 7, 'nama_ekskul': 'Paskibra'},
+              'active_ekskuls': [
+                {'id': 7, 'nama_ekskul': 'Paskibra'},
+              ],
+              'pengurus_aktif': [
+                {
+                  'jabatan': 'ketua',
+                  'status': 'aktif',
+                  'created_at': null,
+                  'siswa': {
+                    'nama': 'Anisa Rahma',
+                    'nis': '20261002',
+                    'kelas': {'nama': 'XII PPLG 1'},
+                  },
+                },
+                {
+                  'jabatan': 'sekretaris',
+                  'status': 'aktif',
+                  'created_at': '2026-11-13T00:00:00+07:00',
+                  'siswa': {
+                    'nama': 'Bima Sekretaris',
+                    'nis': '20261003',
+                    'kelas': {'nama': 'XI PPLG 1'},
+                  },
+                },
+              ],
+            },
+          ),
+        ],
+        child: const MaterialApp(home: PengajuanKepengurusanScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pengurus Paskibra'), findsOneWidget);
+    expect(find.text('ANISA RAHMA'), findsOneWidget);
+    expect(find.text('BIMA SEKRETARIS'), findsOneWidget);
+    expect(find.text('Belum Ada Pengurus'), findsNWidgets(2));
+    expect(find.text('Aktif'), findsNWidgets(2));
+    expect(find.byType(GridView), findsOneWidget);
+    expect(find.byType(ActiveEkskulSelector), findsNothing);
+    expect(find.text('Form Pengajuan Perubahan Pengurus'), findsNothing);
+
+    await tester.tap(
+      find.byKey(const ValueKey('leadership-position-wakil_ketua')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Usulkan wakil ketua'), findsOneWidget);
+    expect(find.byType(TextField), findsNWidgets(3));
+    expect(find.text('Target Jabatan'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

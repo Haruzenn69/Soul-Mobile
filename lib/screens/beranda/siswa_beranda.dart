@@ -146,6 +146,7 @@ class BerandaSiswa extends ConsumerWidget {
                         _Hero(
                           user: user,
                           isJoined: isJoined,
+                          ekskulName: ekskul['nama_ekskul']?.toString() ?? '',
                           registrationStatus:
                               latestRegistration?['status'] as String?,
                           unreadNotifications:
@@ -394,6 +395,7 @@ class _Hero extends StatelessWidget {
   const _Hero({
     required this.user,
     required this.isJoined,
+    required this.ekskulName,
     required this.registrationStatus,
     required this.unreadNotifications,
     required this.onCatalog,
@@ -405,6 +407,7 @@ class _Hero extends StatelessWidget {
 
   final AuthUser user;
   final bool isJoined;
+  final String ekskulName;
   final String? registrationStatus;
   final int unreadNotifications;
   final VoidCallback onCatalog;
@@ -415,201 +418,59 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Render kotak hero utama dengan gradient khas aplikasi
-    return Container(
-      key: const ValueKey('siswa-dashboard-hero'),
-      clipBehavior: Clip.antiAlias,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: AppTheme.brandHeroGradient(context),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.brandHeroShadow(context),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+    final primaryLabel = !isJoined && registrationStatus != 'pending'
+        ? 'Daftar ekskul'
+        : registrationStatus == 'pending'
+        ? 'Cek status'
+        : 'Lihat presensi';
+    final primaryIcon = !isJoined && registrationStatus != 'pending'
+        ? Icons.add_rounded
+        : registrationStatus == 'pending'
+        ? Icons.notifications_outlined
+        : Icons.fact_check_outlined;
+
+    return DashboardHeroCard(
+      cardKey: const ValueKey('siswa-dashboard-hero'),
+      markKey: const ValueKey('siswa-dashboard-hero-mark'),
+      name: user.namaTampilan,
+      photoUrl: user.fotoUrl,
+      eyebrow: 'DASHBOARD SISWA',
+      subtitle: 'Siswa aktif · ${_todayLabel()}',
+      badge: isJoined
+          ? (ekskulName.isEmpty ? 'Aktif dalam ekstrakurikuler' : ekskulName)
+          : registrationStatus == 'pending'
+          ? 'Pendaftaran menunggu'
+          : 'Belum bergabung ekskul',
+      summary: isJoined
+          ? 'Pantau kehadiran dan kegiatanmu.'
+          : 'Temukan ekskul sesuai minatmu.',
+      metrics: const [],
+      switcher: onSelectEkskul != null && user.activeEkskuls.length > 1
+          ? DashboardEkskulSwitcher(
+              ekskuls: user.activeEkskuls,
+              selectedId: selectedEkskulId,
+              ketuaEkskulId: user.ketuaEkskulId,
+              onSelected: onSelectEkskul!,
+            )
+          : null,
+      primaryAction: DashboardHeroAction(
+        label: primaryLabel,
+        icon: primaryIcon,
+        onPressed: () {
+          if (!isJoined && registrationStatus != 'pending') {
+            onCatalog();
+          } else if (registrationStatus == 'pending') {
+            onNotifications();
+          } else {
+            onAttendance();
+          }
+        },
       ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: 12,
-            top: 10,
-            child: Container(
-              key: const ValueKey('siswa-dashboard-hero-mark'),
-              width: 0,
-              height: 0,
-              padding: EdgeInsets.zero,
-              decoration: const BoxDecoration(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.zero,
-              ),
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  PersonAvatar(
-                    name: user.namaTampilan,
-                    photoUrl: user.fotoUrl,
-                    radius: 24,
-                    backgroundColor: Colors.white.withValues(alpha: 0.18),
-                    foregroundColor: Colors.white,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'DASHBOARD SISWA',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Colors.white.withValues(alpha: 0.75),
-                            fontSize: 8,
-                            letterSpacing: 1,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Halo, ${user.namaTampilan}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        Text(
-                          'Siswa aktif · ${_todayLabel()}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Colors.white.withValues(alpha: 0.85),
-                            fontSize: 11.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 62),
-                ],
-              ),
-              const SizedBox(height: 10),
-              if (onSelectEkskul != null && user.activeEkskuls.length > 1) ...[
-                DashboardEkskulSwitcher(
-                  ekskuls: user.activeEkskuls,
-                  selectedId: selectedEkskulId,
-                  ketuaEkskulId: user.ketuaEkskulId,
-                  onSelected: onSelectEkskul!,
-                ),
-                const SizedBox(height: 10),
-              ],
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 11,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.16),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.verified_rounded,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        isJoined
-                            ? 'Aktif dalam Ekstrakurikuler'
-                            : 'Belum Bergabung Ekskul',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.plusJakartaSans(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                isJoined
-                    ? 'Pantau kegiatan dan kehadiran ekskulmu secara berkala.'
-                    : 'Temukan kegiatan ekstrakurikuler yang sesuai dengan minatmu.',
-                style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 11.5,
-                  height: 1.35,
-                ),
-              ),
-              const SizedBox(height: 12),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final primaryAction = _HeroActionButton(
-                    label: !isJoined && registrationStatus != 'pending'
-                        ? 'Daftar ekskul'
-                        : registrationStatus == 'pending'
-                        ? 'Cek status'
-                        : 'Lihat presensi',
-                    icon: !isJoined && registrationStatus != 'pending'
-                        ? Icons.add_rounded
-                        : registrationStatus == 'pending'
-                        ? Icons.notifications_outlined
-                        : Icons.fact_check_outlined,
-                    onPressed: () {
-                      if (!isJoined && registrationStatus != 'pending') {
-                        onCatalog();
-                      } else if (registrationStatus == 'pending') {
-                        onNotifications();
-                      } else {
-                        onAttendance();
-                      }
-                    },
-                  );
-                  final secondaryAction = _HeroActionButton(
-                    label: 'Jelajahi katalog',
-                    icon: Icons.explore_outlined,
-                    secondary: true,
-                    onPressed: onCatalog,
-                  );
-                  if (constraints.maxWidth < 300) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        primaryAction,
-                        const SizedBox(height: 10),
-                        secondaryAction,
-                      ],
-                    );
-                  }
-                  return Row(
-                    children: [
-                      Expanded(child: primaryAction),
-                      const SizedBox(width: 10),
-                      Expanded(child: secondaryAction),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
+      secondaryAction: DashboardHeroAction(
+        label: 'Jelajahi katalog',
+        icon: Icons.explore_outlined,
+        secondary: true,
+        onPressed: onCatalog,
       ),
     );
   }
@@ -632,44 +493,6 @@ class _Hero extends StatelessWidget {
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
-}
-
-class _HeroActionButton extends StatelessWidget {
-  const _HeroActionButton({
-    required this.label,
-    required this.icon,
-    required this.onPressed,
-    this.secondary = false,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onPressed;
-  final bool secondary;
-
-  @override
-  Widget build(BuildContext context) => FilledButton.icon(
-    onPressed: onPressed,
-    style: FilledButton.styleFrom(
-      backgroundColor: secondary
-          ? Colors.white.withValues(alpha: 0.14)
-          : Colors.white,
-      foregroundColor: secondary ? Colors.white : AppTheme.blue,
-      side: secondary
-          ? BorderSide(color: Colors.white.withValues(alpha: 0.38))
-          : BorderSide.none,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      minimumSize: const Size(0, 42),
-      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      textStyle: GoogleFonts.plusJakartaSans(
-        fontSize: 11,
-        fontWeight: FontWeight.w800,
-      ),
-    ),
-    icon: Icon(icon, size: 16),
-    label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-  );
 }
 
 Future<void> _completeOnboarding(

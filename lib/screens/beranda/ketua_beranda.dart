@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../core/app_config.dart';
 import '../../core/providers.dart';
 import '../../data/providers.dart';
 import '../../models/models.dart';
@@ -46,11 +45,12 @@ class BerandaKetua extends ConsumerWidget {
                         (data['anggota_baru_bulan_ini'] as num?)?.toInt() ?? 0;
                     final kegiatanBulanIni =
                         (data['kegiatan_bulan_ini'] as num?)?.toInt() ?? 0;
+                    final pengajuanKeluarPending =
+                        (data['pengajuan_count'] as num?)?.toInt() ?? 0;
                     final testimoniPending =
                         (data['testimoni_pending_count'] as num?)?.toInt() ?? 0;
                     final faqPending =
                         (data['faq_pending_count'] as num?)?.toInt() ?? 0;
-                    final moderasiPending = testimoniPending + faqPending;
                     final ekskul = data['ekskul'] is Map
                         ? Map<String, dynamic>.from(data['ekskul'] as Map)
                         : <String, dynamic>{};
@@ -88,7 +88,7 @@ class BerandaKetua extends ConsumerWidget {
                           totalAnggota: totalAnggota,
                           anggotaBaruCount: anggotaBaruCount,
                           kegiatanBulanIni: kegiatanBulanIni,
-                          moderasiPending: moderasiPending,
+                          pengajuanKeluarPending: pengajuanKeluarPending,
                         ),
                         const SizedBox(height: 20),
                         _AttendanceChart(data: data),
@@ -160,207 +160,49 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final logo = ekskul['logo']?.toString().trim();
-    final hasLogo = logo != null && logo.isNotEmpty;
-    return Container(
-      key: const ValueKey('ketua-dashboard-hero'),
-      clipBehavior: Clip.antiAlias,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: AppTheme.brandHeroGradient(context),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.brandHeroShadow(context),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+    return DashboardHeroCard(
+      cardKey: const ValueKey('ketua-dashboard-hero'),
+      markKey: const ValueKey('ketua-dashboard-hero-mark'),
+      name: user.namaTampilan,
+      photoUrl: user.fotoUrl,
+      eyebrow: 'DASHBOARD KETUA',
+      subtitle: 'Ketua ekstrakurikuler · ${_todayLabel()}',
+      badge: ekskulName.isEmpty
+          ? 'Ekskul belum dipilih'
+          : 'Memimpin $ekskulName',
+      summary: 'Kelola dan kembangkan ekskulmu.',
+      markUrl: _imageField(ekskul, const ['logo', 'logo_url']),
+      metrics: const [],
+      switcher: onSelectEkskul != null && user.activeEkskuls.length > 1
+          ? DashboardEkskulSwitcher(
+              ekskuls: user.activeEkskuls,
+              selectedId: selectedEkskulId,
+              ketuaEkskulId: user.ketuaEkskulId,
+              onSelected: onSelectEkskul!,
+            )
+          : null,
+      primaryAction: DashboardHeroAction(
+        key: const ValueKey('ketua-hero-create-action'),
+        label: 'Buat kegiatan',
+        icon: Icons.add_rounded,
+        onPressed: onCreateActivity,
       ),
-      child: Stack(
-        children: [
-          Positioned(
-            right: 12,
-            top: 10,
-            child: Container(
-              key: const ValueKey('ketua-dashboard-hero-mark'),
-              width: 50,
-              height: 50,
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(13),
-                child: hasLogo
-                    ? Image.network(
-                        AppConfig.imageUrl(logo),
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const Icon(
-                          Icons.groups_2_rounded,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      )
-                    : const Icon(
-                        Icons.groups_2_rounded,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-              ),
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  PersonAvatar(
-                    name: user.namaTampilan,
-                    photoUrl: user.fotoUrl,
-                    radius: 24,
-                    backgroundColor: Colors.white.withValues(alpha: 0.18),
-                    foregroundColor: Colors.white,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'DASHBOARD KETUA',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Colors.white.withValues(alpha: 0.75),
-                            fontSize: 8,
-                            letterSpacing: 1,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Halo, ${user.namaTampilan}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        Text(
-                          'Ketua ekstrakurikuler · ${_todayLabel()}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Colors.white.withValues(alpha: 0.85),
-                            fontSize: 11.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 62),
-                ],
-              ),
-              const SizedBox(height: 10),
-              if (onSelectEkskul != null && user.activeEkskuls.length > 1) ...[
-                DashboardEkskulSwitcher(
-                  ekskuls: user.activeEkskuls,
-                  selectedId: selectedEkskulId,
-                  ketuaEkskulId: user.ketuaEkskulId,
-                  onSelected: onSelectEkskul!,
-                ),
-                const SizedBox(height: 10),
-              ],
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 11,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.16),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.verified_rounded,
-                      color: Colors.white,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        ekskulName.isEmpty
-                            ? 'Ekskul belum dipilih'
-                            : 'Memimpin $ekskulName',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.plusJakartaSans(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'Kelola anggota, tambahkan siswa, dan pantau kehadiran ekskulmu.',
-                style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 11.5,
-                  height: 1.35,
-                ),
-              ),
-              const SizedBox(height: 12),
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final createAction = _HeroActionButton(
-                    key: const ValueKey('ketua-hero-create-action'),
-                    label: 'Buat kegiatan',
-                    icon: Icons.add_rounded,
-                    onPressed: onCreateActivity,
-                  );
-                  final reviewAction = _HeroActionButton(
-                    key: const ValueKey('ketua-hero-add-members-action'),
-                    label: 'Tambah anggota',
-                    icon: Icons.person_add_alt_1_rounded,
-                    secondary: true,
-                    onPressed: onAddMembers,
-                  );
-                  if (constraints.maxWidth < 300) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        createAction,
-                        const SizedBox(height: 8),
-                        reviewAction,
-                      ],
-                    );
-                  }
-                  return Row(
-                    children: [
-                      Expanded(child: createAction),
-                      const SizedBox(width: 8),
-                      Expanded(child: reviewAction),
-                    ],
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
+      secondaryAction: DashboardHeroAction(
+        key: const ValueKey('ketua-hero-add-members-action'),
+        label: 'Tambah anggota',
+        icon: Icons.person_add_alt_1_rounded,
+        secondary: true,
+        onPressed: onAddMembers,
       ),
     );
+  }
+
+  String? _imageField(Map<String, dynamic> data, List<String> keys) {
+    for (final key in keys) {
+      final value = data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) return value;
+    }
+    return null;
   }
 
   String _todayLabel() {
@@ -381,45 +223,6 @@ class _Header extends StatelessWidget {
     ];
     return '${date.day} ${months[date.month - 1]} ${date.year}';
   }
-}
-
-class _HeroActionButton extends StatelessWidget {
-  const _HeroActionButton({
-    super.key,
-    required this.label,
-    required this.icon,
-    required this.onPressed,
-    this.secondary = false,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onPressed;
-  final bool secondary;
-
-  @override
-  Widget build(BuildContext context) => FilledButton.icon(
-    onPressed: onPressed,
-    style: FilledButton.styleFrom(
-      backgroundColor: secondary
-          ? Colors.white.withValues(alpha: 0.14)
-          : Colors.white,
-      foregroundColor: secondary ? Colors.white : AppTheme.blue,
-      side: secondary
-          ? BorderSide(color: Colors.white.withValues(alpha: 0.38))
-          : BorderSide.none,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      minimumSize: const Size(0, 42),
-      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      textStyle: GoogleFonts.plusJakartaSans(
-        fontSize: 11,
-        fontWeight: FontWeight.w800,
-      ),
-    ),
-    icon: Icon(icon, size: 16),
-    label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
-  );
 }
 
 class _AttendanceChart extends StatelessWidget {
@@ -593,13 +396,13 @@ class _StatsGrid extends StatelessWidget {
     required this.totalAnggota,
     required this.anggotaBaruCount,
     required this.kegiatanBulanIni,
-    required this.moderasiPending,
+    required this.pengajuanKeluarPending,
   });
 
   final int totalAnggota;
   final int anggotaBaruCount;
   final int kegiatanBulanIni;
-  final int moderasiPending;
+  final int pengajuanKeluarPending;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -639,10 +442,10 @@ class _StatsGrid extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: StatCard(
-              label: 'Moderasi',
-              value: '$moderasiPending',
-              icon: Icons.rate_review_outlined,
-              color: AppTheme.infoText(context),
+              label: 'Pengajuan Keluar',
+              value: '$pengajuanKeluarPending',
+              icon: Icons.logout_rounded,
+              color: AppTheme.warningText(context),
             ),
           ),
         ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -8,6 +9,7 @@ import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/paginated_list.dart';
+import 'siswa_info_screen.dart';
 import 'tambah_anggota_screen.dart';
 
 class AnggotaScreen extends ConsumerWidget {
@@ -39,53 +41,56 @@ class AnggotaScreen extends ConsumerWidget {
                 topPadding: 25,
               ),
             ),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _AnggotaTabBarDelegate(
-                child: Container(
-                  color: Theme.of(context).scaffoldBackgroundColor,
-                  alignment: Alignment.center,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
-                    child: Container(
-                      key: const ValueKey('anggota-pill-tabs'),
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surface(context),
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: AppTheme.outline(context)),
-                      ),
-                      child: TabBar(
-                        key: const ValueKey('anggota-tab-bar'),
-                        dividerHeight: 0,
-                        overlayColor: const WidgetStatePropertyAll(
-                          Colors.transparent,
+            SliverOverlapAbsorber(
+              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+              sliver: SliverPersistentHeader(
+                pinned: true,
+                delegate: _AnggotaTabBarDelegate(
+                  child: Container(
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    alignment: Alignment.center,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+                      child: Container(
+                        key: const ValueKey('anggota-pill-tabs'),
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surface(context),
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(color: AppTheme.outline(context)),
                         ),
-                        labelColor: AppTheme.blue,
-                        unselectedLabelColor: AppTheme.mutedText(context),
-                        indicatorColor: Colors.transparent,
-                        dividerColor: Colors.transparent,
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        indicator: BoxDecoration(
-                          color: AppTheme.accentSurface(context),
-                          borderRadius: const BorderRadius.all(
-                            Radius.circular(24),
+                        child: TabBar(
+                          key: const ValueKey('anggota-tab-bar'),
+                          dividerHeight: 0,
+                          overlayColor: const WidgetStatePropertyAll(
+                            Colors.transparent,
                           ),
+                          labelColor: AppTheme.blue,
+                          unselectedLabelColor: AppTheme.mutedText(context),
+                          indicatorColor: Colors.transparent,
+                          dividerColor: Colors.transparent,
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          indicator: BoxDecoration(
+                            color: AppTheme.accentSurface(context),
+                            borderRadius: const BorderRadius.all(
+                              Radius.circular(24),
+                            ),
+                          ),
+                          labelPadding: EdgeInsets.zero,
+                          labelStyle: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 11,
+                          ),
+                          unselectedLabelStyle: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                          ),
+                          tabs: const [
+                            Tab(height: 30, text: 'Kelola Anggota'),
+                            Tab(height: 30, text: 'Pendaftaran'),
+                            Tab(height: 30, text: 'Pengajuan'),
+                          ],
                         ),
-                        labelPadding: EdgeInsets.zero,
-                        labelStyle: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 11,
-                        ),
-                        unselectedLabelStyle: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 11,
-                        ),
-                        tabs: const [
-                          Tab(height: 30, text: 'Kelola Anggota'),
-                          Tab(height: 30, text: 'Pendaftaran'),
-                          Tab(height: 30, text: 'Pengajuan'),
-                        ],
                       ),
                     ),
                   ),
@@ -93,17 +98,74 @@ class AnggotaScreen extends ConsumerWidget {
               ),
             ),
           ],
-          body: TabBarView(
-            children: [
-              _AnggotaList(user: user),
-              const _PendaftaranList(),
-              const _PengajuanList(),
-            ],
+          body: Builder(
+            builder: (context) {
+              final overlapHandle =
+                  NestedScrollView.sliverOverlapAbsorberHandleFor(context);
+              return _OverlapAwareTabBarView(
+                handle: overlapHandle,
+                child: TabBarView(
+                  children: [
+                    _AnggotaList(user: user),
+                    const _PendaftaranList(),
+                    const _PengajuanList(),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ),
     );
   }
+}
+
+class _SearchHidingColumn extends StatefulWidget {
+  const _SearchHidingColumn({required this.search, required this.children});
+
+  final Widget search;
+  final List<Widget> children;
+
+  @override
+  State<_SearchHidingColumn> createState() => _SearchHidingColumnState();
+}
+
+class _SearchHidingColumnState extends State<_SearchHidingColumn> {
+  bool _isSearchHidden = false;
+
+  bool _onUserScroll(UserScrollNotification notification) {
+    if (notification.metrics.axis != Axis.vertical ||
+        notification.direction == ScrollDirection.idle) {
+      return false;
+    }
+
+    final hide = notification.direction == ScrollDirection.reverse;
+    if (hide != _isSearchHidden) {
+      setState(() => _isSearchHidden = hide);
+    }
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      NotificationListener<UserScrollNotification>(
+        onNotification: _onUserScroll,
+        child: Column(
+          children: [
+            ClipRect(
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 180),
+                alignment: Alignment.topCenter,
+                curve: Curves.easeInOut,
+                child: _isSearchHidden
+                    ? const SizedBox(width: double.infinity)
+                    : widget.search,
+              ),
+            ),
+            ...widget.children,
+          ],
+        ),
+      );
 }
 
 class _AnggotaTabBarDelegate extends SliverPersistentHeaderDelegate {
@@ -127,6 +189,65 @@ class _AnggotaTabBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   bool shouldRebuild(covariant _AnggotaTabBarDelegate oldDelegate) =>
       oldDelegate.child != child;
+}
+
+class _OverlapAwareTabBarView extends StatefulWidget {
+  const _OverlapAwareTabBarView({required this.handle, required this.child});
+
+  final SliverOverlapAbsorberHandle handle;
+  final Widget child;
+
+  @override
+  State<_OverlapAwareTabBarView> createState() =>
+      _OverlapAwareTabBarViewState();
+}
+
+class _OverlapAwareTabBarViewState extends State<_OverlapAwareTabBarView> {
+  double _overlapExtent = 0;
+  bool _updateScheduled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.handle.addListener(_scheduleOverlapUpdate);
+    _scheduleOverlapUpdate();
+  }
+
+  @override
+  void didUpdateWidget(covariant _OverlapAwareTabBarView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.handle != widget.handle) {
+      oldWidget.handle.removeListener(_scheduleOverlapUpdate);
+      widget.handle.addListener(_scheduleOverlapUpdate);
+      _scheduleOverlapUpdate();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.handle.removeListener(_scheduleOverlapUpdate);
+    super.dispose();
+  }
+
+  void _scheduleOverlapUpdate() {
+    if (_updateScheduled) return;
+    _updateScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateScheduled = false;
+      if (!mounted) return;
+
+      final nextExtent = widget.handle.layoutExtent ?? 0;
+      if (nextExtent != _overlapExtent) {
+        setState(() => _overlapExtent = nextExtent);
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.only(top: _overlapExtent),
+    child: widget.child,
+  );
 }
 
 class _AnggotaList extends ConsumerStatefulWidget {
@@ -186,13 +307,15 @@ class _AnggotaListState extends ConsumerState<_AnggotaList> {
           return _isAscending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
         });
 
-        return Column(
+        return _SearchHidingColumn(
+          search: NameSearchField(
+            key: const ValueKey('anggota-search'),
+            hint: 'Cari nama anggota...',
+            onChanged: (value) => setState(() => _query = value),
+          ),
           children: [
-            NameSearchField(
-              hint: 'Cari nama anggota...',
-              onChanged: (value) => setState(() => _query = value),
-            ),
             Padding(
+              key: const ValueKey('anggota-filter-row'),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Row(
                 children: [
@@ -532,6 +655,11 @@ class _AnggotaListState extends ConsumerState<_AnggotaList> {
                             isSelf: p.siswaRaw?['id'] == widget.user.siswa?.id,
                             onStatus: (status) =>
                                 _changeStatus(context, ref, p, status),
+                            onInfo: () => Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => SiswaInfoScreen(pendaftaran: p),
+                              ),
+                            ),
                           );
                         },
                       ),
@@ -601,11 +729,13 @@ class _AnggotaTile extends StatelessWidget {
     required this.pendaftaran,
     required this.isSelf,
     required this.onStatus,
+    required this.onInfo,
   });
 
   final Pendaftaran pendaftaran;
   final bool isSelf;
   final ValueChanged<String> onStatus;
+  final VoidCallback onInfo;
 
   List<(String, String)> get _statusActions => switch (pendaftaran.status) {
     'diterima' => [
@@ -675,16 +805,33 @@ class _AnggotaTile extends StatelessWidget {
                 ],
               ),
             ),
-            if (!isSelf && _statusActions.isNotEmpty)
+            if (pendaftaran.siswaRaw != null)
               PopupMenuButton<String>(
-                tooltip: 'Ubah status anggota',
-                onSelected: onStatus,
+                tooltip: 'Opsi siswa',
+                onSelected: (value) {
+                  if (value == 'info') {
+                    onInfo();
+                  } else {
+                    onStatus(value);
+                  }
+                },
                 itemBuilder: (context) => [
-                  for (final action in _statusActions)
-                    PopupMenuItem<String>(
-                      value: action.$1,
-                      child: Text(action.$2),
+                  const PopupMenuItem<String>(
+                    value: 'info',
+                    child: Row(
+                      children: [
+                        Icon(Icons.person_outline_rounded, size: 18),
+                        SizedBox(width: 8),
+                        Text('Informasi Siswa'),
+                      ],
                     ),
+                  ),
+                  if (!isSelf)
+                    for (final action in _statusActions)
+                      PopupMenuItem<String>(
+                        value: action.$1,
+                        child: Text(action.$2),
+                      ),
                 ],
               ),
           ],
@@ -833,13 +980,15 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                 ? nameA.compareTo(nameB)
                 : nameB.compareTo(nameA);
           });
-          return Column(
+          return _SearchHidingColumn(
+            search: NameSearchField(
+              key: const ValueKey('pendaftaran-search'),
+              hint: 'Cari nama pendaftar...',
+              onChanged: (value) => setState(() => _query = value),
+            ),
             children: [
-              NameSearchField(
-                hint: 'Cari nama pendaftar...',
-                onChanged: (value) => setState(() => _query = value),
-              ),
               Padding(
+                key: const ValueKey('pendaftaran-filter-row'),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 6,
@@ -1369,13 +1518,15 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
           final nameB = _studentName(b) ?? '';
           return _isAscending ? nameA.compareTo(nameB) : nameB.compareTo(nameA);
         });
-        return Column(
+        return _SearchHidingColumn(
+          search: NameSearchField(
+            key: const ValueKey('pengajuan-search'),
+            hint: 'Cari nama siswa...',
+            onChanged: (value) => setState(() => _query = value),
+          ),
           children: [
-            NameSearchField(
-              hint: 'Cari nama siswa...',
-              onChanged: (value) => setState(() => _query = value),
-            ),
             Padding(
+              key: const ValueKey('pengajuan-filter-row'),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Row(
                 children: [

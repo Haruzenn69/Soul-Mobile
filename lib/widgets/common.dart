@@ -80,7 +80,7 @@ class DashboardEkskulSwitcher extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.swap_horiz_rounded, color: Colors.white, size: 17),
+            Icon(Icons.swap_horiz_rounded, color: Colors.white, size: 17),
             const SizedBox(width: 7),
             Flexible(
               child: Text(
@@ -96,22 +96,374 @@ class DashboardEkskulSwitcher extends StatelessWidget {
             ),
             if (current.id == ketuaEkskulId) ...[
               const SizedBox(width: 5),
-              const Icon(
+              Icon(
                 Icons.workspace_premium_outlined,
                 color: Colors.white,
                 size: 13,
               ),
             ],
             const SizedBox(width: 3),
-            const Icon(
-              Icons.expand_more_rounded,
-              color: Colors.white,
-              size: 17,
-            ),
+            Icon(Icons.expand_more_rounded, color: Colors.white, size: 17),
           ],
         ),
       ),
     );
+  }
+}
+
+class DashboardHeroMetric {
+  const DashboardHeroMetric({required this.label, required this.value});
+
+  final String label;
+  final String value;
+}
+
+class DashboardHeroAction {
+  const DashboardHeroAction({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+    this.secondary = false,
+    this.key,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onPressed;
+  final bool secondary;
+  final Key? key;
+}
+
+class DashboardHeroCard extends StatelessWidget {
+  const DashboardHeroCard({
+    super.key,
+    required this.name,
+    required this.photoUrl,
+    required this.eyebrow,
+    required this.subtitle,
+    required this.badge,
+    required this.summary,
+    required this.metrics,
+    required this.primaryAction,
+    this.secondaryAction,
+    this.markUrl,
+    this.switcher,
+    this.markKey,
+    this.cardKey,
+  });
+
+  final String name;
+  final String? photoUrl;
+  final String eyebrow;
+  final String subtitle;
+  final String badge;
+  final String summary;
+  final List<DashboardHeroMetric> metrics;
+  final DashboardHeroAction primaryAction;
+  final DashboardHeroAction? secondaryAction;
+  final String? markUrl;
+  final Widget? switcher;
+  final Key? markKey;
+  final Key? cardKey;
+
+  @override
+  Widget build(BuildContext context) {
+    final mark = markUrl?.trim();
+    final isDark = AppTheme.isDark(context);
+
+    return Container(
+      key: cardKey,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        gradient: AppTheme.brandHeroGradient(context),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.brandHeroShadow(context),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: -82,
+            right: -42,
+            child: Container(
+              width: 220,
+              height: 220,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: isDark ? 0.035 : 0.12),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 72,
+            right: 54,
+            child: Container(
+              width: 98,
+              height: 98,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: isDark ? 0.025 : 0.08),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 54,
+                      height: 54,
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.22),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.66),
+                        ),
+                      ),
+                      child: PersonAvatar(
+                        name: name,
+                        photoUrl: photoUrl,
+                        radius: 25,
+                        backgroundColor: Colors.white,
+                        foregroundColor: AppTheme.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 11),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            eyebrow,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.white.withValues(alpha: 0.72),
+                              fontSize: 9,
+                              letterSpacing: 1,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.white,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.white.withValues(alpha: 0.82),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      key: markKey,
+                      width: 42,
+                      height: 42,
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.28),
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: mark?.isNotEmpty == true
+                            ? Image.network(
+                                AppConfig.imageUrl(mark),
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => const Icon(
+                                  Icons.groups_2_rounded,
+                                  color: Colors.white,
+                                  size: 22,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.groups_2_rounded,
+                                color: Colors.white,
+                                size: 22,
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (switcher != null) ...[
+                  const SizedBox(height: 12),
+                  switcher!,
+                ],
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.verified_rounded,
+                      color: Colors.white,
+                      size: 15,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        badge,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (summary.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    summary,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+                if (metrics.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    key: const ValueKey('dashboard-hero-metrics'),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 11,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.13),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.13),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        for (
+                          var index = 0;
+                          index < metrics.length;
+                          index++
+                        ) ...[
+                          if (index > 0)
+                            Container(
+                              width: 1,
+                              height: 30,
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                              ),
+                              color: Colors.white.withValues(alpha: 0.26),
+                            ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  metrics[index].value,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: Colors.white,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  metrics[index].label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: Colors.white.withValues(alpha: 0.76),
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _dashboardHeroButton(context, primaryAction),
+                    ),
+                    if (secondaryAction != null) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _dashboardHeroButton(context, secondaryAction!),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dashboardHeroButton(
+    BuildContext context,
+    DashboardHeroAction action,
+  ) {
+    final button = FilledButton.icon(
+      key: action.key,
+      onPressed: action.onPressed,
+      icon: Icon(action.icon, size: 15),
+      label: Text(action.label, maxLines: 1, overflow: TextOverflow.ellipsis),
+      style: FilledButton.styleFrom(
+        backgroundColor: action.secondary
+            ? Colors.white.withValues(alpha: 0.14)
+            : Colors.white,
+        foregroundColor: action.secondary ? Colors.white : AppTheme.blue,
+        side: action.secondary
+            ? BorderSide(color: Colors.white.withValues(alpha: 0.42))
+            : BorderSide.none,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        minimumSize: const Size(0, 42),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        textStyle: GoogleFonts.plusJakartaSans(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+    return button;
   }
 }
 
