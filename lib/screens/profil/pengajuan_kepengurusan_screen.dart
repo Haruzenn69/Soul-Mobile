@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -20,27 +20,24 @@ class PengajuanKepengurusanScreen extends ConsumerStatefulWidget {
 
 class _PengajuanKepengurusanScreenState
     extends ConsumerState<PengajuanKepengurusanScreen> {
-  final _namaSiswa = TextEditingController();
-  final _nisSiswa = TextEditingController();
-  String _jabatanTarget = 'wakil';
+  int? _selectedSiswaId;
+  String _selectedNama = '';
+  String _selectedNis = '';
+  String _jabatanTarget = 'wakil_ketua';
   final _alasan = TextEditingController();
   bool _sending = false;
 
   @override
   void dispose() {
-    _namaSiswa.dispose();
-    _nisSiswa.dispose();
     _alasan.dispose();
     super.dispose();
   }
 
   Future<void> _submit(int ekskulId, BuildContext modalContext) async {
-    if (_namaSiswa.text.trim().isEmpty || _alasan.text.trim().length < 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
+    if (_selectedSiswaId == null || _alasan.text.trim().length < 10) {
+      ScaffoldMessenger.of(modalContext).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Mohon lengkapi data dan alasan (minimal 10 karakter).',
-          ),
+          content: Text('Pilih anggota dan isi alasan minimal 10 karakter.'),
           backgroundColor: Color(0xFFE11D48),
         ),
       );
@@ -55,17 +52,21 @@ class _PengajuanKepengurusanScreenState
             '/siswa/pengajuan-kepengurusan',
             data: {
               'ekskul_id': ekskulId,
-              'nama_siswa': _namaSiswa.text.trim(),
-              'nis': _nisSiswa.text.trim(),
+              'siswa_id': _selectedSiswaId,
+              'nama_siswa': _selectedNama,
+              'nis': _selectedNis,
               'jabatan': _jabatanTarget,
               'alasan': _alasan.text.trim(),
             },
           );
-      _namaSiswa.clear();
-      _nisSiswa.clear();
       _alasan.clear();
+      _selectedSiswaId = null;
+      _selectedNama = '';
+      _selectedNis = '';
       if (!mounted) return;
       ref.invalidate(siswaDashboardProvider);
+      if (!modalContext.mounted) return;
+      Navigator.of(modalContext).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -73,24 +74,56 @@ class _PengajuanKepengurusanScreenState
           ),
         ),
       );
-      if (!modalContext.mounted) return;
-      Navigator.of(modalContext).pop();
     } catch (e) {
-      if (mounted) {
-        await showErrorDialog(context, ref, e);
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(modalContext).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '').trim()),
+          backgroundColor: const Color(0xFFE11D48),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _sending = false);
     }
+  }
+
+  List<DropdownMenuItem<int>> _memberDropdownItems(
+    List<Map<String, dynamic>> members,
+  ) {
+    final items = <DropdownMenuItem<int>>[];
+    for (final member in members) {
+      if (member['siswa'] is! Map) continue;
+      final siswa = Map<String, dynamic>.from(member['siswa'] as Map);
+      final id = (siswa['id'] as num?)?.toInt();
+      if (id == null) continue;
+      final name = siswa['nama']?.toString() ?? '';
+      final nis = siswa['nis']?.toString() ?? '';
+      items.add(
+        DropdownMenuItem<int>(
+          value: id,
+          child: Text(
+            name.isEmpty
+                ? (nis.isEmpty ? 'Siswa' : nis)
+                : nis.isEmpty
+                ? name
+                : '$name • NIS $nis',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      );
+    }
+    return items;
   }
 
   Future<void> _openProposalForm(
     int ekskulId,
     String position,
     String positionLabel,
+    List<Map<String, dynamic>> members,
   ) async {
     final target = switch (position) {
-      'wakil_ketua' => 'wakil',
+      'wakil_ketua' => 'wakil_ketua',
       'sekretaris' => 'sekretaris',
       'bendahara' => 'bendahara',
       _ => null,
@@ -98,102 +131,124 @@ class _PengajuanKepengurusanScreenState
     if (target == null) return;
 
     setState(() => _jabatanTarget = target);
-    _namaSiswa.clear();
-    _nisSiswa.clear();
+    _selectedSiswaId = null;
+    _selectedNama = '';
+    _selectedNis = '';
     _alasan.clear();
-    await showModalBottomSheet<void>(
+    await showDialog<void>(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (modalContext) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.viewInsetsOf(modalContext).bottom,
-        ),
-        child: Container(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(modalContext).height * 0.88,
-          ),
-          decoration: BoxDecoration(
-            color: AppTheme.surface(modalContext),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppTheme.outline(modalContext),
-                      borderRadius: BorderRadius.circular(4),
+      barrierDismissible: true,
+      builder: (modalContext) => Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(
+          child: Dialog(
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 24,
+            ),
+            backgroundColor: Colors.transparent,
+            clipBehavior: Clip.antiAlias,
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(modalContext).height * 0.88,
+              ),
+              decoration: BoxDecoration(
+                color: AppTheme.surface(modalContext),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppTheme.outline(modalContext),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 18),
+                    Text(
+                      'Usulkan ${positionLabel.toLowerCase()}',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppTheme.text(modalContext),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Masukkan data siswa yang diusulkan sebagai $positionLabel.',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppTheme.mutedText(modalContext),
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    DropdownButtonFormField<int>(
+                      initialValue: _selectedSiswaId,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Pilih Anggota',
+                        hintText: 'Pilih anggota aktif',
+                        prefixIcon: Icon(Icons.person_search_outlined),
+                      ),
+                      items: _memberDropdownItems(members),
+                      onChanged: (id) {
+                        if (id == null) return;
+                        final member = members
+                            .cast<Map<String, dynamic>>()
+                            .firstWhere((item) {
+                              final siswa = item['siswa'];
+                              return siswa is Map &&
+                                  (siswa['id'] as num?)?.toInt() == id;
+                            }, orElse: () => const <String, dynamic>{});
+                        final siswa = member['siswa'] is Map
+                            ? Map<String, dynamic>.from(member['siswa'] as Map)
+                            : const <String, dynamic>{};
+                        setState(() {
+                          _selectedSiswaId = id;
+                          _selectedNama = siswa['nama']?.toString() ?? '';
+                          _selectedNis = siswa['nis']?.toString() ?? '';
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: _alasan,
+                      maxLines: 4,
+                      maxLength: 1000,
+                      decoration: const InputDecoration(
+                        labelText: 'Alasan / Keterangan Pengajuan',
+                        hintText: 'Jelaskan mengapa perubahan ini diajukan',
+                        helperText: 'Minimal 10 karakter.',
+                        prefixIcon: Icon(Icons.edit_note_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        key: const ValueKey('submit-proposal'),
+                        onPressed: _sending
+                            ? null
+                            : () => _submit(ekskulId, modalContext),
+                        icon: const Icon(Icons.send_rounded, size: 18),
+                        label: Text(
+                          _sending ? 'Mengirim...' : 'Kirim Pengajuan',
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 18),
-                Text(
-                  'Usulkan ${positionLabel.toLowerCase()}',
-                  style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.text(modalContext),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Masukkan data siswa yang diusulkan sebagai $positionLabel.',
-                  style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.mutedText(modalContext),
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextField(
-                  controller: _namaSiswa,
-                  decoration: const InputDecoration(
-                    labelText: 'Nama Lengkap Siswa',
-                    hintText: 'Nama siswa yang diajukan',
-                    prefixIcon: Icon(Icons.person_outline),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: _nisSiswa,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'NIS / NISN',
-                    hintText: 'Nomor Induk Siswa',
-                    prefixIcon: Icon(Icons.badge_outlined),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: _alasan,
-                  maxLines: 4,
-                  maxLength: 1000,
-                  decoration: const InputDecoration(
-                    labelText: 'Alasan / Keterangan Pengajuan',
-                    hintText: 'Jelaskan mengapa perubahan ini diajukan',
-                    helperText: 'Minimal 10 karakter.',
-                    prefixIcon: Icon(Icons.edit_note_outlined),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _sending
-                        ? null
-                        : () => _submit(ekskulId, modalContext),
-                    icon: const Icon(Icons.send_rounded, size: 18),
-                    label: Text(_sending ? 'Mengirim...' : 'Kirim Pengajuan'),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -204,6 +259,7 @@ class _PengajuanKepengurusanScreenState
   @override
   Widget build(BuildContext context) {
     final value = ref.watch(siswaDashboardProvider);
+    final memberValue = ref.watch(ketuaAnggotaProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Pengajuan Kepengurusan')),
@@ -211,8 +267,24 @@ class _PengajuanKepengurusanScreenState
         value: value,
         onRetry: () => ref.invalidate(siswaDashboardProvider),
         builder: (context, data) {
+          final members = memberValue.hasValue
+              ? listOf(memberValue.value, 'anggotas')
+                    .where((item) {
+                      final status = item['status']?.toString().toLowerCase();
+                      return status == null ||
+                          status == 'aktif' ||
+                          status == 'diterima';
+                    })
+                    .map(Map<String, dynamic>.from)
+                    .toList()
+              : <Map<String, dynamic>>[];
           final pengurusByJabatan = {
             for (final pengurus in listOf(data, 'pengurus_aktif'))
+              if (pengurus['jabatan'] != null)
+                pengurus['jabatan'].toString(): pengurus,
+          };
+          final pengurusPendingByJabatan = {
+            for (final pengurus in listOf(data, 'pengurus_pending'))
               if (pengurus['jabatan'] != null)
                 pengurus['jabatan'].toString(): pengurus,
           };
@@ -238,15 +310,21 @@ class _PengajuanKepengurusanScreenState
                 ),
                 itemBuilder: (context, index) {
                   final position = _leadershipPositions[index];
+                  final isPending =
+                      pengurusPendingByJabatan[position.$1] != null;
                   return _LeadershipPositionCard(
                     position: position,
-                    assignment: pengurusByJabatan[position.$1],
-                    onSuggest: ekskulId == null || position.$1 == 'ketua'
+                    assignment:
+                        pengurusByJabatan[position.$1] ??
+                        pengurusPendingByJabatan[position.$1],
+                    onSuggest:
+                        ekskulId == null || position.$1 == 'ketua' || isPending
                         ? null
                         : () => _openProposalForm(
                             ekskulId,
                             position.$1,
                             position.$2,
+                            members,
                           ),
                   );
                 },
@@ -291,6 +369,8 @@ class _LeadershipPositionCard extends StatelessWidget {
       assignment?['created_at']?.toString() ?? '',
     );
     final isOccupied = siswa != null;
+    final isPending =
+        assignment?['status']?.toString().toLowerCase() == 'menunggu';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -338,12 +418,20 @@ class _LeadershipPositionCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               if (isOccupied) ...[
-                const Icon(Icons.circle, size: 7, color: Color(0xFF34C99A)),
+                Icon(
+                  Icons.circle,
+                  size: 7,
+                  color: isPending
+                      ? const Color(0xFFF59E0B)
+                      : const Color(0xFF34C99A),
+                ),
                 const SizedBox(width: 4),
                 Text(
-                  'Aktif',
+                  isPending ? 'Pending' : 'Aktif',
                   style: GoogleFonts.plusJakartaSans(
-                    color: AppTheme.successText(context),
+                    color: isPending
+                        ? AppTheme.warningText(context)
+                        : AppTheme.successText(context),
                     fontSize: 10,
                     fontWeight: FontWeight.w800,
                   ),
@@ -414,8 +502,12 @@ class _LeadershipPositionCard extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         assignedAt == null
-                            ? 'Pengurus aktif'
-                            : 'Ditetapkan: ${DateFormat('d MMM yyyy').format(assignedAt)}',
+                            ? (isPending
+                                  ? 'Menunggu persetujuan pembina'
+                                  : 'Pengurus aktif')
+                            : (isPending
+                                  ? 'Diusulkan: ${DateFormat('d MMM yyyy').format(assignedAt)}'
+                                  : 'Ditetapkan: ${DateFormat('d MMM yyyy').format(assignedAt)}'),
                         textAlign: TextAlign.center,
                         style: GoogleFonts.plusJakartaSans(
                           color: AppTheme.mutedText(context),
@@ -474,7 +566,13 @@ class _LeadershipPositionCard extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size.fromHeight(34),
                 padding: const EdgeInsets.symmetric(horizontal: 8),
-                side: BorderSide(color: AppTheme.infoBorder(context)),
+                side: BorderSide(
+                  color: isPending
+                      ? AppTheme.outline(context)
+                      : AppTheme.infoBorder(context),
+                ),
+                disabledBackgroundColor: AppTheme.surface(context),
+                disabledForegroundColor: AppTheme.mutedText(context),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -482,6 +580,8 @@ class _LeadershipPositionCard extends StatelessWidget {
               child: Text(
                 position.$1 == 'ketua'
                     ? 'Ketua Ekskul (Anda)'
+                    : isPending
+                    ? 'Pending'
                     : isOccupied
                     ? 'Usulkan Calon Lain'
                     : 'Usulkan Siswa',

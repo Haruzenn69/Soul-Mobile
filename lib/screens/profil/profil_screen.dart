@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -551,12 +551,6 @@ class ProfilScreen extends ConsumerWidget {
         .join(' ');
   }
 
-  String _shortEmail(String email) {
-    final separator = email.lastIndexOf('@');
-    if (separator <= 9) return email;
-    return '${email.substring(0, 9)}...${email.substring(separator)}';
-  }
-
   Widget _contentCard({
     required BuildContext context,
     required IconData icon,
@@ -630,7 +624,6 @@ class ProfilScreen extends ConsumerWidget {
 
   Widget _row(BuildContext context, IconData icon, String label, String value) {
     final colors = Theme.of(context).colorScheme;
-    final displayValue = label == 'Email' ? _shortEmail(value) : value;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 11),
       child: Row(
@@ -652,7 +645,7 @@ class ProfilScreen extends ConsumerWidget {
           Flexible(
             child: label == 'Email'
                 ? Text(
-                    displayValue,
+                    value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     softWrap: false,

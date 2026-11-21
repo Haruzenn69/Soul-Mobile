@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:soul/core/api_client.dart';
@@ -27,9 +27,15 @@ import 'package:soul/screens/menu/ketua_menu_screen.dart';
 import 'package:soul/screens/notifikasi/notifikasi_screen.dart';
 import 'package:soul/screens/profil/profil_screen.dart';
 import 'package:soul/screens/profil/pengajuan_kepengurusan_screen.dart';
+import 'package:soul/screens/splash_screen.dart';
 import 'package:soul/theme/app_theme.dart';
 import 'package:soul/theme/theme_controller.dart';
 import 'package:soul/widgets/common.dart';
+
+class _UnknownAuthController extends AuthController {
+  @override
+  AuthState build() => const AuthState();
+}
 
 class _TestAuthController extends AuthController {
   @override
@@ -450,9 +456,27 @@ void main() {
   });
 
   testWidgets('app boots and shows splash', (tester) async {
-    await tester.pumpWidget(const ProviderScope(child: SoulApp()));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authControllerProvider.overrideWith(_UnknownAuthController.new),
+          themeModeProvider.overrideWith(_MemoryThemeController.new),
+        ],
+        child: const SoulApp(),
+      ),
+    );
     await tester.pump();
-    expect(find.text('SOUL'), findsOneWidget);
+    expect(find.byType(SplashScreen), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Image &&
+            widget.image is AssetImage &&
+            (widget.image as AssetImage).assetName ==
+                'assets/images/logo-light.png',
+      ),
+      findsOneWidget,
+    );
   });
 
   testWidgets('profile settings can switch to dark mode', (tester) async {
@@ -478,9 +502,10 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    final email = tester.widget<Text>(find.text('ketua.pas...@soul.test'));
+    final email = tester.widget<Text>(find.text('ketua.paskib@soul.test'));
     expect(email.maxLines, 1);
     expect(email.softWrap, isFalse);
+    expect(email.overflow, TextOverflow.ellipsis);
     expect(email.style?.fontSize, 13);
     await tester.drag(find.byType(ListView), const Offset(0, -700));
     await tester.pumpAndSettle();
@@ -769,7 +794,10 @@ void main() {
       foto: 'storage/profile/new-photo.jpg',
     );
     final container = ProviderContainer(
-      overrides: [authControllerProvider.overrideWith(_TestAuthController.new)],
+      overrides: [
+        authControllerProvider.overrideWith(_TestAuthController.new),
+        notifikasiProvider.overrideWith((ref) async => {}),
+      ],
     );
     addTearDown(container.dispose);
     container.read(shellTabProvider.notifier).set(4);
@@ -1102,7 +1130,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Riwayat Kegiatan (2)'), findsOneWidget);
+    expect(find.text('2 presensi'), findsOneWidget);
     expect(find.text('Latihan Futsal'), findsOneWidget);
     expect(find.text('hadir'), findsOneWidget);
     expect(find.byType(TextField), findsNothing);
@@ -2139,12 +2167,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Member 0'), findsOneWidget);
 
-    await tester.tap(find.text('Hadir').first);
+    await tester.tap(find.byType(PopupMenuButton<String>).first);
     await tester.pumpAndSettle();
-    expect(find.text('Alpha'), findsWidgets);
-    await tester.tap(find.text('Alpha').first);
+    await tester.tap(find.text('Hadir').last);
     await tester.pumpAndSettle();
-    expect(find.text('Alpha'), findsOneWidget);
+    expect(find.text('Hadir'), findsOneWidget);
 
     for (var i = 0; i < 20 && find.text('Member 299').evaluate().isEmpty; i++) {
       await tester.drag(find.byType(CustomScrollView), const Offset(0, -1500));
@@ -2188,6 +2215,32 @@ void main() {
                   },
                 },
               ],
+              'pengurus_pending': [
+                {
+                  'jabatan': 'wakil_ketua',
+                  'status': 'menunggu',
+                  'created_at': '2026-11-21T10:00:00+07:00',
+                  'siswa': {
+                    'nama': 'Citra Calon',
+                    'nis': '20261020',
+                    'kelas': {'nama': 'XI PPLG 1'},
+                  },
+                },
+              ],
+            },
+          ),
+          ketuaAnggotaProvider.overrideWith(
+            (ref) async => {
+              'anggotas': [
+                {
+                  'status': 'diterima',
+                  'siswa': {
+                    'id': 20,
+                    'nama': 'Citra Anggota',
+                    'nis': '20261020',
+                  },
+                },
+              ],
             },
           ),
         ],
@@ -2199,18 +2252,33 @@ void main() {
     expect(find.text('Pengurus Paskibra'), findsOneWidget);
     expect(find.text('ANISA RAHMA'), findsOneWidget);
     expect(find.text('BIMA SEKRETARIS'), findsOneWidget);
-    expect(find.text('Belum Ada Pengurus'), findsNWidgets(2));
+    expect(find.text('Belum Ada Pengurus'), findsOneWidget);
     expect(find.text('Aktif'), findsNWidgets(2));
+    expect(find.text('CITRA CALON'), findsOneWidget);
+    expect(find.text('Pending'), findsWidgets);
     expect(find.byType(GridView), findsOneWidget);
     expect(find.byType(ActiveEkskulSelector), findsNothing);
     expect(find.text('Form Pengajuan Perubahan Pengurus'), findsNothing);
 
-    await tester.tap(
-      find.byKey(const ValueKey('leadership-position-wakil_ketua')),
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('leadership-position-bendahara')),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Usulkan wakil ketua'), findsOneWidget);
-    expect(find.byType(TextField), findsNWidgets(3));
+    await tester.tap(
+      find.byKey(const ValueKey('leadership-position-bendahara')),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Usulkan bendahara'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
+    expect(find.byType(DropdownButtonFormField<int>), findsOneWidget);
+    expect(find.text('Pilih Anggota'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const ValueKey('submit-proposal')));
+    await tester.tap(find.byKey(const ValueKey('submit-proposal')));
+    await tester.pumpAndSettle();
+    expect(
+      find.text('Pilih anggota dan isi alasan minimal 10 karakter.'),
+      findsWidgets,
+    );
     expect(find.text('Target Jabatan'), findsNothing);
     expect(tester.takeException(), isNull);
   });
