@@ -830,7 +830,42 @@ class _AnggotaTile extends StatelessWidget {
                     for (final action in _statusActions)
                       PopupMenuItem<String>(
                         value: action.$1,
-                        child: Text(action.$2),
+                        child: Builder(
+                          builder: (context) {
+                            final (icon, color) = switch (action.$1) {
+                              'diterima' => (
+                                Icons.check_circle_outline_rounded,
+                                AppTheme.successText(context),
+                              ),
+                              'peringatan' => (
+                                Icons.warning_amber_rounded,
+                                AppTheme.warningText(context),
+                              ),
+                              'nonaktif' => (
+                                Icons.pause_circle_outline_rounded,
+                                AppTheme.dangerText(context),
+                              ),
+                              _ => (
+                                Icons.circle_outlined,
+                                AppTheme.mutedText(context),
+                              ),
+                            };
+                            return Row(
+                              children: [
+                                Icon(icon, size: 18, color: color),
+                                const SizedBox(width: 10),
+                                Text(
+                                  action.$2,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: color,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                       ),
                 ],
               ),

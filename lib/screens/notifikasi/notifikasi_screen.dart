@@ -6,6 +6,16 @@ import '../../core/providers.dart';
 import '../../data/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
+import '../aktivitas/siswa_aktivitas_screen.dart';
+import '../kegiatan/kegiatan_screen.dart';
+import '../laporan/laporan_screen.dart';
+import '../anggota/anggota_screen.dart';
+import '../profil/profil_screen.dart';
+import '../profil/pengajuan_kepengurusan_screen.dart';
+import '../profil_ekskul/profil_ekskul_screen.dart';
+import '../testimoni/testimoni_manage_screen.dart';
+import '../faq/ketua_faq_screen.dart';
+import '../katalog/katalog_screen.dart';
 import '../../widgets/common.dart';
 
 class NotifikasiScreen extends ConsumerWidget {
@@ -16,6 +26,7 @@ class NotifikasiScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notif = ref.watch(notifikasiProvider);
+    final authUser = ref.watch(authControllerProvider).user;
 
     return SafeArea(
       child: Column(
@@ -160,19 +171,18 @@ class NotifikasiScreen extends ConsumerWidget {
                     return _NotifCard(
                       notifikasi: n,
                       onDelete: () => _deleteNotification(context, ref, n),
+                      onMarkRead: () =>
+                          _markNotificationRead(context, ref, n, isKetua),
                       onTap: () async {
-                        if (n.isRead) return;
-                        try {
-                          await ref
-                              .read(apiClientProvider)
-                              .post('/siswa/notifikasi/${n.id}/read');
-                          ref.invalidate(notifikasiProvider);
-                          ref.invalidate(siswaDashboardProvider);
-                          if (isKetua) ref.invalidate(ketuaDashboardProvider);
-                        } catch (error) {
-                          if (context.mounted) {
-                            await showErrorDialog(context, ref, error);
-                          }
+                        await _markNotificationRead(context, ref, n, isKetua);
+                        if (context.mounted) {
+                          await _openRelevantNotification(
+                            context,
+                            ref,
+                            n,
+                            isKetua,
+                            authUser,
+                          );
                         }
                       },
                     );
@@ -184,6 +194,78 @@ class NotifikasiScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _markNotificationRead(
+    BuildContext context,
+    WidgetRef ref,
+    Notifikasi notification,
+    bool isKetua,
+  ) async {
+    if (notification.isRead) return;
+    try {
+      final client = ref.read(apiClientProvider);
+      if (isKetua) {
+        await client.post('/ketua/notifikasi/${notification.id}/read');
+      } else {
+        await client.post('/siswa/notifikasi/${notification.id}/read');
+      }
+      ref.invalidate(notifikasiProvider);
+      ref.invalidate(siswaDashboardProvider);
+      if (isKetua) ref.invalidate(ketuaDashboardProvider);
+    } catch (error) {
+      if (context.mounted) await showErrorDialog(context, ref, error);
+    }
+  }
+
+  Future<void> _openRelevantNotification(
+    BuildContext context,
+    WidgetRef ref,
+    Notifikasi notification,
+    bool isKetua,
+    AuthUser? user,
+  ) async {
+    final text = '${notification.judul} ${notification.pesan}'.toLowerCase();
+    if (user == null) return;
+
+    Widget? destination;
+    if (text.contains('profil') ||
+        text.contains('password') ||
+        text.contains('akun')) {
+      destination = ProfilScreen(user: user);
+    } else if (text.contains('laporan')) {
+      if (isKetua) destination = LaporanScreen(user: user);
+    } else if (text.contains('kegiatan') ||
+        text.contains('agenda') ||
+        text.contains('presensi')) {
+      destination = isKetua
+          ? KegiatanScreen(user: user)
+          : const SiswaAktivitasScreen();
+    } else if (text.contains('pendaftaran') ||
+        text.contains('anggota') ||
+        text.contains('keluar dari ekskul') ||
+        text.contains('pengajuan')) {
+      if (isKetua) destination = AnggotaScreen(user: user);
+    } else if (text.contains('kepengurusan') || text.contains('pengurus')) {
+      destination = isKetua
+          ? const PengajuanKepengurusanScreen()
+          : ProfilScreen(user: user);
+    } else if (text.contains('testimoni')) {
+      if (isKetua) destination = const TestimoniManageScreen();
+    } else if (text.contains('faq') || text.contains('pertanyaan')) {
+      if (isKetua) destination = const KetuaFaqScreen();
+    } else if (text.contains('ekskul') || text.contains('katalog')) {
+      if (isKetua) {
+        destination = ProfilEkskulScreen(user: user);
+      } else {
+        destination = KatalogScreen(user: user);
+      }
+    }
+
+    if (destination != null && context.mounted) {
+      await Navigator.of(context)
+          .push<void>(MaterialPageRoute<void>(builder: (_) => destination!));
+    }
   }
 
   Future<void> _deleteNotification(
@@ -239,11 +321,13 @@ class _NotifCard extends StatelessWidget {
     required this.notifikasi,
     required this.onTap,
     required this.onDelete,
+    required this.onMarkRead,
   });
 
   final Notifikasi notifikasi;
   final VoidCallback onTap;
   final VoidCallback onDelete;
+  final VoidCallback onMarkRead;
 
   @override
   Widget build(BuildContext context) {
@@ -311,16 +395,6 @@ class _NotifCard extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                           ),
-                        IconButton(
-                          tooltip: 'Hapus notifikasi',
-                          visualDensity: VisualDensity.compact,
-                          onPressed: onDelete,
-                          icon: Icon(
-                            Icons.delete_outline_rounded,
-                            color: AppTheme.mutedText(context),
-                            size: 19,
-                          ),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -341,6 +415,58 @@ class _NotifCard extends StatelessWidget {
                         color: AppTheme.mutedText(context)
                             .withValues(alpha: 0.7),
                         fontSize: 11,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: AlignmentDirectional.bottomEnd,
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          TextButton.icon(
+                            onPressed: onDelete,
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppTheme.dangerText(context),
+                              backgroundColor: AppTheme.dangerSurface(context),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              minimumSize: const Size(0, 36),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.delete_outline_rounded,
+                              size: 17,
+                            ),
+                            label: const Text('Hapus'),
+                          ),
+                          if (!notifikasi.isRead)
+                            FilledButton.icon(
+                              onPressed: onMarkRead,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: AppTheme.blue,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 8,
+                                ),
+                                minimumSize: const Size(0, 36),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                textStyle: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              icon: const Icon(Icons.done_rounded, size: 17),
+                              label: const Text('Tandai dibaca'),
+                            ),
+                        ],
                       ),
                     ),
                   ],

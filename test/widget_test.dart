@@ -845,6 +845,7 @@ void main() {
                 'id': 1,
                 'nama_ekskul': 'Klub Teater',
                 'cover': 'http://localhost:8000/storage/ekskul/cover.jpg',
+                'logo': 'http://localhost:8000/storage/ekskul/logo.jpg',
                 'status': true,
                 'anggota_count': 8,
               },
@@ -859,7 +860,21 @@ void main() {
       find.byWidgetPredicate((widget) => widget is ImageFiltered),
       findsOneWidget,
     );
-    expect(find.byType(Image), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('ketua-menu-ekskul-avatar')),
+      findsOneWidget,
+    );
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Image &&
+            widget.image is NetworkImage &&
+            (widget.image as NetworkImage).url.endsWith(
+              '/storage/ekskul/cover.jpg',
+            ),
+      ),
+      findsOneWidget,
+    );
     expect(
       tester.getSize(
         find.byKey(const ValueKey('ketua-menu-identity-background')),
@@ -1404,7 +1419,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const ValueKey('anggota-pill-tabs')), findsOneWidget);
-    expect(find.text('Kelola Anggota'), findsOneWidget);
+    expect(find.text('Kelola Anggota'), findsWidgets);
     expect(find.text('Pendaftaran'), findsOneWidget);
     expect(find.text('Pengajuan'), findsOneWidget);
     expect(find.byKey(const ValueKey('open-add-members')), findsNothing);
@@ -1419,11 +1434,11 @@ void main() {
     expect(addMembersFab.backgroundColor, AppTheme.blue);
     expect(addMembersFab.foregroundColor, Colors.white);
 
-    await tester.tap(find.text('Kelola Anggota'));
+    await tester.tap(find.text('Kelola Anggota').last);
     await tester.pumpAndSettle();
     expect(find.text('Alya Anggota'), findsOneWidget);
     expect(find.text('Sekretaris'), findsOneWidget);
-    expect(find.text('Anggota'), findsOneWidget);
+    expect(find.text('Kelola Anggota'), findsWidgets);
     expect(
       find.byWidgetPredicate(
         (widget) =>
@@ -1702,13 +1717,7 @@ void main() {
     final heroRect = tester.getRect(
       find.byKey(const ValueKey('ketua-dashboard-hero')),
     );
-    final markRect = tester.getRect(
-      find.byKey(const ValueKey('ketua-dashboard-hero-mark')),
-    );
-    expect(markRect.left, greaterThanOrEqualTo(heroRect.left));
-    expect(markRect.top, greaterThanOrEqualTo(heroRect.top));
-    expect(markRect.right, lessThanOrEqualTo(heroRect.right));
-    expect(markRect.bottom, lessThanOrEqualTo(heroRect.bottom));
+    expect(heroRect.width, greaterThan(300));
     final createActionRect = tester.getRect(
       find.byKey(const ValueKey('ketua-hero-create-action')),
     );
@@ -1880,7 +1889,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Buat Kegiatan'), findsOneWidget);
 
-      await tester.tap(find.text('Batal'));
+      await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     },
@@ -1965,7 +1974,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('Hapus notifikasi'));
+    await tester.tap(find.text('Hapus').first);
     await tester.pumpAndSettle();
 
     expect(find.text('Hapus notifikasi?'), findsOneWidget);

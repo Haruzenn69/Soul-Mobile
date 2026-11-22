@@ -277,6 +277,38 @@ class AppTheme {
         refreshBackgroundColor: Colors.white,
       ),
       dividerTheme: const DividerThemeData(color: line, thickness: 1),
+      popupMenuTheme: PopupMenuThemeData(
+        color: Colors.white,
+        elevation: 8,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: line),
+        ),
+        textStyle: GoogleFonts.plusJakartaSans(
+          color: ink,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        menuStyle: MenuStyle(
+          backgroundColor: const WidgetStatePropertyAll(Colors.white),
+          surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+          elevation: const WidgetStatePropertyAll(8),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: line),
+            ),
+          ),
+        ),
+        textStyle: GoogleFonts.plusJakartaSans(
+          color: ink,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: const Color(0xFF1E293B),
@@ -466,6 +498,38 @@ class AppTheme {
         linearTrackColor: Color(0xFF1E3A5F),
       ),
       dividerTheme: const DividerThemeData(color: darkLine, thickness: 1),
+      popupMenuTheme: PopupMenuThemeData(
+        color: darkSurface,
+        elevation: 8,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: darkLine),
+        ),
+        textStyle: GoogleFonts.plusJakartaSans(
+          color: darkInk,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        menuStyle: MenuStyle(
+          backgroundColor: const WidgetStatePropertyAll(darkSurface),
+          surfaceTintColor: const WidgetStatePropertyAll(Colors.transparent),
+          elevation: const WidgetStatePropertyAll(8),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: darkLine),
+            ),
+          ),
+        ),
+        textStyle: GoogleFonts.plusJakartaSans(
+          color: darkInk,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: darkSurface,

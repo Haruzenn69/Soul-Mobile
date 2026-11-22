@@ -23,4 +23,9 @@ void main() {
       throwsStateError,
     );
   });
+
+  test('default profile photo is resolved from the configured server', () {
+    final uri = Uri.parse(configuredUrl);
+    expect(AppConfig.profilePhotoUrl(null), '${uri.origin}/images/default.png');
+  });
 }

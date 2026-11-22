@@ -67,7 +67,8 @@ class KetuaMenuScreen extends ConsumerWidget {
                 icon: Icons.group_add_outlined,
                 title: 'Pengajuan Kepengurusan',
                 subtitle: 'Ajukan penambahan atau perubahan pengurus.',
-                onTap: () => _open(context, const PengajuanKepengurusanScreen()),
+                onTap: () =>
+                    _open(context, const PengajuanKepengurusanScreen()),
               ),
               _MenuTile(
                 icon: Icons.reviews_outlined,
@@ -122,8 +123,15 @@ class _IdentityCard extends ConsumerWidget {
     final profileData = ref.watch(ketuaProfilEkskulProvider).asData?.value;
     final ekskulName = ekskul?.namaEkskul ?? 'Ekstrakurikuler';
     final cover = ekskul?.cover?.trim();
-    final apiCover = (profileData?['ekskul'] as Map?)?['cover']?.toString().trim();
+    final logo = ekskul?.logo?.trim();
+    final apiCover = (profileData?['ekskul'] as Map?)?['cover']
+        ?.toString()
+        .trim();
+    final apiLogo = (profileData?['ekskul'] as Map?)?['logo']
+        ?.toString()
+        .trim();
     final effectiveCover = (cover?.isNotEmpty == true) ? cover : apiCover;
+    final effectiveLogo = (logo?.isNotEmpty == true) ? logo : apiLogo;
     return Container(
       key: const ValueKey('ketua-menu-identity-card'),
       clipBehavior: Clip.antiAlias,
@@ -161,32 +169,37 @@ class _IdentityCard extends ConsumerWidget {
               children: [
                 Row(
                   children: [
-                    PersonAvatar(
-                      name: user.namaTampilan,
-                      photoUrl: user.fotoUrl,
-                      radius: 22,
-                      backgroundColor: Colors.white.withValues(alpha: 0.16),
-                      foregroundColor: Colors.white,
-                    ),
-                    const Spacer(),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 11,
-                        vertical: 7,
-                      ),
+                      key: const ValueKey('ketua-menu-ekskul-avatar'),
+                      width: 76,
+                      height: 76,
+                      padding: const EdgeInsets.all(3),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: Text(
-                        'KETUA',
-                        style: GoogleFonts.plusJakartaSans(
-                          color: const Color(0xFF1D4ED8),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.66),
                         ),
                       ),
+                      child: ClipOval(
+                        child: effectiveLogo?.isNotEmpty == true
+                            ? Image.network(
+                                AppConfig.imageUrl(effectiveLogo),
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, _, _) => const Icon(
+                                  Icons.groups_2_rounded,
+                                  color: AppTheme.blue,
+                                  size: 32,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.groups_2_rounded,
+                                color: AppTheme.blue,
+                                size: 32,
+                              ),
+                      ),
                     ),
+                    const Spacer(),
                   ],
                 ),
                 const SizedBox(height: 22),

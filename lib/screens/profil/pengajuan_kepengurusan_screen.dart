@@ -224,7 +224,7 @@ class _PengajuanKepengurusanScreenState
                     TextField(
                       controller: _alasan,
                       maxLines: 4,
-                      maxLength: 1000,
+                      maxLength: 500,
                       decoration: const InputDecoration(
                         labelText: 'Alasan / Keterangan Pengajuan',
                         hintText: 'Jelaskan mengapa perubahan ini diajukan',
@@ -463,14 +463,12 @@ class _LeadershipPositionCard extends StatelessWidget {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: foto != null && foto.isNotEmpty
-                              ? Image.network(
-                                  AppConfig.imageUrl(foto),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) =>
-                                      _avatarFallback(context, name),
-                                )
-                              : _avatarFallback(context, name),
+                          child: Image.network(
+                            AppConfig.profilePhotoUrl(foto),
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) =>
+                                _avatarFallback(context, name),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),

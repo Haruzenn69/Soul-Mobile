@@ -4,12 +4,10 @@ import 'package:dio/dio.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/app_config.dart';
 import '../../core/providers.dart';
-import '../../core/upload_check.dart';
 import '../../data/providers.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
@@ -18,6 +16,7 @@ import '../../widgets/common.dart';
 import '../laporan/laporan_create_screen.dart';
 import '../laporan/laporan_screen.dart';
 import 'kegiatan_detail_screen.dart';
+import 'kegiatan_create_screen.dart';
 import 'rekap_presensi_screen.dart';
 
 class KegiatanScreen extends ConsumerStatefulWidget {
@@ -65,7 +64,11 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
   }
 
   Future<void> _buatKegiatan() async {
-    final data = await _showBuatDialog();
+    final data = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute<Map<String, dynamic>>(
+        builder: (_) => const KegiatanCreateScreen(),
+      ),
+    );
     if (data == null || !mounted) return;
     try {
       setState(() {});
@@ -107,230 +110,6 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
       ref.invalidate(ketuaLaporanProvider);
       ref.invalidate(ketuaDashboardProvider);
     }
-  }
-
-  Future<Map<String, dynamic>?> _showBuatDialog() async {
-    String materi = '';
-    String deskripsi = '';
-    DateTime tanggal = DateTime.now();
-    DateTime? tanggalBerakhir;
-    bool isEvent = false;
-    XFile? photo;
-    Uint8List? photoBytes;
-
-    final result = await showDialog<Map<String, dynamic>>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) => AlertDialog(
-            titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 8),
-            contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
-            actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            title: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppTheme.accentSurface(context),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.event_note, color: AppTheme.blue),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(child: Text('Buat Kegiatan')),
-              ],
-            ),
-            content: SizedBox(
-              width: 420,
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Lengkapi detail kegiatan ekskul yang akan dicatat.',
-                      style: GoogleFonts.plusJakartaSans(
-                        color: AppTheme.mutedText(context),
-                        fontSize: 12,
-                        height: 1.45,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    TextField(
-                      onChanged: (value) => materi = value,
-                      decoration: const InputDecoration(
-                        labelText: 'Materi Kegiatan',
-                        hintText: 'mis. Latihan Dasar',
-                        prefixIcon: Icon(Icons.edit_note_outlined),
-                      ),
-                    ),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        'Kegiatan event/lomba',
-                        style: GoogleFonts.plusJakartaSans(
-                          color: AppTheme.text(context),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      subtitle: Text(
-                        'Aktifkan jika berupa event atau lomba.',
-                        style: GoogleFonts.plusJakartaSans(
-                          color: AppTheme.mutedText(context),
-                          fontSize: 12,
-                        ),
-                      ),
-                      value: isEvent,
-                      onChanged: (value) =>
-                          setDialogState(() => isEvent = value),
-                    ),
-                    const SizedBox(height: 14),
-                    TextField(
-                      onChanged: (value) => deskripsi = value,
-                      maxLines: 2,
-                      decoration: const InputDecoration(
-                        labelText: 'Deskripsi (opsional)',
-                        prefixIcon: Icon(Icons.description_outlined),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    InkWell(
-                      onTap: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: tanggal,
-                          firstDate: DateTime.now().subtract(
-                            const Duration(days: 365),
-                          ),
-                          lastDate: DateTime.now().add(
-                            const Duration(days: 365),
-                          ),
-                        );
-                        if (picked != null) {
-                          setDialogState(() {
-                            tanggal = picked;
-                            if (tanggalBerakhir != null &&
-                                tanggalBerakhir!.isBefore(picked)) {
-                              tanggalBerakhir = null;
-                            }
-                          });
-                        }
-                      },
-                      borderRadius: BorderRadius.circular(12),
-                      child: InputDecorator(
-                        decoration: const InputDecoration(
-                          labelText: 'Tanggal Kegiatan',
-                          prefixIcon: Icon(Icons.calendar_today_outlined),
-                        ),
-                        child: Text(DateFormat('yyyy-MM-dd').format(tanggal)),
-                      ),
-                    ),
-                    if (isEvent) ...[
-                      const SizedBox(height: 14),
-                      InkWell(
-                        onTap: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: tanggalBerakhir ?? tanggal,
-                            firstDate: tanggal,
-                            lastDate: DateTime.now().add(
-                              const Duration(days: 3650),
-                            ),
-                          );
-                          if (picked != null) {
-                            setDialogState(() {
-                              tanggalBerakhir = picked;
-                            });
-                          }
-                        },
-                        borderRadius: BorderRadius.circular(12),
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Tanggal berakhir (opsional)',
-                            prefixIcon: Icon(Icons.event_busy_outlined),
-                          ),
-                          child: Text(
-                            tanggalBerakhir == null
-                                ? 'Pilih tanggal'
-                                : DateFormat('yyyy-MM-dd')
-                                      .format(tanggalBerakhir!),
-                          ),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 14),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: () async {
-                          final picked = await ImagePicker().pickImage(
-                            source: ImageSource.gallery,
-                            imageQuality: 85,
-                          );
-                          if (picked == null) return;
-                          try {
-                            final bytes = await readImageBytesChecked(
-                              picked,
-                              label: 'Dokumentasi kegiatan',
-                            );
-                            setDialogState(() {
-                              photo = picked;
-                              photoBytes = bytes;
-                            });
-                          } catch (e) {
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(e.toString())),
-                              );
-                            }
-                          }
-                        },
-                        icon: const Icon(Icons.add_photo_alternate_outlined),
-                        label: Text(
-                          photo?.name ?? 'Tambah dokumentasi (maks. 2 MB)',
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Batal'),
-              ),
-              FilledButton.icon(
-                onPressed: () {
-                  if (materi.trim().isEmpty) return;
-                  Navigator.of(context).pop(<String, dynamic>{
-                    'materi': materi.trim(),
-                    'deskripsi': deskripsi.trim().isEmpty
-                        ? ''
-                        : deskripsi.trim(),
-                    'tanggal_kegiatan': DateFormat('yyyy-MM-dd')
-                        .format(tanggal),
-                    'jenis_kegiatan': isEvent ? 'event' : null,
-                    if (tanggalBerakhir != null)
-                      'tanggal_berakhir': DateFormat('yyyy-MM-dd')
-                          .format(tanggalBerakhir!),
-                    ...?(photo == null ? null : {'_photo': photo}),
-                    ...?(photoBytes == null
-                        ? null
-                        : {'_photo_bytes': photoBytes}),
-                  });
-                },
-                icon: const Icon(Icons.check_rounded),
-                label: const Text('Simpan'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-    return result;
   }
 
   @override

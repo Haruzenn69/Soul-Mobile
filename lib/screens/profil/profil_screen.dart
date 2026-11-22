@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/providers.dart';
+import '../../core/app_config.dart';
 import '../../models/models.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/theme_controller.dart';
@@ -21,6 +22,7 @@ class _ProfileHeroCard extends StatelessWidget {
   const _ProfileHeroCard({
     required this.name,
     required this.photoUrl,
+    this.coverUrl,
     required this.subtitle,
     required this.metrics,
     this.onEdit,
@@ -28,6 +30,7 @@ class _ProfileHeroCard extends StatelessWidget {
 
   final String name;
   final String? photoUrl;
+  final String? coverUrl;
   final String subtitle;
   final List<_ProfileMetric> metrics;
   final VoidCallback? onEdit;
@@ -56,42 +59,32 @@ class _ProfileHeroCard extends StatelessWidget {
               Container(
                 height: 118,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: dark
-                        ? const [Color(0xFF1E3A5F), Color(0xFF334155)]
-                        : const [Color(0xFFBFDBFE), Color(0xFFE0F2FE)],
-                  ),
+                  gradient: AppTheme.brandHeroGradient(context),
                 ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      top: -64,
-                      right: -24,
-                      child: Container(
-                        width: 190,
-                        height: 190,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.16),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: -38,
-                      bottom: -96,
-                      child: Container(
-                        width: 180,
-                        height: 180,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.13),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                child: coverUrl?.trim().isNotEmpty == true
+                    ? Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Image.network(
+                            AppConfig.imageUrl(coverUrl),
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.black.withValues(alpha: 0.48),
+                                  Colors.black.withValues(alpha: 0.18),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : null,
               ),
               if (onEdit != null)
                 Positioned(
@@ -112,8 +105,8 @@ class _ProfileHeroCard extends StatelessWidget {
           Transform.translate(
             offset: const Offset(0, -36),
             child: Container(
-              width: 78,
-              height: 78,
+              width: 88,
+              height: 88,
               padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 gradient: AppTheme.brandHeroGradient(context),
@@ -122,7 +115,7 @@ class _ProfileHeroCard extends StatelessWidget {
               child: PersonAvatar(
                 name: name,
                 photoUrl: photoUrl,
-                radius: 36,
+                radius: 41,
                 backgroundColor: AppTheme.surface(context),
                 foregroundColor: AppTheme.blue,
               ),
@@ -262,6 +255,9 @@ class ProfilScreen extends ConsumerWidget {
           _ProfileHeroCard(
             name: user.namaTampilan,
             photoUrl: user.fotoUrl,
+            coverUrl:
+                user.aktivEkskul?.cover ??
+                user.activeEkskuls.firstOrNull?.cover,
             subtitle: subtitle.isEmpty ? roleLabel : subtitle,
             metrics: [
               _ProfileMetric(

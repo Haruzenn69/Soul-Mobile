@@ -165,6 +165,7 @@ class _Header extends StatelessWidget {
       markKey: const ValueKey('ketua-dashboard-hero-mark'),
       name: user.namaTampilan,
       photoUrl: user.fotoUrl,
+      coverUrl: _imageField(ekskul, const ['cover', 'cover_url']),
       eyebrow: 'DASHBOARD KETUA',
       subtitle: 'Ketua ekstrakurikuler · ${_todayLabel()}',
       badge: ekskulName.isEmpty

@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -147,6 +149,7 @@ class DashboardHeroCard extends StatelessWidget {
     required this.primaryAction,
     this.secondaryAction,
     this.markUrl,
+    this.coverUrl,
     this.switcher,
     this.markKey,
     this.cardKey,
@@ -162,13 +165,13 @@ class DashboardHeroCard extends StatelessWidget {
   final DashboardHeroAction primaryAction;
   final DashboardHeroAction? secondaryAction;
   final String? markUrl;
+  final String? coverUrl;
   final Widget? switcher;
   final Key? markKey;
   final Key? cardKey;
 
   @override
   Widget build(BuildContext context) {
-    final mark = markUrl?.trim();
     final isDark = AppTheme.isDark(context);
 
     return Container(
@@ -187,6 +190,32 @@ class DashboardHeroCard extends StatelessWidget {
       ),
       child: Stack(
         children: [
+          if (coverUrl?.trim().isNotEmpty == true)
+            Positioned.fill(
+              child: ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                child: Image.network(
+                  AppConfig.imageUrl(coverUrl),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
+          if (coverUrl?.trim().isNotEmpty == true)
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.58),
+                      Colors.black.withValues(alpha: 0.30),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           Positioned(
             top: -82,
             right: -42,
@@ -219,8 +248,8 @@ class DashboardHeroCard extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      width: 54,
-                      height: 54,
+                      width: 72,
+                      height: 72,
                       padding: const EdgeInsets.all(2),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.22),
@@ -232,12 +261,12 @@ class DashboardHeroCard extends StatelessWidget {
                       child: PersonAvatar(
                         name: name,
                         photoUrl: photoUrl,
-                        radius: 25,
+                        radius: 34,
                         backgroundColor: Colors.white,
                         foregroundColor: AppTheme.blue,
                       ),
                     ),
-                    const SizedBox(width: 11),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -274,38 +303,6 @@ class DashboardHeroCard extends StatelessWidget {
                             ),
                           ),
                         ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      key: markKey,
-                      width: 42,
-                      height: 42,
-                      padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.28),
-                        ),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: mark?.isNotEmpty == true
-                            ? Image.network(
-                                AppConfig.imageUrl(mark),
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, _, _) => const Icon(
-                                  Icons.groups_2_rounded,
-                                  color: Colors.white,
-                                  size: 22,
-                                ),
-                              )
-                            : const Icon(
-                                Icons.groups_2_rounded,
-                                color: Colors.white,
-                                size: 22,
-                              ),
                       ),
                     ),
                   ],
@@ -726,7 +723,7 @@ class PersonAvatar extends StatelessWidget {
         ? const Color(0xFF93C5FD)
         : foregroundColor;
     final normalizedUrl = photoUrl?.trim();
-    final hasPhoto = normalizedUrl != null && normalizedUrl.isNotEmpty;
+    final photoUrlResolved = AppConfig.profilePhotoUrl(normalizedUrl);
     final initials = name
         .trim()
         .split(RegExp(r'\s+'))
@@ -749,19 +746,17 @@ class PersonAvatar extends StatelessWidget {
     return CircleAvatar(
       radius: radius,
       backgroundColor: effectiveBackground,
-      child: !hasPhoto
-          ? fallback()
-          : ClipOval(
-              child: Image.network(
-                AppConfig.imageUrl(normalizedUrl),
-                width: radius * 2,
-                height: radius * 2,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => fallback(),
-                loadingBuilder: (_, child, progress) =>
-                    progress == null ? child : fallback(),
-              ),
-            ),
+      child: ClipOval(
+        child: Image.network(
+          photoUrlResolved,
+          width: radius * 2,
+          height: radius * 2,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => fallback(),
+          loadingBuilder: (_, child, progress) =>
+              progress == null ? child : fallback(),
+        ),
+      ),
     );
   }
 }

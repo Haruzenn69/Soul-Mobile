@@ -10,6 +10,7 @@ class AppConfig {
   static const brandBlue = 0xFF2563EB;
   static const brandBlueDark = 0xFF1D4ED8;
   static const brandBg = 0xFFE0F2FE;
+  static const defaultProfilePhotoPath = '/images/default.png';
 
   /// Mendapatkan Base URL API yang telah divalidasi keamanannya (harus HTTPS kecuali localhost saat debug)
   static String get apiBaseUrl {
@@ -69,6 +70,13 @@ class AppConfig {
       throw StateError('Remote HTTP image URLs are not allowed.');
     }
     return url;
+  }
+
+  static String profilePhotoUrl(String? url) {
+    final normalized = url?.trim();
+    return normalized != null && normalized.isNotEmpty
+        ? imageUrl(normalized)
+        : imageUrl(defaultProfilePhotoPath);
   }
 
   /// Mengecek apakah suatu host termasuk alamat lokal (localhost, IP lokal, atau private subnet)

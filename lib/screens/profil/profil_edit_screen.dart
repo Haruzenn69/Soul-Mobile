@@ -268,15 +268,7 @@ class _ProfilEditScreenState extends ConsumerState<ProfilEditScreen> {
           backgroundColor: AppTheme.accentSurface(context),
           backgroundImage: _photoBytes != null
               ? MemoryImage(_photoBytes!)
-              : ((widget.user.fotoUrl != null &&
-                        widget.user.fotoUrl!.isNotEmpty)
-                    ? NetworkImage(AppConfig.imageUrl(widget.user.fotoUrl))
-                    : null),
-          child:
-              (_photoBytes == null &&
-                  (widget.user.fotoUrl == null || widget.user.fotoUrl!.isEmpty))
-              ? const Icon(Icons.person_outline, color: AppTheme.blue, size: 34)
-              : null,
+              : NetworkImage(AppConfig.profilePhotoUrl(widget.user.fotoUrl)),
         ),
         const SizedBox(width: 14),
         Expanded(
