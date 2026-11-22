@@ -259,12 +259,13 @@ class _ProfilEditScreenState extends ConsumerState<ProfilEditScreen> {
   );
 
   Widget _photoCard() => _formCard(
+    icon: Icons.photo_camera_outlined,
     title: 'Foto Profil',
     subtitle: 'Gunakan foto yang jelas dan mudah dikenali.',
     child: Row(
       children: [
         CircleAvatar(
-          radius: 34,
+          radius: 42,
           backgroundColor: AppTheme.accentSurface(context),
           backgroundImage: _photoBytes != null
               ? MemoryImage(_photoBytes!)
@@ -283,6 +284,7 @@ class _ProfilEditScreenState extends ConsumerState<ProfilEditScreen> {
   );
 
   Widget _personalInfoCard() => _formCard(
+    icon: Icons.person_outline_rounded,
     title: 'Informasi Akun',
     subtitle: 'Data yang digunakan untuk mengenali akun kamu.',
     child: Column(
@@ -323,6 +325,7 @@ class _ProfilEditScreenState extends ConsumerState<ProfilEditScreen> {
   );
 
   Widget _additionalInfoCard() => _formCard(
+    icon: Icons.badge_outlined,
     title: 'Data Diri Siswa',
     subtitle: 'Informasi biodata siswa (dikelola oleh kesiswaan).',
     child: Column(
@@ -352,6 +355,7 @@ class _ProfilEditScreenState extends ConsumerState<ProfilEditScreen> {
   );
 
   Widget _formCard({
+    IconData? icon,
     required String title,
     required String subtitle,
     required Widget child,
@@ -365,22 +369,46 @@ class _ProfilEditScreenState extends ConsumerState<ProfilEditScreen> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.text(context),
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 3),
-        Text(
-          subtitle,
-          style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.mutedText(context),
-            fontSize: 11.5,
-            height: 1.4,
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (icon != null) ...[
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: AppTheme.accentSurface(context),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: AppTheme.blue, size: 18),
+              ),
+              const SizedBox(width: 10),
+            ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.text(context),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.mutedText(context),
+                      fontSize: 11.5,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         child,

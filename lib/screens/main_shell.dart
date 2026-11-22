@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -157,6 +159,7 @@ class _ShellScaffoldState extends ConsumerState<_ShellScaffold> {
       return tab;
     });
     return Scaffold(
+      extendBody: true,
       body: DecoratedBox(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -174,50 +177,82 @@ class _ShellScaffoldState extends ConsumerState<_ShellScaffold> {
         ),
         child: IndexedStack(index: safeIndex, children: tabChildren),
       ),
-      bottomNavigationBar: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          border: Border(
-            top: BorderSide(
-              color: Theme.of(context).colorScheme.outlineVariant,
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.fromLTRB(
+          12,
+          0,
+          12,
+          MediaQuery.paddingOf(context).bottom > 0 ? 8 : 12,
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface
+                    .withValues(alpha: 0.08),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant
+                      .withValues(
+                        alpha: AppTheme.isDark(context) ? 0.34 : 0.48,
+                      ),
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(
+                      alpha: AppTheme.isDark(context) ? 0.20 : 0.10,
+                    ),
+                    blurRadius: 28,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: NavigationBar(
+                selectedIndex: safeIndex,
+                onDestinationSelected: (i) =>
+                    ref.read(shellTabProvider.notifier).set(i),
+                backgroundColor: Colors.transparent,
+                indicatorColor: AppTheme.isDark(context)
+                    ? AppTheme.blue.withValues(alpha: 0.18)
+                    : AppTheme.lightAccentSurface,
+                elevation: 0,
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                destinations: [
+                  for (var i = 0; i < widget.tabs.length; i++) ...[
+                    () {
+                      final tab = widget.tabs[i];
+                      final isNotif = tab.label == 'Notifikasi';
+                      final count = isNotif ? unreadCount : 0;
+                      final badgeText = count > 9 ? '9+' : '$count';
+                      final iconWidget = Icon(
+                        tab.icon,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      );
+                      final selectedIconWidget = Icon(
+                        tab.icon,
+                        color: Theme.of(context).colorScheme.primary,
+                      );
+
+                      return NavigationDestination(
+                        icon: count > 0
+                            ? Badge(label: Text(badgeText), child: iconWidget)
+                            : iconWidget,
+                        selectedIcon: count > 0
+                            ? Badge(
+                                label: Text(badgeText),
+                                child: selectedIconWidget,
+                              )
+                            : selectedIconWidget,
+                        label: tab.label,
+                      );
+                    }(),
+                  ],
+                ],
+              ),
             ),
           ),
-        ),
-        child: NavigationBar(
-          selectedIndex: safeIndex,
-          onDestinationSelected: (i) =>
-              ref.read(shellTabProvider.notifier).set(i),
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          indicatorColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          destinations: [
-            for (var i = 0; i < widget.tabs.length; i++) ...[
-              () {
-                final tab = widget.tabs[i];
-                final isNotif = tab.label == 'Notifikasi';
-                final count = isNotif ? unreadCount : 0;
-                final badgeText = count > 9 ? '9+' : '$count';
-                final iconWidget = Icon(
-                  tab.icon,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                );
-                final selectedIconWidget = Icon(
-                  tab.icon,
-                  color: Theme.of(context).colorScheme.primary,
-                );
-
-                return NavigationDestination(
-                  icon: count > 0
-                      ? Badge(label: Text(badgeText), child: iconWidget)
-                      : iconWidget,
-                  selectedIcon: count > 0
-                      ? Badge(label: Text(badgeText), child: selectedIconWidget)
-                      : selectedIconWidget,
-                  label: tab.label,
-                );
-              }(),
-            ],
-          ],
         ),
       ),
     );

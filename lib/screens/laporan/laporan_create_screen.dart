@@ -141,20 +141,63 @@ class _LaporanCreateScreenState extends ConsumerState<LaporanCreateScreen> {
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: [
-                _infoCard(
-                  icon: Icons.calendar_month_outlined,
-                  title: 'Periode laporan',
-                  description:
-                      'Laporan ini ${widget.isEditing ? 'berisi' : 'dibuat untuk'} ${_bulan == null ? '${_monthLabel(now.month)} ${now.year}' : _formatPeriod(_bulan!)}.',
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.brandHeroGradient(context),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.16),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.24),
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.assignment_outlined,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _bulan == null
+                                  ? '${_monthLabel(now.month)} ${now.year}'
+                                  : _formatPeriod(_bulan!),
+                              style: GoogleFonts.plusJakartaSans(
+                                color: Colors.white,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Materi kegiatan, rekap kehadiran, dan dokumentasi akan diambil dari periode ini.',
+                              style: GoogleFonts.plusJakartaSans(
+                                color: Colors.white.withValues(alpha: 0.82),
+                                fontSize: 11,
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 12),
-                _infoCard(
-                  icon: Icons.auto_awesome_outlined,
-                  title: 'Data otomatis',
-                  description: 'Materi kegiatan, rekap kehadiran, dan dokumentasi akan diambil dari data kegiatan pada periode laporan.',
-                ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 14),
                 _formCard(
+                  icon: Icons.flag_outlined,
                   title: 'Tujuan Kegiatan',
                   subtitle: 'Jelaskan target kegiatan ekskul pada bulan ini.',
                   child: TextField(
@@ -169,6 +212,7 @@ class _LaporanCreateScreenState extends ConsumerState<LaporanCreateScreen> {
                 ),
                 const SizedBox(height: 14),
                 _formCard(
+                  icon: Icons.workspace_premium_outlined,
                   title: 'Evaluasi Keberhasilan',
                   subtitle: 'Capaian positif yang berhasil diraih.',
                   child: TextField(
@@ -183,6 +227,7 @@ class _LaporanCreateScreenState extends ConsumerState<LaporanCreateScreen> {
                 ),
                 const SizedBox(height: 14),
                 _formCard(
+                  icon: Icons.warning_amber_rounded,
                   title: 'Evaluasi Kendala',
                   subtitle: 'Hambatan atau masalah yang muncul.',
                   child: TextField(
@@ -197,6 +242,7 @@ class _LaporanCreateScreenState extends ConsumerState<LaporanCreateScreen> {
                 ),
                 const SizedBox(height: 14),
                 _formCard(
+                  icon: Icons.build_circle_outlined,
                   title: 'Solusi / Tindak Lanjut',
                   subtitle: 'Rencana untuk mengatasi kendala dan memperbaiki kegiatan.',
                   child: TextField(
@@ -258,51 +304,8 @@ class _LaporanCreateScreenState extends ConsumerState<LaporanCreateScreen> {
     return '${_monthLabel(month)} ${parts[0]}';
   }
 
-  Widget _infoCard({
-    required IconData icon,
-    required String title,
-    required String description,
-  }) => Container(
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: AppTheme.accentSurface(context),
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: AppTheme.blue.withValues(alpha: 0.12)),
-    ),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: AppTheme.blue, size: 20),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.plusJakartaSans(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                description,
-                style: GoogleFonts.plusJakartaSans(
-                  color: AppTheme.mutedText(context),
-                  fontSize: 11.5,
-                  height: 1.45,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-
   Widget _formCard({
+    IconData? icon,
     required String title,
     required String subtitle,
     required Widget child,
@@ -316,24 +319,48 @@ class _LaporanCreateScreenState extends ConsumerState<LaporanCreateScreen> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.text(context),
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-          ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (icon != null) ...[
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: AppTheme.accentSurface(context),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: AppTheme.blue, size: 18),
+              ),
+              const SizedBox(width: 10),
+            ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.text(context),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: AppTheme.mutedText(context),
+                      fontSize: 11.5,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 3),
-        Text(
-          subtitle,
-          style: GoogleFonts.plusJakartaSans(
-            color: AppTheme.mutedText(context),
-            fontSize: 11.5,
-            height: 1.4,
-          ),
-        ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         child,
       ],
     ),

@@ -674,7 +674,7 @@ class _PrestasiTabState extends ConsumerState<_PrestasiTab> {
         backgroundColor: AppTheme.blue,
         foregroundColor: Colors.white,
         shape: const CircleBorder(),
-        tooltip: 'Tambah Prestasi',
+        tooltip: 'Tambah prestasi',
         child: const Icon(Icons.add_rounded),
       ),
     );

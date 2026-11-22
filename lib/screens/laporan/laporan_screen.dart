@@ -22,10 +22,12 @@ class LaporanScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 70),
+        padding: const EdgeInsets.only(bottom: 88),
         child: FloatingActionButton(
           onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute<void>(builder: (_) => const LaporanCreateScreen()),
+            MaterialPageRoute<void>(
+              builder: (_) => const LaporanCreateScreen(),
+            ),
           ),
           backgroundColor: AppTheme.blue,
           foregroundColor: Colors.white,
@@ -72,23 +74,37 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
                         onSelected: (val) {
                           if (val == 'terbaru' || val == 'terlama') {
                             setState(() => _timeSort = val);
-                          } else if (val == 'semua' || val == 'pending' || val == 'diterima' || val == 'draft' || val == 'ditolak') {
+                          } else if (val == 'semua' ||
+                              val == 'pending' ||
+                              val == 'diterima' ||
+                              val == 'draft' ||
+                              val == 'ditolak') {
                             setState(() => _statusFilter = val);
                           }
                         },
                         itemBuilder: (context) => [
                           const PopupMenuItem(
                             enabled: false,
-                            child: Text('Status', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                            child: Text(
+                              'Status',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                              ),
+                            ),
                           ),
                           PopupMenuItem(
                             value: 'semua',
                             child: Row(
                               children: [
                                 Icon(
-                                  _statusFilter == 'semua' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  _statusFilter == 'semua'
+                                      ? Icons.radio_button_checked
+                                      : Icons.radio_button_off,
                                   size: 18,
-                                  color: _statusFilter == 'semua' ? AppTheme.blue : AppTheme.mutedText(context),
+                                  color: _statusFilter == 'semua'
+                                      ? AppTheme.blue
+                                      : AppTheme.mutedText(context),
                                 ),
                                 const SizedBox(width: 8),
                                 const Text('Semua Status'),
@@ -100,9 +116,13 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
                             child: Row(
                               children: [
                                 Icon(
-                                  _statusFilter == 'pending' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  _statusFilter == 'pending'
+                                      ? Icons.radio_button_checked
+                                      : Icons.radio_button_off,
                                   size: 18,
-                                  color: _statusFilter == 'pending' ? AppTheme.blue : AppTheme.mutedText(context),
+                                  color: _statusFilter == 'pending'
+                                      ? AppTheme.blue
+                                      : AppTheme.mutedText(context),
                                 ),
                                 const SizedBox(width: 8),
                                 const Text('Pending'),
@@ -114,9 +134,13 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
                             child: Row(
                               children: [
                                 Icon(
-                                  _statusFilter == 'diterima' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  _statusFilter == 'diterima'
+                                      ? Icons.radio_button_checked
+                                      : Icons.radio_button_off,
                                   size: 18,
-                                  color: _statusFilter == 'diterima' ? AppTheme.blue : AppTheme.mutedText(context),
+                                  color: _statusFilter == 'diterima'
+                                      ? AppTheme.blue
+                                      : AppTheme.mutedText(context),
                                 ),
                                 const SizedBox(width: 8),
                                 const Text('Diterima'),
@@ -128,9 +152,13 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
                             child: Row(
                               children: [
                                 Icon(
-                                  _statusFilter == 'draft' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  _statusFilter == 'draft'
+                                      ? Icons.radio_button_checked
+                                      : Icons.radio_button_off,
                                   size: 18,
-                                  color: _statusFilter == 'draft' ? AppTheme.blue : AppTheme.mutedText(context),
+                                  color: _statusFilter == 'draft'
+                                      ? AppTheme.blue
+                                      : AppTheme.mutedText(context),
                                 ),
                                 const SizedBox(width: 8),
                                 const Text('Draft'),
@@ -142,9 +170,13 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
                             child: Row(
                               children: [
                                 Icon(
-                                  _statusFilter == 'ditolak' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  _statusFilter == 'ditolak'
+                                      ? Icons.radio_button_checked
+                                      : Icons.radio_button_off,
                                   size: 18,
-                                  color: _statusFilter == 'ditolak' ? AppTheme.blue : AppTheme.mutedText(context),
+                                  color: _statusFilter == 'ditolak'
+                                      ? AppTheme.blue
+                                      : AppTheme.mutedText(context),
                                 ),
                                 const SizedBox(width: 8),
                                 const Text('Ditolak'),
@@ -154,16 +186,26 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
                           const PopupMenuDivider(),
                           const PopupMenuItem(
                             enabled: false,
-                            child: Text('Urutkan', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                            child: Text(
+                              'Urutkan',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12,
+                              ),
+                            ),
                           ),
                           PopupMenuItem(
                             value: 'terbaru',
                             child: Row(
                               children: [
                                 Icon(
-                                  _timeSort == 'terbaru' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  _timeSort == 'terbaru'
+                                      ? Icons.radio_button_checked
+                                      : Icons.radio_button_off,
                                   size: 18,
-                                  color: _timeSort == 'terbaru' ? AppTheme.blue : AppTheme.mutedText(context),
+                                  color: _timeSort == 'terbaru'
+                                      ? AppTheme.blue
+                                      : AppTheme.mutedText(context),
                                 ),
                                 const SizedBox(width: 8),
                                 const Text('Terbaru'),
@@ -175,9 +217,13 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
                             child: Row(
                               children: [
                                 Icon(
-                                  _timeSort == 'terlama' ? Icons.radio_button_checked : Icons.radio_button_off,
+                                  _timeSort == 'terlama'
+                                      ? Icons.radio_button_checked
+                                      : Icons.radio_button_off,
                                   size: 18,
-                                  color: _timeSort == 'terlama' ? AppTheme.blue : AppTheme.mutedText(context),
+                                  color: _timeSort == 'terlama'
+                                      ? AppTheme.blue
+                                      : AppTheme.mutedText(context),
                                 ),
                                 const SizedBox(width: 8),
                                 const Text('Terlama'),
@@ -186,19 +232,33 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
                           ),
                         ],
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.surface(context),
                             borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: AppTheme.outline(context)),
+                            border: Border.all(
+                              color: AppTheme.outline(context),
+                            ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.tune_rounded, size: 16, color: AppTheme.blue),
+                              const Icon(
+                                Icons.tune_rounded,
+                                size: 16,
+                                color: AppTheme.blue,
+                              ),
                               const SizedBox(width: 6),
-                              Text('Filter',
-                                  style: GoogleFonts.plusJakartaSans(fontSize: 12, fontWeight: FontWeight.w700)),
+                              Text(
+                                'Filter',
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                               const SizedBox(width: 4),
                               const Icon(Icons.arrow_drop_down, size: 18),
                             ],
@@ -207,7 +267,10 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
                         decoration: BoxDecoration(
                           color: AppTheme.blue,
                           borderRadius: BorderRadius.circular(999),
@@ -215,20 +278,32 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
                         child: Text(
                           _statusFilter == 'semua'
                               ? 'Semua Status'
-                              : (_statusFilter[0].toUpperCase() + _statusFilter.substring(1)),
-                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                              : (_statusFilter[0].toUpperCase() +
+                                    _statusFilter.substring(1)),
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
+                        ),
                         decoration: BoxDecoration(
                           color: AppTheme.blue,
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
                           _timeSort == 'terbaru' ? 'Terbaru' : 'Terlama',
-                          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
                     ],
@@ -237,12 +312,17 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
               ),
               const SizedBox(width: 8),
               Tooltip(
-                message: _isAscending ? 'Urutkan A-Z (Klik untuk Z-A)' : 'Urutkan Z-A (Klik untuk A-Z)',
+                message: _isAscending
+                    ? 'Urutkan A-Z (Klik untuk Z-A)'
+                    : 'Urutkan Z-A (Klik untuk A-Z)',
                 child: InkWell(
                   onTap: () => setState(() => _isAscending = !_isAscending),
                   borderRadius: BorderRadius.circular(999),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.surface(context),
                       borderRadius: BorderRadius.circular(999),
@@ -261,7 +341,9 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
                         ),
                         const SizedBox(width: 4),
                         Icon(
-                          _isAscending ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                          _isAscending
+                              ? Icons.arrow_upward_rounded
+                              : Icons.arrow_downward_rounded,
                           size: 14,
                           color: AppTheme.blue,
                         ),
@@ -282,23 +364,39 @@ class _LaporanContentState extends ConsumerState<LaporanContent> {
               final filtered = allItems.where((item) {
                 final st = (item['status'] ?? '').toString().toLowerCase();
                 if (_statusFilter == 'semua') return true;
-                if (_statusFilter == 'pending') return st == 'pending' || st == 'menunggu' || st == 'diserahkan';
-                if (_statusFilter == 'diterima') return st == 'diterima' || st == 'disetujui';
+                if (_statusFilter == 'pending') {
+                  return st == 'pending' ||
+                      st == 'menunggu' ||
+                      st == 'diserahkan';
+                }
+                if (_statusFilter == 'diterima') {
+                  return st == 'diterima' || st == 'disetujui';
+                }
                 if (_statusFilter == 'draft') return st == 'draft';
                 if (_statusFilter == 'ditolak') return st == 'ditolak';
                 return true;
               }).toList();
               final items = [...filtered];
               items.sort((a, b) {
-                final da = DateTime.tryParse((a['created_at'] ?? a['tanggal'] ?? a['tanggal_buat'] ?? '').toString());
-                final db = DateTime.tryParse((b['created_at'] ?? b['tanggal'] ?? b['tanggal_buat'] ?? '').toString());
+                final da = DateTime.tryParse(
+                  (a['created_at'] ?? a['tanggal'] ?? a['tanggal_buat'] ?? '')
+                      .toString(),
+                );
+                final db = DateTime.tryParse(
+                  (b['created_at'] ?? b['tanggal'] ?? b['tanggal_buat'] ?? '')
+                      .toString(),
+                );
                 if (da != null && db != null) {
-                  final cmp = _timeSort == 'terbaru' ? db.compareTo(da) : da.compareTo(db);
+                  final cmp = _timeSort == 'terbaru'
+                      ? db.compareTo(da)
+                      : da.compareTo(db);
                   if (cmp != 0) return cmp;
                 }
                 final titleA = (a['judul'] ?? a['bulan'] ?? '').toString();
                 final titleB = (b['judul'] ?? b['bulan'] ?? '').toString();
-                return _isAscending ? titleA.compareTo(titleB) : titleB.compareTo(titleA);
+                return _isAscending
+                    ? titleA.compareTo(titleB)
+                    : titleB.compareTo(titleA);
               });
 
               if (items.isEmpty) {

@@ -2053,7 +2053,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(LaporanCreateScreen), findsOneWidget);
-    expect(find.text('Data otomatis'), findsOneWidget);
+    expect(
+      find.textContaining('Materi kegiatan, rekap kehadiran'),
+      findsOneWidget,
+    );
     expect(find.text('Tujuan Kegiatan'), findsOneWidget);
     expect(find.text('Evaluasi Keberhasilan'), findsOneWidget);
     await tester.drag(find.byType(ListView).last, const Offset(0, -700));

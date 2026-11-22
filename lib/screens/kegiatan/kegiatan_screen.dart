@@ -119,7 +119,7 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
     return Scaffold(
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.only(bottom: 88),
         child: switch (_tabController.index) {
           0 => FloatingActionButton(
             onPressed: _buatKegiatan,

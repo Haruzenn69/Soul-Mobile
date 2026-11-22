@@ -366,7 +366,7 @@ class _KegiatanDetailScreenState extends ConsumerState<KegiatanDetailScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.only(bottom: 88),
         child: detail.maybeWhen(
           data: (data) {
             final keg = Kegiatan.fromJson(
