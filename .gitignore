@@ -47,5 +47,4 @@ app.*.map.json
 # Widget Preview related
 .widget_preview/
 
-screenshot*.png
-navbar-check*.png
+*.png

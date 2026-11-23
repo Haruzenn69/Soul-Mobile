@@ -32,7 +32,12 @@ class KetuaMenuScreen extends ConsumerWidget {
 
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          12,
+          16,
+          floatingNavScrollPadding(context),
+        ),
         children: [
           const PageHeader(
             title: 'Menu Ketua',
@@ -55,20 +60,20 @@ class KetuaMenuScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 26),
           _MenuSection(
-            title: 'Kelola Katalog',
+            title: 'Ekskul',
             children: [
-              _MenuTile(
-                icon: Icons.storefront_outlined,
-                title: 'Profil Ekskul & Prestasi',
-                subtitle: 'Perbarui informasi, galeri, dan prestasi.',
-                onTap: () => _open(context, ProfilEkskulScreen(user: user)),
-              ),
               _MenuTile(
                 icon: Icons.group_add_outlined,
                 title: 'Pengajuan Kepengurusan',
                 subtitle: 'Ajukan penambahan atau perubahan pengurus.',
                 onTap: () =>
                     _open(context, const PengajuanKepengurusanScreen()),
+              ),
+              _MenuTile(
+                icon: Icons.storefront_outlined,
+                title: 'Profil Ekskul & Prestasi',
+                subtitle: 'Perbarui informasi, galeri, dan prestasi.',
+                onTap: () => _open(context, ProfilEkskulScreen(user: user)),
               ),
               _MenuTile(
                 icon: Icons.reviews_outlined,

@@ -158,102 +158,124 @@ class _ShellScaffoldState extends ConsumerState<_ShellScaffold> {
       _tabCache[i] = tab;
       return tab;
     });
+    final systemInsets = MediaQuery.viewPaddingOf(context);
     return Scaffold(
-      extendBody: true,
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: Theme.of(context).brightness == Brightness.dark
-                ? const [
-                    AppTheme.darkCanvas,
-                    AppTheme.darkSurface,
-                    AppTheme.darkCanvas,
-                  ]
-                : const [AppTheme.canvas, Colors.white, AppTheme.canvas],
-            stops: const [0, 0.52, 1],
-          ),
-        ),
-        child: IndexedStack(index: safeIndex, children: tabChildren),
-      ),
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.fromLTRB(
-          12,
-          0,
-          12,
-          MediaQuery.paddingOf(context).bottom > 0 ? 8 : 12,
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-            child: Container(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: DecoratedBox(
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface
-                    .withValues(alpha: 0.08),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outlineVariant
-                      .withValues(
-                        alpha: AppTheme.isDark(context) ? 0.34 : 0.48,
-                      ),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: Theme.of(context).brightness == Brightness.dark
+                      ? const [
+                          AppTheme.darkCanvas,
+                          AppTheme.darkSurface,
+                          AppTheme.darkCanvas,
+                        ]
+                      : const [AppTheme.canvas, Colors.white, AppTheme.canvas],
+                  stops: const [0, 0.52, 1],
                 ),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(
-                      alpha: AppTheme.isDark(context) ? 0.20 : 0.10,
-                    ),
-                    blurRadius: 28,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: NavigationBar(
-                selectedIndex: safeIndex,
-                onDestinationSelected: (i) =>
-                    ref.read(shellTabProvider.notifier).set(i),
-                backgroundColor: Colors.transparent,
-                indicatorColor: AppTheme.isDark(context)
-                    ? AppTheme.blue.withValues(alpha: 0.18)
-                    : AppTheme.lightAccentSurface,
-                elevation: 0,
-                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-                destinations: [
-                  for (var i = 0; i < widget.tabs.length; i++) ...[
-                    () {
-                      final tab = widget.tabs[i];
-                      final isNotif = tab.label == 'Notifikasi';
-                      final count = isNotif ? unreadCount : 0;
-                      final badgeText = count > 9 ? '9+' : '$count';
-                      final iconWidget = Icon(
-                        tab.icon,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      );
-                      final selectedIconWidget = Icon(
-                        tab.icon,
-                        color: Theme.of(context).colorScheme.primary,
-                      );
-
-                      return NavigationDestination(
-                        icon: count > 0
-                            ? Badge(label: Text(badgeText), child: iconWidget)
-                            : iconWidget,
-                        selectedIcon: count > 0
-                            ? Badge(
-                                label: Text(badgeText),
-                                child: selectedIconWidget,
-                              )
-                            : selectedIconWidget,
-                        label: tab.label,
-                      );
-                    }(),
-                  ],
-                ],
               ),
             ),
           ),
-        ),
+          Positioned.fill(
+            child: IndexedStack(index: safeIndex, children: tabChildren),
+          ),
+          Positioned(
+            left: systemInsets.left + 12,
+            right: systemInsets.right + 12,
+            bottom: systemInsets.bottom + 12,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface
+                        .withValues(alpha: 0.08),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant
+                          .withValues(
+                            alpha: AppTheme.isDark(context) ? 0.34 : 0.48,
+                          ),
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: AppTheme.isDark(context) ? 0.20 : 0.10,
+                        ),
+                        blurRadius: 28,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: SizedBox(
+                    height: 70,
+                    child: MediaQuery.removePadding(
+                      context: context,
+                      removeBottom: true,
+                      child: Transform.translate(
+                        offset: const Offset(0, -16),
+                        child: NavigationBar(
+                          height: 70,
+                          selectedIndex: safeIndex,
+                          onDestinationSelected: (i) =>
+                              ref.read(shellTabProvider.notifier).set(i),
+                          backgroundColor: Colors.transparent,
+                          indicatorColor: AppTheme.isDark(context)
+                              ? AppTheme.accent(context).withValues(alpha: 0.18)
+                              : AppTheme.lightAccentSurface,
+                          elevation: 0,
+                          labelBehavior:
+                              NavigationDestinationLabelBehavior.alwaysShow,
+                          destinations: [
+                            for (var i = 0; i < widget.tabs.length; i++) ...[
+                              () {
+                                final tab = widget.tabs[i];
+                                final isNotif = tab.label == 'Notifikasi';
+                                final count = isNotif ? unreadCount : 0;
+                                final badgeText = count > 9 ? '9+' : '$count';
+                                final iconWidget = Icon(
+                                  tab.icon,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant,
+                                );
+                                final selectedIconWidget = Icon(
+                                  tab.icon,
+                                  color: Theme.of(context).colorScheme.primary,
+                                );
+
+                                return NavigationDestination(
+                                  icon: count > 0
+                                      ? Badge(
+                                          label: Text(badgeText),
+                                          child: iconWidget,
+                                        )
+                                      : iconWidget,
+                                  selectedIcon: count > 0
+                                      ? Badge(
+                                          label: Text(badgeText),
+                                          child: selectedIconWidget,
+                                        )
+                                      : selectedIconWidget,
+                                  label: tab.label,
+                                );
+                              }(),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

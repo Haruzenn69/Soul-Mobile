@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 
 import 'screens/auth_gate.dart';
 import 'theme/app_theme.dart';
@@ -19,19 +20,37 @@ void main() async {
   } catch (_) {}
   
   // Custom Error Widget untuk menampilkan detail error di layar secara elegan
-  ErrorWidget.builder = (details) => Material(
-    color: const Color(0xFF7F1D1D),
-    child: Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: SelectableText(
-          '${details.exception}\n\n${details.stack ?? ""}\n\n'
-          '${details.informationCollector?.call().join('\n') ?? ""}',
-          style: const TextStyle(color: Colors.yellow, fontSize: 13),
+  ErrorWidget.builder = (details) {
+    if (!kDebugMode) {
+      return const Material(
+        color: Color(0xFF7F1D1D),
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Text(
+              'Terjadi kesalahan. Silakan muat ulang halaman atau buka kembali aplikasi.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Material(
+      color: const Color(0xFF7F1D1D),
+      child: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: SelectableText(
+            '${details.exception}\n\n${details.stack ?? ""}\n\n'
+            '${details.informationCollector?.call().join('\n') ?? ""}',
+            style: const TextStyle(color: Colors.yellow, fontSize: 13),
+          ),
         ),
       ),
-    ),
-  );
+    );
+  };
   
   // Menjalankan root widget aplikasi dengan Riverpod ProviderScope
   runApp(const ProviderScope(child: SoulApp()));
@@ -62,13 +81,13 @@ class SoulApp extends ConsumerWidget {
             statusBarColor: background,
             statusBarIconBrightness: dark ? Brightness.light : Brightness.dark,
             statusBarBrightness: dark ? Brightness.dark : Brightness.light,
-            systemNavigationBarColor: background,
+            // Biarkan konten aplikasi terlihat di area gesture sistem agar
+            // ruang di bawah navbar mengambang tetap transparan.
+            systemNavigationBarColor: Colors.transparent,
             systemNavigationBarIconBrightness: dark
                 ? Brightness.light
                 : Brightness.dark,
-            systemNavigationBarDividerColor: Theme.of(context)
-                .colorScheme
-                .outline,
+            systemNavigationBarDividerColor: Colors.transparent,
             systemNavigationBarContrastEnforced: false,
             systemStatusBarContrastEnforced: false,
           ),

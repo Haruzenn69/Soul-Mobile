@@ -12,7 +12,7 @@ final apiClientProvider = Provider<ApiClient>(
   (ref) => ApiClient(tokenStorage: ref.watch(tokenStorageProvider)),
 );
 
-enum AuthStatus { unknown, authenticated, unauthenticated }
+enum AuthStatus { unknown, authenticated, unauthenticated, sessionUnavailable }
 
 class AuthState {
   final AuthStatus status;
@@ -20,6 +20,7 @@ class AuthState {
   final String? token;
   final bool loading;
   final String? loginError;
+  final String? sessionError;
 
   const AuthState({
     this.status = AuthStatus.unknown,
@@ -27,6 +28,7 @@ class AuthState {
     this.token,
     this.loading = false,
     this.loginError,
+    this.sessionError,
   });
 
   AuthState copyWith({
@@ -35,6 +37,7 @@ class AuthState {
     String? token,
     bool? loading,
     String? loginError,
+    String? sessionError,
     bool clearError = false,
   }) => AuthState(
     status: status ?? this.status,
@@ -42,6 +45,7 @@ class AuthState {
     token: token ?? this.token,
     loading: loading ?? this.loading,
     loginError: clearError ? null : (loginError ?? this.loginError),
+    sessionError: sessionError ?? this.sessionError,
   );
 }
 
@@ -53,6 +57,7 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> _restoreSession() async {
+    state = const AuthState(status: AuthStatus.unknown);
     final api = ref.read(apiClientProvider);
     final storage = ref.read(tokenStorageProvider);
     try {
@@ -89,11 +94,22 @@ class AuthController extends Notifier<AuthState> {
         token: token,
       );
       ref.read(selectedSiswaEkskulProvider.notifier).clear();
-    } catch (_) {
-      try {
-        await api.clearToken();
-      } catch (_) {}
-      state = const AuthState(status: AuthStatus.unauthenticated);
+    } catch (error) {
+      // Hanya token yang ditolak server (401) yang dianggap kedaluwarsa.
+      // Gangguan jaringan dan timeout tidak boleh menghapus sesi lokal.
+      if (error is ApiException && error.isUnauthorized) {
+        try {
+          await api.clearToken();
+        } catch (_) {}
+        state = const AuthState(status: AuthStatus.unauthenticated);
+        return;
+      }
+      state = AuthState(
+        status: AuthStatus.sessionUnavailable,
+        sessionError: error is ApiException
+            ? error.message
+            : 'Tidak dapat memeriksa sesi. Periksa koneksi lalu coba lagi.',
+      );
     }
   }
 

@@ -36,12 +36,55 @@ class AuthGate extends ConsumerWidget {
     return switch (state.status) {
       AuthStatus.unknown => const SplashScreen(),
       AuthStatus.unauthenticated => const LoginScreen(),
+      AuthStatus.sessionUnavailable => _SessionUnavailable(
+        message: state.sessionError,
+        onRetry: () =>
+            ref.read(authControllerProvider.notifier).refreshSession(),
+      ),
       AuthStatus.authenticated =>
         state.user!.needsOnboarding
             ? _OnboardingPrompt(user: state.user!)
             : _ProfileCompletionPrompt(user: state.user!),
     };
   }
+}
+
+class _SessionUnavailable extends StatelessWidget {
+  const _SessionUnavailable({required this.message, required this.onRetry});
+
+  final String? message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.wifi_off_rounded, size: 48),
+            const SizedBox(height: 16),
+            const Text(
+              'Sesi belum dapat diperiksa',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message ?? 'Periksa koneksi internet lalu coba lagi.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Coba lagi'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 /// Widget perantara untuk menampilkan dialog onboarding bagi pengguna baru/belum onboarding.

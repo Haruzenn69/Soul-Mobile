@@ -646,7 +646,12 @@ class _AnggotaListState extends ConsumerState<_AnggotaList> {
                         items: sorted,
                         pageSize: 25,
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          8,
+                          16,
+                          floatingNavScrollPadding(context),
+                        ),
                         separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, raw, i) {
                           final p = Pendaftaran.fromJson(raw);
@@ -972,14 +977,17 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      floatingActionButton: FloatingActionButton.extended(
-        key: const ValueKey('open-add-members'),
-        heroTag: 'open-add-members-fab',
-        onPressed: _addMembers,
-        backgroundColor: AppTheme.blue,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.person_add_alt_1_rounded),
-        label: const Text('Tambah Anggota'),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 92),
+        child: FloatingActionButton.extended(
+          key: const ValueKey('open-add-members'),
+          heroTag: 'open-add-members-fab',
+          onPressed: _addMembers,
+          backgroundColor: AppTheme.blue,
+          foregroundColor: Colors.white,
+          icon: const Icon(Icons.person_add_alt_1_rounded),
+          label: const Text('Tambah Anggota'),
+        ),
       ),
       body: ApiAsyncView(
         value: data,
@@ -1340,7 +1348,12 @@ class _PendaftaranListState extends ConsumerState<_PendaftaranList> {
                           items: sorted,
                           pageSize: 25,
                           physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                          padding: EdgeInsets.fromLTRB(
+                            16,
+                            8,
+                            16,
+                            floatingNavScrollPadding(context),
+                          ),
                           separatorBuilder: (_, _) => const SizedBox(height: 8),
                           itemBuilder: (context, raw, i) {
                             final p = Pendaftaran.fromJson(raw);
@@ -1872,7 +1885,12 @@ class _PengajuanListState extends ConsumerState<_PengajuanList> {
                         items: sorted,
                         pageSize: 25,
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          8,
+                          16,
+                          floatingNavScrollPadding(context),
+                        ),
                         separatorBuilder: (_, _) => const SizedBox(height: 8),
                         itemBuilder: (context, p, i) {
                           return Container(

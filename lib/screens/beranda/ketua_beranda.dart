@@ -33,7 +33,12 @@ class BerandaKetua extends ConsumerWidget {
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                12,
+                16,
+                floatingNavScrollPadding(context),
+              ),
               sliver: SliverToBoxAdapter(
                 child: ApiAsyncView(
                   value: dashboard,

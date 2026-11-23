@@ -41,162 +41,197 @@ class _ProfileHeroCard extends StatelessWidget {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: AppTheme.outline(context)),
+        gradient: AppTheme.brandHeroGradient(context),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: dark ? 0.12 : 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 7),
+            color: AppTheme.brandHeroShadow(context),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: Column(
+      child: Stack(
         children: [
-          Stack(
-            children: [
-              Container(
-                height: 118,
-                decoration: BoxDecoration(
-                  gradient: AppTheme.brandHeroGradient(context),
-                ),
-                child: coverUrl?.trim().isNotEmpty == true
-                    ? Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          Image.network(
-                            AppConfig.imageUrl(coverUrl),
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.black.withValues(alpha: 0.48),
-                                  Colors.black.withValues(alpha: 0.18),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      )
-                    : null,
+          if (coverUrl?.trim().isNotEmpty == true)
+            Positioned.fill(
+              child: Image.network(
+                AppConfig.imageUrl(coverUrl),
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
               ),
-              if (onEdit != null)
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: IconButton(
-                    tooltip: 'Edit Profil',
-                    onPressed: onEdit,
-                    icon: const Icon(Icons.edit_outlined),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.white.withValues(alpha: 0.86),
-                      foregroundColor: AppTheme.blue,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          Transform.translate(
-            offset: const Offset(0, -36),
+            ),
+          Positioned(
+            right: -38,
+            top: -62,
             child: Container(
-              width: 88,
-              height: 88,
-              padding: const EdgeInsets.all(3),
+              width: 190,
+              height: 190,
               decoration: BoxDecoration(
-                gradient: AppTheme.brandHeroGradient(context),
                 shape: BoxShape.circle,
-              ),
-              child: PersonAvatar(
-                name: name,
-                photoUrl: photoUrl,
-                radius: 41,
-                backgroundColor: AppTheme.surface(context),
-                foregroundColor: AppTheme.blue,
+                color: Colors.white.withValues(alpha: 0.08),
               ),
             ),
           ),
-          Transform.translate(
-            offset: const Offset(0, -24),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  Text(
-                    name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.text(context),
-                      fontSize: 21,
-                      height: 1.2,
-                      fontWeight: FontWeight.w900,
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    (dark ? AppTheme.darkSurface : AppTheme.blue).withValues(
+                      alpha: coverUrl?.trim().isNotEmpty == true ? 0.84 : 0.96,
                     ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    subtitle,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.mutedText(context),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+                    (dark
+                            ? AppTheme.darkRaisedSurface
+                            : const Color(0xFF1D4ED8))
+                        .withValues(
+                          alpha: coverUrl?.trim().isNotEmpty == true
+                              ? 0.90
+                              : 0.98,
+                        ),
+                  ],
+                ),
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 18),
-            child: Row(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                for (var index = 0; index < metrics.length; index++) ...[
-                  if (index > 0)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Identitas akun',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: Colors.white.withValues(alpha: 0.78),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (onEdit != null)
+                      IconButton(
+                        tooltip: 'Edit Profil',
+                        onPressed: onEdit,
+                        icon: const Icon(Icons.edit_outlined, size: 19),
+                        visualDensity: VisualDensity.compact,
+                        style: IconButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.white.withValues(alpha: 0.14),
+                          side: BorderSide(
+                            color: Colors.white.withValues(alpha: 0.22),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
                     Container(
-                      width: 1,
-                      height: 32,
-                      color: AppTheme.outline(context),
-                    ),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        Text(
-                          metrics[index].value,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.plusJakartaSans(
-                            color: AppTheme.text(context),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                          ),
+                      width: 70,
+                      height: 70,
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.72),
+                          width: 1.5,
                         ),
-                        const SizedBox(height: 3),
-                        Text(
-                          metrics[index].label.toUpperCase(),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.plusJakartaSans(
-                            color: AppTheme.mutedText(context),
-                            fontSize: 9,
-                            letterSpacing: 0.6,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
+                      ),
+                      child: PersonAvatar(
+                        name: name,
+                        photoUrl: photoUrl,
+                        radius: 32,
+                        backgroundColor: AppTheme.surface(context),
+                        foregroundColor: AppTheme.accent(context),
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            name,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.white,
+                              fontSize: 19,
+                              height: 1.15,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            subtitle,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: Colors.white.withValues(alpha: 0.78),
+                              fontSize: 11,
+                              height: 1.3,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Container(
+                  height: 1,
+                  color: Colors.white.withValues(alpha: 0.20),
+                ),
+                const SizedBox(height: 13),
+                Row(
+                  children: [
+                    for (var index = 0; index < metrics.length; index++) ...[
+                      if (index > 0)
+                        Container(
+                          width: 1,
+                          height: 30,
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                          color: Colors.white.withValues(alpha: 0.24),
+                        ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              metrics[index].label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                color: Colors.white.withValues(alpha: 0.72),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              metrics[index].value,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.plusJakartaSans(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ],
             ),
           ),
@@ -243,7 +278,12 @@ class ProfilScreen extends ConsumerWidget {
 
     return SafeArea(
       child: ListView(
-        padding: EdgeInsets.fromLTRB(16, showHeader ? 0 : 16, 16, 24),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          showHeader ? 0 : 16,
+          16,
+          floatingNavScrollPadding(context),
+        ),
         children: [
           if (showHeader)
             const PageHeader(
@@ -438,7 +478,7 @@ class ProfilScreen extends ConsumerWidget {
                               darkMode
                                   ? Icons.dark_mode_rounded
                                   : Icons.light_mode_rounded,
-                              color: AppTheme.blue,
+                              color: AppTheme.accent(context),
                               size: 20,
                             ),
                           ),
@@ -555,36 +595,23 @@ class ProfilScreen extends ConsumerWidget {
     required Widget child,
   }) {
     final colors = Theme.of(context).colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.outlineVariant),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.035),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 38,
-                height: 38,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
-                  color: colors.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppTheme.accentSurface(context),
+                  borderRadius: BorderRadius.circular(11),
                 ),
-                child: Icon(icon, color: AppTheme.blue, size: 20),
+                child: Icon(icon, color: AppTheme.accent(context), size: 18),
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -593,16 +620,16 @@ class ProfilScreen extends ConsumerWidget {
                       title,
                       style: GoogleFonts.plusJakartaSans(
                         color: colors.onSurface,
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
                       subtitle,
                       style: GoogleFonts.plusJakartaSans(
                         color: colors.onSurfaceVariant,
-                        fontSize: 11,
+                        fontSize: 11.5,
                         height: 1.35,
                       ),
                     ),
@@ -611,8 +638,16 @@ class ProfilScreen extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
-          child,
+          const SizedBox(height: 11),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: colors.outlineVariant),
+            ),
+            child: child,
+          ),
         ],
       ),
     );
@@ -625,7 +660,7 @@ class ProfilScreen extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: AppTheme.blue),
+          Icon(icon, size: 20, color: AppTheme.accent(context)),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -683,6 +718,9 @@ class ProfilScreen extends ConsumerWidget {
     Color? iconBackground,
   }) {
     final colors = Theme.of(context).colorScheme;
+    final actionColor = color == AppTheme.blue
+        ? AppTheme.accent(context)
+        : color;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -697,7 +735,7 @@ class ProfilScreen extends ConsumerWidget {
                 color: iconBackground ?? AppTheme.accentSurface(context),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: color, size: 20),
+              child: Icon(icon, color: actionColor, size: 20),
             ),
             const SizedBox(width: 11),
             Expanded(
@@ -762,9 +800,9 @@ class ProfilScreen extends ConsumerWidget {
                     color: AppTheme.accentSurface(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.lock_reset_rounded,
-                    color: AppTheme.blue,
+                    color: AppTheme.accent(context),
                   ),
                 ),
                 const SizedBox(width: 12),

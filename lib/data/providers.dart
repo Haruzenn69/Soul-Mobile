@@ -6,11 +6,6 @@ import '../core/providers.dart';
 /// Definisi tipe data peta JSON (Map &lt;String, dynamic&gt;)
 typedef Json = Map<String, dynamic>;
 
-/// Fungsi bantu untuk menginvalidasi seluruh cache provider
-Future<void> invalidateAll(Ref ref) async {
-  await Future<void>.delayed(Duration.zero);
-}
-
 /// Helper untuk mengekstrak objek `data` dari respons standar JSON API
 Map<String, dynamic>? dataOf(Object? body) {
   if (body is! Map) return null;

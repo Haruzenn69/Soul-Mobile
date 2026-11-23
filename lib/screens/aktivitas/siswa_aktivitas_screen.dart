@@ -182,7 +182,12 @@ class _PresensiTabState extends ConsumerState<_PresensiTab> {
 
         if (rawRows.isEmpty) {
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              12,
+              16,
+              floatingNavScrollPadding(context),
+            ),
             children: [
               const EmptyState(
                 title: 'Belum ada data presensi',
@@ -514,7 +519,12 @@ class _PresensiTabState extends ConsumerState<_PresensiTab> {
                     : PaginatedList<Map<String, dynamic>>(
                         items: sorted,
                         pageSize: 10,
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          8,
+                          16,
+                          floatingNavScrollPadding(context),
+                        ),
                         separatorBuilder: (_, _) => const SizedBox(height: 9),
                         itemBuilder: (context, row, index) {
                           final kegiatan = row['kegiatan'] is Map
@@ -565,7 +575,12 @@ class _RekapTabState extends ConsumerState<_RekapTab> {
             : null;
         if (row == null) {
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+            padding: EdgeInsets.fromLTRB(
+              16,
+              12,
+              16,
+              floatingNavScrollPadding(context),
+            ),
             children: [
               const EmptyState(
                 title: 'Belum ada rekap absensi',
@@ -577,7 +592,12 @@ class _RekapTabState extends ConsumerState<_RekapTab> {
         final months = (data['available_months'] as List?) ?? const [];
         final month = data['bulan']?.toString() ?? '';
         return ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            12,
+            16,
+            floatingNavScrollPadding(context),
+          ),
           children: [
             _StudentPeriodHero(
               month: month,

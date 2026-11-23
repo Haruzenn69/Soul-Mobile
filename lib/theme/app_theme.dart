@@ -18,12 +18,16 @@ class AppTheme {
   static const line = Color(0xFFE3EAF4);
   static const lightSurfaceVariant = Color(0xFFF1F5FB);
   static const lightAccentSurface = Color(0xFFEDF4FF);
-  static const darkCanvas = Color(0xFF171717);
-  static const darkSurface = Color(0xFF24262B);
-  static const darkSurfaceVariant = Color(0xFF2C3038);
-  static const darkLine = Color(0xFF3B414A);
-  static const darkInk = Color(0xFFF5F5F5);
-  static const darkSub = Color(0xFFA6AFBD);
+  static const darkCanvas = Color(0xFF141619);
+  static const darkSurface = Color(0xFF1C2025);
+  static const darkSurfaceVariant = Color(0xFF252A31);
+  static const darkRaisedSurface = Color(0xFF2D333B);
+  static const darkLine = Color(0xFF3A414B);
+  static const darkInk = Color(0xFFF2F3F5);
+  static const darkSub = Color(0xFFADB4BE);
+  static const darkAccent = Color(0xFF8ABEFF);
+  static const darkAccentStrong = Color(0xFF3478C5);
+  static const darkAccentSurface = Color(0xFF252D37);
 
   /// Mengecek apakah mode gelap sedang aktif
   static bool isDark(BuildContext context) =>
@@ -52,11 +56,11 @@ class AppTheme {
       isDark(context) ? const Color(0xFF8ADDAB) : const Color(0xFF15803D);
 
   static Color infoSurface(BuildContext context) =>
-      isDark(context) ? const Color(0xFF1D2F40) : const Color(0xFFE0F2FE);
+      isDark(context) ? darkAccentSurface : const Color(0xFFE0F2FE);
   static Color infoBorder(BuildContext context) =>
-      isDark(context) ? const Color(0xFF31516D) : const Color(0xFFBFDBFE);
+      isDark(context) ? const Color(0xFF355677) : const Color(0xFFBFDBFE);
   static Color infoText(BuildContext context) =>
-      isDark(context) ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8);
+      isDark(context) ? darkAccent : const Color(0xFF1D4ED8);
 
   // Helper warna UI adaptif
   static Color surface(BuildContext context) =>
@@ -73,13 +77,13 @@ class AppTheme {
       Theme.of(context).colorScheme.outline;
   static Color accentSurface(BuildContext context) =>
       Theme.of(context).brightness == Brightness.dark
-      ? const Color(0xFF202B3A)
+      ? darkAccentSurface
       : lightAccentSurface;
 
   /// Gradient warna untuk hero card pada beranda
   static LinearGradient brandHeroGradient(BuildContext context) {
     final colors = isDark(context)
-        ? const [Color(0xFF17283D), Color(0xFF1E3A5F), Color(0xFF1D4ED8)]
+        ? const [Color(0xFF20252B), Color(0xFF29333E), Color(0xFF35485D)]
         : const [sky, Color(0xFF60A5FA), blue];
     return LinearGradient(
       begin: Alignment.topLeft,
@@ -89,7 +93,9 @@ class AppTheme {
   }
 
   static Color brandHeroShadow(BuildContext context) =>
-      blue.withValues(alpha: isDark(context) ? 0.1 : 0.18);
+      (isDark(context) ? darkAccent : blue).withValues(
+        alpha: isDark(context) ? 0.14 : 0.18,
+      );
 
   /// Konfigurasi Tema Terang (Light Theme)
   static ThemeData light() {
@@ -323,14 +329,27 @@ class AppTheme {
         ColorScheme.fromSeed(
           seedColor: blue,
           brightness: Brightness.dark,
-          primary: const Color(0xFF60A5FA),
+          primary: darkAccent,
           surface: darkSurface,
         ).copyWith(
-          primary: const Color(0xFF60A5FA),
-          secondary: const Color(0xFF7DD3FC),
+          primary: darkAccent,
+          onPrimary: const Color(0xFF10243A),
+          primaryContainer: darkAccentSurface,
+          onPrimaryContainer: const Color(0xFFD8E9FF),
+          secondary: const Color(0xFF72D0DD),
+          onSecondary: const Color(0xFF10262B),
           surface: darkSurface,
+          surfaceDim: darkCanvas,
+          surfaceBright: darkRaisedSurface,
+          surfaceContainerLowest: const Color(0xFF101214),
+          surfaceContainerLow: const Color(0xFF181B1F),
+          surfaceContainer: const Color(0xFF202429),
+          surfaceContainerHigh: const Color(0xFF282D34),
           surfaceContainerHighest: darkSurfaceVariant,
+          onSurface: darkInk,
+          onSurfaceVariant: darkSub,
           outline: darkLine,
+          outlineVariant: const Color(0xFF30363E),
         );
 
     return base.copyWith(
@@ -340,6 +359,33 @@ class AppTheme {
         fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
         bodyColor: darkInk,
         displayColor: darkInk,
+      ),
+      iconTheme: const IconThemeData(color: darkSub),
+      bottomAppBarTheme: const BottomAppBarThemeData(
+        color: darkSurface,
+        surfaceTintColor: Colors.transparent,
+      ),
+      badgeTheme: const BadgeThemeData(
+        backgroundColor: darkAccent,
+        textColor: Color(0xFF10243A),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: darkSurfaceVariant,
+        selectedColor: darkAccentSurface,
+        disabledColor: darkSurface,
+        secondarySelectedColor: darkAccentSurface,
+        labelStyle: GoogleFonts.plusJakartaSans(
+          color: darkInk,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        secondaryLabelStyle: GoogleFonts.plusJakartaSans(
+          color: darkAccent,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
+        side: const BorderSide(color: darkLine),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: darkCanvas,
@@ -370,7 +416,7 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: blue,
+          backgroundColor: darkAccentStrong,
           foregroundColor: Colors.white,
           elevation: 0,
           minimumSize: const Size(48, 48),
@@ -398,7 +444,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: const Color(0xFF93C5FD),
+          foregroundColor: darkAccent,
           minimumSize: const Size(44, 44),
           textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
         ),
@@ -427,12 +473,9 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: darkSurface,
+        fillColor: darkSurfaceVariant,
         hintStyle: GoogleFonts.plusJakartaSans(color: darkSub, fontSize: 13),
-        labelStyle: GoogleFonts.plusJakartaSans(
-          color: const Color(0xFFCBD5E1),
-          fontSize: 13,
-        ),
+        labelStyle: GoogleFonts.plusJakartaSans(color: darkSub, fontSize: 13),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
@@ -447,7 +490,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF60A5FA), width: 1.4),
+          borderSide: const BorderSide(color: darkAccent, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
@@ -458,10 +501,30 @@ class AppTheme {
           borderSide: const BorderSide(color: Color(0xFFFB7185), width: 1.4),
         ),
       ),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: darkAccent,
+        selectionColor: Color(0x558ABEFF),
+        selectionHandleColor: darkAccent,
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          return states.contains(WidgetState.selected) ? darkAccent : darkSub;
+        }),
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          return states.contains(WidgetState.selected)
+              ? darkAccent.withValues(alpha: 0.35)
+              : darkSurfaceVariant;
+        }),
+        trackOutlineColor: const WidgetStatePropertyAll(darkLine),
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: darkAccentStrong,
+        foregroundColor: Colors.white,
+      ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: darkSurface.withValues(alpha: 0.88),
         surfaceTintColor: Colors.transparent,
-        indicatorColor: const Color(0xFF60A5FA).withValues(alpha: 0.18),
+        indicatorColor: darkAccent.withValues(alpha: 0.18),
         height: 74,
         elevation: 0,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
@@ -471,16 +534,14 @@ class AppTheme {
         iconTheme: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
           return IconThemeData(
-            color: isSelected ? const Color(0xFF60A5FA) : darkSub,
+            color: isSelected ? darkAccent : darkSub,
             size: 22,
           );
         }),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => GoogleFonts.plusJakartaSans(
             fontSize: 10.5,
-            color: states.contains(WidgetState.selected)
-                ? const Color(0xFF60A5FA)
-                : darkSub,
+            color: states.contains(WidgetState.selected) ? darkAccent : darkSub,
             fontWeight: states.contains(WidgetState.selected)
                 ? FontWeight.w800
                 : FontWeight.w600,
@@ -488,14 +549,14 @@ class AppTheme {
         ),
       ),
       tabBarTheme: const TabBarThemeData(
-        labelColor: Color(0xFF93C5FD),
+        labelColor: darkAccent,
         unselectedLabelColor: darkSub,
         dividerColor: Colors.transparent,
-        indicatorColor: Color(0xFF60A5FA),
+        indicatorColor: darkAccent,
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: Color(0xFF60A5FA),
-        linearTrackColor: Color(0xFF1E3A5F),
+        color: darkAccent,
+        linearTrackColor: darkAccentSurface,
       ),
       dividerTheme: const DividerThemeData(color: darkLine, thickness: 1),
       popupMenuTheme: PopupMenuThemeData(

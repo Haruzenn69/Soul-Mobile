@@ -606,11 +606,11 @@ class _KegiatanScreenState extends ConsumerState<KegiatanScreen>
                                           : Icons.search_off_rounded,
                                     )
                                   : ListView.separated(
-                                      padding: const EdgeInsets.fromLTRB(
+                                      padding: EdgeInsets.fromLTRB(
                                         16,
                                         4,
                                         16,
-                                        16,
+                                        floatingNavScrollPadding(context),
                                       ),
                                       itemCount: sorted.length,
                                       separatorBuilder: (_, _) =>

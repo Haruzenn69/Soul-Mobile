@@ -10,6 +10,11 @@ import '../core/providers.dart';
 import '../models/models.dart';
 import '../theme/app_theme.dart';
 
+/// Ruang scroll di ujung konten agar item terakhir dapat muncul di atas navbar
+/// mengambang tanpa mengecilkan viewport halaman.
+double floatingNavScrollPadding(BuildContext context) =>
+    MediaQuery.viewPaddingOf(context).bottom + 104;
+
 class DashboardEkskulSwitcher extends StatelessWidget {
   const DashboardEkskulSwitcher({
     super.key,
@@ -47,7 +52,7 @@ class DashboardEkskulSwitcher extends StatelessWidget {
                       : Icons.radio_button_off_rounded,
                   size: 18,
                   color: ekskul.id == current.id
-                      ? AppTheme.blue
+                      ? AppTheme.accent(context)
                       : AppTheme.mutedText(context),
                 ),
                 const SizedBox(width: 8),
@@ -62,7 +67,7 @@ class DashboardEkskulSwitcher extends StatelessWidget {
                   Text(
                     'Ketua',
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.blue,
+                      color: AppTheme.accent(context),
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                     ),
@@ -501,9 +506,8 @@ class ActiveEkskulSelector extends StatelessWidget {
           border: Border.all(color: AppTheme.outline(context)),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.blue.withValues(
-                alpha: AppTheme.isDark(context) ? 0.08 : 0.035,
-              ),
+              color: AppTheme.accent(context)
+                  .withValues(alpha: AppTheme.isDark(context) ? 0.08 : 0.035),
               blurRadius: 16,
               offset: const Offset(0, 5),
             ),
@@ -612,7 +616,8 @@ class ActiveEkskulSelector extends StatelessWidget {
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: isSelected
-                                  ? AppTheme.blue.withValues(alpha: 0.55)
+                                  ? AppTheme.accent(context)
+                                        .withValues(alpha: 0.55)
                                   : AppTheme.outline(context),
                               width: isSelected ? 1.3 : 1,
                             ),
@@ -720,7 +725,7 @@ class PersonAvatar extends StatelessWidget {
         : backgroundColor;
     final effectiveForeground =
         foregroundColor == AppTheme.blue && theme.brightness == Brightness.dark
-        ? const Color(0xFF93C5FD)
+        ? AppTheme.accent(context)
         : foregroundColor;
     final normalizedUrl = photoUrl?.trim();
     final photoUrlResolved = AppConfig.profilePhotoUrl(normalizedUrl);
@@ -1061,9 +1066,8 @@ class StatCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.blue.withValues(
-              alpha: AppTheme.isDark(context) ? 0.035 : 0.045,
-            ),
+            color: AppTheme.accent(context)
+                .withValues(alpha: AppTheme.isDark(context) ? 0.035 : 0.045),
             blurRadius: 14,
             offset: const Offset(0, 5),
           ),
@@ -1474,10 +1478,11 @@ class ContentCard extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: AppTheme.blue.withValues(alpha: 0.1),
+                  color: AppTheme.accent(context)
+                      .withValues(alpha: AppTheme.isDark(context) ? 0.16 : 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: AppTheme.blue, size: 20),
+                child: Icon(icon, color: AppTheme.accent(context), size: 20),
               ),
               const SizedBox(width: 11),
               Expanded(

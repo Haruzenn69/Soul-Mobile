@@ -210,7 +210,12 @@ class _KatalogScreenState extends ConsumerState<KatalogScreen> {
     return PaginatedList<Map<String, dynamic>>(
       items: filteredByCategory,
       pageSize: 10,
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        4,
+        16,
+        floatingNavScrollPadding(context),
+      ),
       separatorBuilder: (_, _) => const SizedBox(height: 12),
       itemBuilder: (context, item, index) {
         final raw = Map<String, dynamic>.from(item);
