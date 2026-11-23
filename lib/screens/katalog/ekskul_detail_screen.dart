@@ -10,6 +10,16 @@ import '../../theme/app_theme.dart';
 import '../../widgets/common.dart';
 import '../../widgets/photo_viewer.dart';
 
+abstract final class _DetailFont {
+  static const micro = 11.0;
+  static const caption = 12.0;
+  static const secondary = 13.0;
+  static const body = 14.0;
+  static const cardTitle = 15.0;
+  static const sectionTitle = 20.0;
+  static const heroTitle = 23.0;
+}
+
 class EkskulDetailScreen extends ConsumerStatefulWidget {
   const EkskulDetailScreen({super.key, required this.ekskulId});
 
@@ -87,7 +97,7 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
     final detail = ref.watch(ekskulDetailProvider(widget.ekskulId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Detail Ekskul')),
+      appBar: AppBar(title: const Text('Profil ekskul')),
       body: ApiAsyncView(
         value: detail,
         onRetry: () => ref.invalidate(ekskulDetailProvider(widget.ekskulId)),
@@ -115,7 +125,7 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
               detailData['has_submitted_testimoni'] == true;
 
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 136),
             children: [
               _DetailHero(
                 ekskul: ekskul,
@@ -123,7 +133,7 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
                     ? Map<String, dynamic>.from(pelatih)
                     : null,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 26),
               _DetailSectionHeading(
                 eyebrow: 'TENTANG KAMI',
                 title: 'Mengenal ${ekskul.namaEkskul}',
@@ -136,7 +146,7 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
                 children: [
                   const Expanded(
                     child: _DetailSectionHeading(
-                      eyebrow: 'HALL OF FAME',
+                      eyebrow: 'PENCAPAIAN',
                       title: 'Prestasi',
                     ),
                   ),
@@ -307,12 +317,12 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
             decoration: BoxDecoration(
-              color: AppTheme.accentSurface(context),
-              borderRadius: BorderRadius.circular(16),
+              color: AppTheme.surfaceVariant(context),
+              borderRadius: BorderRadius.circular(17),
               border: Border.all(color: AppTheme.outline(context)),
             ),
             child: Row(
@@ -327,7 +337,7 @@ class _EkskulDetailScreenState extends ConsumerState<EkskulDetailScreen> {
                     'Keanggotaan dikelola langsung oleh ketua ekskul. Hubungi ketua jika ingin bergabung.',
                     style: GoogleFonts.plusJakartaSans(
                       color: AppTheme.text(context),
-                      fontSize: 11,
+                      fontSize: _DetailFont.caption,
                       height: 1.35,
                     ),
                   ),
@@ -349,34 +359,23 @@ class _DetailHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initials = ekskul.namaEkskul.trim().isEmpty
+    final name = ekskul.namaEkskul.trim();
+    final initials = name.isEmpty
         ? 'E'
-        : ekskul.namaEkskul.trim().substring(
-            0,
-            ekskul.namaEkskul.trim().length > 1
-                ? 2
-                : ekskul.namaEkskul.trim().length,
-          );
+        : name.substring(0, name.length > 1 ? 2 : 1);
 
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(26),
         border: Border.all(color: AppTheme.outline(context)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A0F172A),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: 150,
+            height: 226,
             width: double.infinity,
             child: Stack(
               fit: StackFit.expand,
@@ -389,204 +388,203 @@ class _DetailHero extends StatelessWidget {
                       gradient: AppTheme.brandHeroGradient(context),
                     ),
                   ),
-                const DecoratedBox(
+                DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      colors: [Colors.black38, Colors.transparent],
+                      colors: [
+                        Colors.black.withValues(alpha: 0.28),
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.78),
+                      ],
+                      stops: const [0, 0.38, 1],
                     ),
                   ),
                 ),
                 Positioned(
-                  left: 12,
-                  top: 12,
+                  top: 14,
+                  left: 14,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
+                      horizontal: 11,
+                      vertical: 7,
                     ),
                     decoration: BoxDecoration(
                       color: ekskul.status
-                          ? const Color(0xFF15803D)
-                          : const Color(0xFF334155),
+                          ? AppTheme.successSurface(
+                              context,
+                            ).withValues(alpha: 0.94)
+                          : AppTheme.surface(context).withValues(alpha: 0.94),
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: Text(
-                      ekskul.status ? 'Ekskul Aktif' : 'Tidak Aktif',
-                      style: GoogleFonts.plusJakartaSans(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: ekskul.status
+                                ? AppTheme.successText(context)
+                                : AppTheme.mutedText(context),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 7),
+                        Text(
+                          ekskul.status ? 'Ekskul aktif' : 'Belum aktif',
+                          style: GoogleFonts.plusJakartaSans(
+                          color: ekskul.status
+                              ? AppTheme.successText(context)
+                              : AppTheme.mutedText(context),
+                            fontSize: _DetailFont.caption,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
                     ),
+                  ),
+                ),
+                Positioned(
+                  left: 18,
+                  right: 18,
+                  bottom: 17,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: (ekskul.logo ?? '').isNotEmpty
+                              ? _ImageOrPlaceholder(
+                                  url: AppConfig.imageUrl(ekskul.logo),
+                                )
+                              : DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: AppTheme.brandHeroGradient(
+                                      context,
+                                    ),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      initials.toUpperCase(),
+                                      style: GoogleFonts.plusJakartaSans(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(width: 13),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 2),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (ekskul.kategori?.isNotEmpty == true) ...[
+                                Text(
+                                  ekskul.kategori!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: Colors.white.withValues(alpha: 0.78),
+                                    fontSize: _DetailFont.caption,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                              ],
+                              Text(
+                                name.isEmpty ? 'Ekstrakurikuler' : name,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: Colors.white,
+                                  fontSize: _DetailFont.heroTitle,
+                                  fontWeight: FontWeight.w900,
+                                  height: 1.08,
+                                ),
+                              ),
+                              if (ekskul.tagline?.isNotEmpty == true) ...[
+                                const SizedBox(height: 3),
+                                Text(
+                                  ekskul.tagline!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: Colors.white.withValues(alpha: 0.78),
+                                    fontSize: _DetailFont.caption,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 13),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Transform.translate(
-                  offset: const Offset(0, -24),
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    padding: const EdgeInsets.all(2),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface(context),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.outline(context)),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x140F172A),
-                          blurRadius: 6,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
+                Row(
+                  children: [
+                    Expanded(
+                      child: _MetricTile(
+                        icon: Icons.school_outlined,
+                        label: 'Pembina',
+                        value: ekskul.pembina?.nama ?? 'Belum ditentukan',
+                      ),
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: (ekskul.logo ?? '').isNotEmpty
-                          ? _ImageOrPlaceholder(
-                              url: AppConfig.imageUrl(ekskul.logo),
-                            )
-                          : DecoratedBox(
-                              decoration: BoxDecoration(
-                                gradient: AppTheme.brandHeroGradient(context),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  initials.toUpperCase(),
-                                  style: GoogleFonts.plusJakartaSans(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                              ),
-                            ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _MetricTile(
+                        icon: Icons.sports_outlined,
+                        label: 'Pelatih',
+                        value: pelatih?['nama']?.toString() ?? 'Belum ada',
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                Transform.translate(
-                  offset: const Offset(0, -16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              ekskul.namaEkskul,
-                              style: GoogleFonts.plusJakartaSans(
-                                color: AppTheme.text(context),
-                                fontSize: 19,
-                                fontWeight: FontWeight.w900,
-                                height: 1.15,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.verified_rounded,
-                            color: AppTheme.blue,
-                            size: 18,
-                          ),
-                        ],
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _MetricTile(
+                        icon: Icons.groups_outlined,
+                        label: 'Anggota aktif',
+                        value: '${ekskul.anggotaCount} siswa',
                       ),
-                      if (ekskul.kategori?.isNotEmpty == true) ...[
-                        const SizedBox(height: 7),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 9,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.accentSurface(context),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: const Color(0xFFBFDBFE)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.category_outlined,
-                                color: AppTheme.blue,
-                                size: 13,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                ekskul.kategori!,
-                                style: GoogleFonts.plusJakartaSans(
-                                  color: AppTheme.blue,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      if (ekskul.tagline?.isNotEmpty == true) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          '“${ekskul.tagline}”',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: AppTheme.mutedText(context),
-                            fontSize: 12,
-                            fontStyle: FontStyle.italic,
-                            height: 1.4,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 12),
-                      GridView.count(
-                        crossAxisCount: 2,
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        childAspectRatio: 2.8,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
-                        children: [
-                          _MetricTile(
-                            icon: Icons.school_outlined,
-                            label: 'Pembina',
-                            value: ekskul.pembina?.nama ?? 'Belum ditentukan',
-                            tint: AppTheme.blue.withValues(alpha: 0.1),
-                            iconColor: AppTheme.blue,
-                          ),
-                          _MetricTile(
-                            icon: Icons.sports_outlined,
-                            label: 'Pelatih',
-                            value: pelatih?['nama']?.toString() ?? 'Belum ada',
-                            tint: AppTheme.warningSurface(context),
-                            iconColor: AppTheme.warningText(context),
-                          ),
-                          _MetricTile(
-                            icon: Icons.groups_outlined,
-                            label: 'Anggota aktif',
-                            value: '${ekskul.anggotaCount} siswa',
-                            tint: AppTheme.successSurface(context),
-                            iconColor: AppTheme.successText(context),
-                          ),
-                          _MetricTile(
-                            icon: Icons.calendar_month_outlined,
-                            label: 'Jadwal rutin',
-                            value: ekskul.jadwal?.isNotEmpty == true
-                                ? ekskul.jadwal!
-                                : 'Belum diatur',
-                            tint: AppTheme.blue.withValues(alpha: 0.1),
-                            iconColor: AppTheme.blue,
-                          ),
-                        ],
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _MetricTile(
+                        icon: Icons.calendar_month_outlined,
+                        label: 'Jadwal rutin',
+                        value: ekskul.jadwal?.isNotEmpty == true
+                            ? ekskul.jadwal!
+                            : 'Belum diatur',
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -602,27 +600,24 @@ class _MetricTile extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
-    required this.tint,
-    required this.iconColor,
   });
 
   final IconData icon;
   final String label;
   final String value;
-  final Color tint;
-  final Color iconColor;
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+    constraints: const BoxConstraints(minHeight: 58),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
     decoration: BoxDecoration(
-      color: tint,
-      borderRadius: BorderRadius.circular(12),
+      color: AppTheme.surfaceVariant(context).withValues(alpha: 0.65),
+      borderRadius: BorderRadius.circular(15),
     ),
     child: Row(
       children: [
-        Icon(icon, color: iconColor, size: 17),
-        const SizedBox(width: 7),
+        Icon(icon, color: AppTheme.accent(context), size: 18),
+        const SizedBox(width: 8),
         Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -634,7 +629,7 @@ class _MetricTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.plusJakartaSans(
                   color: AppTheme.mutedText(context),
-                  fontSize: 9,
+                  fontSize: _DetailFont.micro,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -644,7 +639,7 @@ class _MetricTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.plusJakartaSans(
                   color: AppTheme.text(context),
-                  fontSize: 10,
+                  fontSize: _DetailFont.caption,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -672,12 +667,11 @@ class _DetailSectionHeading extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(
-        eyebrow,
+        eyebrow.toLowerCase(),
         style: GoogleFonts.plusJakartaSans(
-          color: AppTheme.blue,
-          fontSize: 9,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 1,
+          color: AppTheme.accent(context),
+          fontSize: _DetailFont.caption,
+          fontWeight: FontWeight.w700,
         ),
       ),
       const SizedBox(height: 3),
@@ -685,7 +679,7 @@ class _DetailSectionHeading extends StatelessWidget {
         title,
         style: GoogleFonts.plusJakartaSans(
           color: AppTheme.text(context),
-          fontSize: 17,
+          fontSize: _DetailFont.sectionTitle,
           fontWeight: FontWeight.w900,
           height: 1.2,
         ),
@@ -696,7 +690,7 @@ class _DetailSectionHeading extends StatelessWidget {
           subtitle!,
           style: GoogleFonts.plusJakartaSans(
             color: AppTheme.mutedText(context),
-            fontSize: 11.5,
+            fontSize: _DetailFont.secondary,
             height: 1.4,
           ),
         ),
@@ -726,13 +720,17 @@ class _AboutCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.info_outline, color: AppTheme.blue, size: 19),
+                Icon(
+                  Icons.info_outline,
+                  color: AppTheme.accent(context),
+                  size: 19,
+                ),
                 const SizedBox(width: 8),
                 Text(
-                  'Profil & eksplorasi',
+                  'Tentang kegiatan',
                   style: GoogleFonts.plusJakartaSans(
                     color: AppTheme.text(context),
-                    fontSize: 13,
+                    fontSize: _DetailFont.cardTitle,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -752,9 +750,9 @@ class _AboutCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-          color: AppTheme.warningSurface(context),
+          color: AppTheme.surfaceVariant(context),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.warningBorder(context)),
+          border: Border.all(color: AppTheme.outline(context)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -763,15 +761,15 @@ class _AboutCard extends StatelessWidget {
               children: [
                 Icon(
                   Icons.track_changes_outlined,
-                  color: AppTheme.warningText(context),
+                  color: AppTheme.accent(context),
                   size: 19,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Fokus & tujuan',
+                  'Tujuan kegiatan',
                   style: GoogleFonts.plusJakartaSans(
                     color: AppTheme.text(context),
-                    fontSize: 13,
+                    fontSize: _DetailFont.cardTitle,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -813,14 +811,14 @@ class _DetailEmptyCard extends StatelessWidget {
     ),
     child: Column(
       children: [
-        Icon(icon, color: AppTheme.blue, size: 26),
+        Icon(icon, color: AppTheme.accent(context), size: 26),
         const SizedBox(height: 7),
         Text(
           title,
           textAlign: TextAlign.center,
           style: GoogleFonts.plusJakartaSans(
             color: AppTheme.text(context),
-            fontSize: 12,
+            fontSize: _DetailFont.cardTitle,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -830,7 +828,7 @@ class _DetailEmptyCard extends StatelessWidget {
           textAlign: TextAlign.center,
           style: GoogleFonts.plusJakartaSans(
             color: AppTheme.mutedText(context),
-            fontSize: 11,
+            fontSize: _DetailFont.secondary,
             height: 1.4,
           ),
         ),
@@ -862,7 +860,7 @@ class _CountBadge extends StatelessWidget {
           text,
           style: GoogleFonts.plusJakartaSans(
             color: AppTheme.warningText(context),
-            fontSize: 10,
+            fontSize: _DetailFont.caption,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -907,7 +905,9 @@ class _FeedbackActionCard extends StatelessWidget {
       children: [
         Icon(
           icon,
-          color: isComplete ? AppTheme.warningText(context) : AppTheme.blue,
+          color: isComplete
+              ? AppTheme.warningText(context)
+              : AppTheme.accent(context),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -918,7 +918,7 @@ class _FeedbackActionCard extends StatelessWidget {
                 title,
                 style: GoogleFonts.plusJakartaSans(
                   color: AppTheme.text(context),
-                  fontSize: 12,
+                  fontSize: _DetailFont.cardTitle,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -927,7 +927,7 @@ class _FeedbackActionCard extends StatelessWidget {
                 description,
                 style: GoogleFonts.plusJakartaSans(
                   color: AppTheme.mutedText(context),
-                  fontSize: 10.5,
+                  fontSize: _DetailFont.secondary,
                   height: 1.35,
                 ),
               ),
@@ -940,7 +940,10 @@ class _FeedbackActionCard extends StatelessWidget {
           child: Text(
             buttonLabel,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+            style: const TextStyle(
+              fontSize: _DetailFont.caption,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],
@@ -961,7 +964,7 @@ class _BodyText extends StatelessWidget {
         text,
         style: GoogleFonts.plusJakartaSans(
           color: AppTheme.text(context),
-          fontSize: 13,
+          fontSize: _DetailFont.body,
           height: 1.5,
         ),
       ),
@@ -981,7 +984,7 @@ class _PrestasiCard extends StatelessWidget {
       margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
         color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppTheme.outline(context)),
       ),
       clipBehavior: Clip.antiAlias,
@@ -1026,8 +1029,8 @@ class _PrestasiCard extends StatelessWidget {
                   Text(
                     data['kategori'].toString().toUpperCase(),
                     style: GoogleFonts.plusJakartaSans(
-                      color: AppTheme.blue,
-                      fontSize: 9,
+                      color: AppTheme.accent(context),
+                      fontSize: _DetailFont.caption,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 0.7,
                     ),
@@ -1037,7 +1040,7 @@ class _PrestasiCard extends StatelessWidget {
                   '${data['judul'] ?? ''}',
                   style: GoogleFonts.plusJakartaSans(
                     color: AppTheme.text(context),
-                    fontSize: 13.5,
+                    fontSize: _DetailFont.cardTitle,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -1047,7 +1050,7 @@ class _PrestasiCard extends StatelessWidget {
                     '${data['tahun']} · Terverifikasi',
                     style: GoogleFonts.plusJakartaSans(
                       color: AppTheme.mutedText(context),
-                      fontSize: 10.5,
+                      fontSize: _DetailFont.caption,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -1073,7 +1076,7 @@ class _KegiatanMini extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppTheme.surface(context),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(color: AppTheme.outline(context)),
       ),
       child: Row(
@@ -1082,12 +1085,12 @@ class _KegiatanMini extends StatelessWidget {
             width: 43,
             height: 48,
             decoration: BoxDecoration(
-              gradient: AppTheme.brandHeroGradient(context),
-              borderRadius: BorderRadius.circular(12),
+              color: AppTheme.accentSurface(context),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.event_outlined,
-              color: Colors.white,
+              color: AppTheme.accent(context),
               size: 21,
             ),
           ),
@@ -1100,7 +1103,7 @@ class _KegiatanMini extends StatelessWidget {
                   kegiatan.materi,
                   style: GoogleFonts.plusJakartaSans(
                     color: AppTheme.text(context),
-                    fontSize: 13.5,
+                    fontSize: _DetailFont.cardTitle,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1109,7 +1112,7 @@ class _KegiatanMini extends StatelessWidget {
                   kegiatan.tanggalText,
                   style: GoogleFonts.plusJakartaSans(
                     color: AppTheme.mutedText(context),
-                    fontSize: 11.5,
+                    fontSize: _DetailFont.secondary,
                   ),
                 ),
                 if (kegiatan.deskripsi?.isNotEmpty == true) ...[
@@ -1120,7 +1123,7 @@ class _KegiatanMini extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(
                       color: AppTheme.mutedText(context),
-                      fontSize: 10.5,
+                      fontSize: _DetailFont.secondary,
                       height: 1.35,
                     ),
                   ),
@@ -1145,9 +1148,9 @@ class _TestimoniCard extends StatelessWidget {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.warningSurface(context),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.warningBorder(context)),
+        color: AppTheme.surface(context),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppTheme.outline(context)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1170,7 +1173,7 @@ class _TestimoniCard extends StatelessWidget {
             '“${data['quote'] ?? ''}”',
             style: GoogleFonts.plusJakartaSans(
               color: AppTheme.text(context),
-              fontSize: 13,
+              fontSize: _DetailFont.body,
               fontStyle: FontStyle.italic,
               height: 1.45,
             ),
@@ -1180,7 +1183,7 @@ class _TestimoniCard extends StatelessWidget {
             '— ${data['nama'] ?? ''}${_kelasLabel(data['kelas']).isNotEmpty ? ' · ${_kelasLabel(data['kelas'])}' : ''}',
             style: GoogleFonts.plusJakartaSans(
               color: AppTheme.mutedText(context),
-              fontSize: 11.5,
+              fontSize: _DetailFont.caption,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -1205,7 +1208,7 @@ class _FaqCard extends StatelessWidget {
     margin: const EdgeInsets.only(bottom: 8),
     decoration: BoxDecoration(
       color: AppTheme.surface(context),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(18),
       border: Border.all(color: AppTheme.outline(context)),
     ),
     child: Theme(
@@ -1217,15 +1220,15 @@ class _FaqCard extends StatelessWidget {
           width: 30,
           height: 30,
           decoration: BoxDecoration(
-            color: const Color(AppConfig.brandBg),
+            color: AppTheme.accentSurface(context),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Center(
+          child: Center(
             child: Text(
               'Q',
-              style: TextStyle(
-                color: AppTheme.blue,
-                fontSize: 12,
+              style: GoogleFonts.plusJakartaSans(
+                color: AppTheme.accent(context),
+                fontSize: _DetailFont.cardTitle,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -1235,7 +1238,7 @@ class _FaqCard extends StatelessWidget {
           data['pertanyaan']?.toString() ?? '',
           style: GoogleFonts.plusJakartaSans(
             color: AppTheme.text(context),
-            fontSize: 12,
+            fontSize: _DetailFont.cardTitle,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -1257,7 +1260,7 @@ class _FaqCard extends StatelessWidget {
                     'A',
                     style: TextStyle(
                       color: AppTheme.warningText(context),
-                      fontSize: 11,
+                      fontSize: _DetailFont.caption,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -1269,7 +1272,7 @@ class _FaqCard extends StatelessWidget {
                   data['jawaban']?.toString() ?? '',
                   style: GoogleFonts.plusJakartaSans(
                     color: AppTheme.mutedText(context),
-                    fontSize: 11.5,
+                    fontSize: _DetailFont.secondary,
                     height: 1.5,
                   ),
                 ),

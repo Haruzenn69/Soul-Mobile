@@ -69,7 +69,7 @@ class AuthController extends Notifier<AuthState> {
       final res = await api
           .get('/auth/me')
           .timeout(
-            const Duration(seconds: 8),
+            const Duration(seconds: 70),
             onTimeout: () =>
                 throw const ApiException(message: 'Timeout koneksi server.'),
           );
